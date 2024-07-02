@@ -1,6 +1,5 @@
 <template>
     <div class="home">
-      <Sidebar />
       <div class="main-content">
         <CardGrid />
         <Section title="Section">
