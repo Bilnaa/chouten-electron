@@ -2,18 +2,15 @@
   <div class="card">
     <img src="/mountains.svg" alt="Mountains" />
     <div class="card-content">
-      <div class="card-action">
-        <div class="infos">
-          <p class="secondary">Secondary</p>
-          <h2 class="primary">Primary</h2>
-        </div>
-        <!-- <div class="actions">
-          <span>Like</span>
+      <p class="secondary">Secondary</p>
+      <div class="primary-row">
+        <h2 class="primary">Primary</h2>
+        <div class="card-footer">
+          <span>Text</span>
           <span class="heart">❤️</span>
-        </div> -->
-    </div>
-    <p class="description">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc semper urna enim, quis blandit elit sodales et. Morbi quis tortor a velit ultricies elementum. Morbi auctor vitae risus sed fermentum.</p>
-
+        </div>
+      </div>
+      <p class="description">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc semper urna enim, quis blandit elit sodales et. Morbi quis tortor a velit ultricies elementum. Morbi auctor vitae risus sed fermentum.</p>
     </div>
   </div>
 </template>
@@ -27,20 +24,20 @@ export default {
 <style scoped>
 .card {
   display: flex;
-  width: 100%;
-  max-width: 800px;
-  background-color: #1e1e1e;
-  border-radius: 10px;
-  overflow: hidden;
+    width: 65vw;
+    height: 50vh;
+    max-height: fit-content;
+    background-color: #1e1e1e;
+    border-radius: 12px;
+    overflow: hidden;
 }
 
 .card img {
-  width: 50%;
   object-fit: cover;
 }
 
 .card-content {
-  width: 50%;
+  width: 60%;
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -49,14 +46,21 @@ export default {
 
 .secondary {
   color: #888;
-  margin-bottom: 5px;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.primary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
 .primary {
   font-size: 24px;
   color: #fff;
-  margin-top: 0;
-  margin-bottom: 10px;
+  margin: 0;
 }
 
 .description {
@@ -65,17 +69,18 @@ export default {
   line-height: 1.4;
 }
 
-.card-action {
+.card-footer {
   display: flex;
-  
+  align-items: center;
 }
 
-.card-action span {
+.card-footer span {
   color: #fff;
+  font-size: 14px;
   margin-right: 5px;
 }
 
 .heart {
-  font-size: 18px;
+  color: #ff0000;
 }
 </style>
