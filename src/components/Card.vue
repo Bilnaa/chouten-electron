@@ -24,7 +24,7 @@ export default {
 <style scoped>
 .card {
   display: flex;
-    width: 65vw;
+    width: 55vw;
     height: 50vh;
     max-height: fit-content;
     background-color: #1e1e1e;

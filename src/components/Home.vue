@@ -1,49 +1,52 @@
 <template>
-    <div class="home">
-      <div class="main-content">
-        <CardGrid />
-        <Section title="Section">
-          <TextItem v-for="i in 10" :key="i" title="Title" />
-          <SeeAllButton />
-        </Section>
-        <Section title="Section">
-          <NumberedItem v-for="i in 8" :key="i" :number="i" title="Title" />
-          <SeeAllButton />
-        </Section>
-      </div>
+  <div class="home">
+    <div class="top-bar">
+      <SearchButton />
     </div>
-  </template>
-  
-  <script>
-  import Sidebar from './Sidebar.vue'
-  import CardGrid from './CardGrid.vue'
-  import Section from './Section.vue'
-  import TextItem from './TextItem.vue'
-  import NumberedItem from './NumberedItem.vue'
-  import SeeAllButton from './SeeAllButton.vue'
-  
-  export default {
-    name: 'Home',
-    components: {
-      Sidebar,
-      CardGrid,
-      Section,
-      TextItem,
-      NumberedItem,
-      SeeAllButton
-    }
+    <div class="main-content">
+      <CardGrid />
+      <Section title="Section n" use="TextItem" />
+      <Section title="Section" use="NumberedItem" />
+    </div>
+  </div>
+</template>
+
+<script>
+import Sidebar from './Sidebar.vue'
+import CardGrid from './CardGrid.vue'
+import Section from './Section.vue'
+import SearchButton from './SearchButton.vue'
+
+export default {
+  name: 'Home',
+  components: {
+    Sidebar,
+    CardGrid,
+    Section,
+    SearchButton,
   }
-  </script>
-  
-  <style scoped>
-  .home {
-    display: flex;
-    height: 100vh;
-  }
-  
-  .main-content {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 20px;
-  }
-  </style>
+}
+</script>
+
+<style scoped>
+.home {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  color: #ffffff; /* Light text color for contrast */
+}
+
+.top-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+.main-content {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 20px;
+  min-width: 900px;
+}
+</style>
