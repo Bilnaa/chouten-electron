@@ -1,5 +1,15 @@
-
 a {
-    text-decoration: none;
-    color: inherit;
-  }
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Hide scrollbars in WebKit-based browsers (e.g., Chrome, Safari) */
+div::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbars in IE, Edge, and Firefox */
+div {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;     /* Firefox */
+}
