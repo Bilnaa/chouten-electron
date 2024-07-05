@@ -6,6 +6,7 @@ import {
 import Home from './components/Home.vue';
 import ComingSoon from './components/ComingSoon.vue';
 import Repo from './components/Repo.vue';
+import Info from './components/Info.vue';
 
 
 export default createRouter({
@@ -27,5 +28,9 @@ export default createRouter({
         path:'/settings',
         component: ComingSoon
       },
+      {
+        path:'/infos',
+        component: Info
+      }
      ]
 });
