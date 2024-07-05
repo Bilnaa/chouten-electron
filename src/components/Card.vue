@@ -1,5 +1,5 @@
 <template>
-  <div class="card">
+  <router-link class="card">
     <img src="/mountains.svg" alt="Mountains" />
     <div class="card-content">
       <p class="secondary">Secondary</p>
@@ -12,7 +12,7 @@
       </div>
       <p class="description">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc semper urna enim, quis blandit elit sodales et. Morbi quis tortor a velit ultricies elementum. Morbi auctor vitae risus sed fermentum.</p>
     </div>
-  </div>
+  </router-link>
 </template>
 
 <script>

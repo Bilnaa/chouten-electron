@@ -1,5 +1,5 @@
 <template>
-  <div class="text-item">
+  <router-link class="text-item">
     <div class="image-placeholder">
       <img src="/mountains.svg" alt="Placeholder" class="placeholder-image">
       <span class="text-label">Text</span>
@@ -8,7 +8,7 @@
       <h3 class="title">{{ title }}</h3>
       <span class="index">{{ index }}/12</span>
     </div>
-  </div>
+  </router-link>
 </template>
 
 <script>

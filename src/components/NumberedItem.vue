@@ -1,5 +1,5 @@
 <template>
-  <div class="numbered-item">
+   <router-link class="numbered-item" to="/infos">
     <div class="content">
       <div class="image-placeholder">
         <img src="/mountains.svg" alt="Placeholder" class="placeholder-image">
@@ -10,7 +10,8 @@
       </div>
     </div>
     <span class="number">{{ number }}</span>
-  </div>
+  </router-link>
+  
 </template>
 
 <script>
@@ -24,6 +25,8 @@ export default {
 </script>
 
 <style scoped>
+
+
 .numbered-item {
   display: flex;
   justify-content: space-between;
