@@ -27,7 +27,7 @@
     
     <div class="module-select">
       <button @click="$emit('open-module-selector')" class="select-module-btn">
-        <ArchivePlusIcon :size="24" />
+        <Archive :size="24" />
       </button>
     </div>
     <div class="settings">
@@ -43,7 +43,7 @@ import HomeIcon from 'vue-material-design-icons/Home.vue'
 import CompassIcon from 'vue-material-design-icons/Compass.vue'
 import PackageVariantClosedIcon from 'vue-material-design-icons/PackageVariantClosed.vue'
 import CogIcon from 'vue-material-design-icons/Cog.vue'
-import ArchivePlusIcon from 'vue-material-design-icons/ArchivePlus.vue' // Ensure this import is correct
+import Archive from 'vue-material-design-icons/Archive.vue' // Ensure this import is correct
 
 export default {
   name: 'Sidebar',
@@ -52,7 +52,7 @@ export default {
     CompassIcon,
     PackageVariantClosedIcon,
     CogIcon,
-    ArchivePlusIcon // Register the ArchivePlusIcon here
+    Archive 
   }
 }
 </script>
@@ -65,6 +65,10 @@ export default {
   flex-direction: column;
   align-items: center;
   height: 98%;
+    
+  backdrop-filter: blur(10px);
+  background-color: rgba(0, 0, 0, 0.5);
+  
 }
 
 .logo-container {
