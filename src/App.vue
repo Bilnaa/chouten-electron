@@ -48,7 +48,7 @@ onMounted(() => {
 
 <template>
   <div class="title-bar"></div>
-  <Sidebar @open-module-selector="openModal" style="position: absolute;" />
+  <Sidebar @open-module-selector="openModal"/>
   <div class="container">
     <div v-if="selectedModule">
       <p>Selected Repo: {{ selectedRepo?.name }}</p>

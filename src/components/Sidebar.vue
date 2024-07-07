@@ -5,38 +5,41 @@
         <span>LOGO</span>
       </div>
     </div>
-    <nav class="main-nav">
-      <ul>
-        <li>
-          <router-link to="/" exact>
-            <HomeIcon :size="24" />
-          </router-link>
-        </li>
-        <li>
-          <router-link to="/discover">
-            <CompassIcon :size="24" />
-          </router-link>
-        </li>
-        <li>
-          <router-link to="/repo">
-            <PackageVariantClosedIcon :size="24" />
-          </router-link>
-        </li>
-      </ul>
-    </nav>
     
-    <div class="module-select">
+    <div class="main-content">
+      <nav class="main-nav">
+        <ul>
+          <li>
+            <router-link to="/" exact>
+              <HomeIcon :size="24" />
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/discover">
+              <CompassIcon :size="24" />
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/repo">
+              <PackageVariantClosedIcon :size="24" />
+            </router-link>
+          </li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="bottom-icons">
       <button @click="$emit('open-module-selector')" class="select-module-btn">
         <Archive :size="24" />
       </button>
-    </div>
-    <div class="settings">
-      <router-link to="/settings">
+      <router-link to="/settings" class="settings-btn">
         <CogIcon :size="24" />
       </router-link>
     </div>
   </div>
+
 </template>
+
 
 <script>
 import HomeIcon from 'vue-material-design-icons/Home.vue'
@@ -60,15 +63,14 @@ export default {
 <style scoped>
 .sidebar {
   width: 120px;
-  padding-top : 50px;
+  height: 100vh; /* Full viewport height */
   display: flex;
+  position: absolute;
   flex-direction: column;
+  justify-content: space-between; /* Space between top and bottom sections */
   align-items: center;
-  height: 98%;
-    
-  backdrop-filter: blur(10px);
-  background-color: rgba(0, 0, 0, 0.5);
-  
+  padding-top: 50px;
+  box-sizing: border-box; /* Ensure padding is included in width/height calculations */
 }
 
 .logo-container {
@@ -88,13 +90,17 @@ export default {
   font-weight: bold;
 }
 
-.main-nav {
-  flex-grow: 0.9;
+.main-content {
   display: flex;
+  flex-direction: column;
   align-items: center;
+  position: relative;
+  top: 10px; 
+  flex-grow: 1; 
+  justify-content: center;
 }
 
-.sidebar ul {
+.main-nav ul {
   list-style-type: none;
   padding: 0;
   margin: 0;
@@ -103,11 +109,11 @@ export default {
   align-items: center;
 }
 
-.sidebar li {
+.main-nav li {
   margin-bottom: 20px;
 }
 
-.sidebar a {
+.main-nav a {
   color: #666;
   text-decoration: none;
   display: flex;
@@ -115,33 +121,49 @@ export default {
   justify-content: center;
   width: 40px;
   height: 40px;
-  border-radius: 8px;
+  border-radius: 50%;
   transition: all 0.3s ease;
 }
 
-.sidebar a:hover,
-.sidebar a.router-link-active {
+.main-nav a:hover {
   color: #fff;
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.module-select {
-  margin-bottom: 20px;
+.main-nav a.router-link-active {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
+  filter: drop-shadow(0 0 16px rgba(100, 88, 237, 1)); /* Stronger glow */
 }
 
-.select-module-btn {
+.bottom-icons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px; /* Ensure space at the bottom */
+}
+
+.select-module-btn,
+.settings-btn {
   background: none;
   border: none;
   color: #666;
   cursor: pointer;
   padding: 8px;
-  border-radius: 8px;
+  border-radius: 50%;
   transition: all 0.3s ease;
+  margin-bottom: 10px; /* Space between buttons */
 }
 
-.select-module-btn:hover {
+.select-module-btn:hover,
+.settings-btn:hover {
   color: #fff;
   background-color: rgba(255, 255, 255, 0.1);
 }
 
+.select-module-btn:focus,
+.settings-btn:focus {
+  outline: none;
+  filter: drop-shadow(0 0 16px rgba(100, 88, 237, 1)); /* Stronger glow */
+}
 </style>

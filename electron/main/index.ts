@@ -65,12 +65,12 @@ async function createWindow() {
       symbolColor: '#eee',
       height: 40
     },
+    roundedCorners: true,
     backgroundMaterial: 'acrylic',
-
+    vibrancy: 'under-window',
     transparent : true,
     webPreferences: {
       preload,
-      webSecurity: false,
       allowRunningInsecureContent: false,
       enableBlinkFeatures: 'FontAccess, AudioVideoTracks',
       backgroundThrottling: false,
@@ -79,7 +79,7 @@ async function createWindow() {
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
-    win.webContents.openDevTools()
+    // win.webContents.openDevTools()
   } else {
     win.loadFile(indexHtml)
   }
