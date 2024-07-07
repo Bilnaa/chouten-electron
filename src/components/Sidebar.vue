@@ -24,6 +24,12 @@
         </li>
       </ul>
     </nav>
+    
+    <div class="module-select">
+      <button @click="$emit('open-module-selector')" class="select-module-btn">
+        <ArchivePlusIcon :size="24" />
+      </button>
+    </div>
     <div class="settings">
       <router-link to="/settings">
         <CogIcon :size="24" />
@@ -37,6 +43,7 @@ import HomeIcon from 'vue-material-design-icons/Home.vue'
 import CompassIcon from 'vue-material-design-icons/Compass.vue'
 import PackageVariantClosedIcon from 'vue-material-design-icons/PackageVariantClosed.vue'
 import CogIcon from 'vue-material-design-icons/Cog.vue'
+import ArchivePlusIcon from 'vue-material-design-icons/ArchivePlus.vue' // Ensure this import is correct
 
 export default {
   name: 'Sidebar',
@@ -44,7 +51,8 @@ export default {
     HomeIcon,
     CompassIcon,
     PackageVariantClosedIcon,
-    CogIcon
+    CogIcon,
+    ArchivePlusIcon // Register the ArchivePlusIcon here
   }
 }
 </script>
@@ -52,8 +60,7 @@ export default {
 <style scoped>
 .sidebar {
   width: 120px;
-  background-color: #121212;
-  padding-top : 20px;
+  padding-top : 50px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -110,6 +117,25 @@ export default {
 
 .sidebar a:hover,
 .sidebar a.router-link-active {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.module-select {
+  margin-bottom: 20px;
+}
+
+.select-module-btn {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.select-module-btn:hover {
   color: #fff;
   background-color: rgba(255, 255, 255, 0.1);
 }

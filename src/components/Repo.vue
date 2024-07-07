@@ -74,7 +74,7 @@
           <p><strong>{{ repoToRemove?.name }}</strong></p>
         </div>
         <div class="modal-footer">
-          <button class="remove-button" @click="removeRepo">Remove</button>
+          <button class="cancel-button" @click="removeRepo" style="background-color: #ff4444;">Remove</button>
           <button class="cancel-button" @click="closeRemoveModal">Cancel</button>
         </div>
       </div>
@@ -83,8 +83,6 @@
 </template>
 
 <script>
-import { loadRouteLocation } from 'vue-router';
-
 export default {
   data() {
     return {
@@ -96,15 +94,14 @@ export default {
       urlError: '',
       installError: '',
       isLoading: false,
-      repos: [
-      ]
-    }
+      repos: []
+    };
   },
   computed: {
     filteredRepos() {
       return this.repos.filter(repo => 
         repo.name.toLowerCase().includes(this.searchQuery.toLowerCase())
-      )
+      );
     }
   },
   methods: {
@@ -368,15 +365,18 @@ export default {
   background-color: #252525;
 }
 
-.install-button, .cancel-button {
+.install-button, .cancel-button, .modal-footer .remove-button {
   width: 100%;
   padding: 10px;
   margin-bottom: 10px;
-  background-color: #007AFF;
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
+}
+
+.install-button {
+  background-color: #007AFF;
 }
 
 .install-button:disabled {
@@ -388,12 +388,4 @@ export default {
   background-color: #333;
 }
 
-.modal-footer .remove-button {
-  background-color: #ff4444;
-  width: 100%;
-  height: auto;
-  border-radius: 5px;
-  margin-left: 0;
-  margin-bottom: 10px;
-}
 </style>

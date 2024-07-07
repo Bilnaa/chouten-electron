@@ -7,7 +7,7 @@ import NumberedItem from './NumberedItem.vue';
   <section class="section">
     <h2>{{ title }}</h2>
     <div :class="componentClass">
-      <component v-for="i in 10" :key="i" :is="component" :title="'Title ' + i" :number="i" />
+      <component v-for="i in 10" :key="i" :is="component" :title="'Title ' + i" :number="i"  />
     </div>
   </section>
 </template>

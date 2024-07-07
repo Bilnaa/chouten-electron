@@ -1,5 +1,5 @@
 <template>
-  <router-link class="text-item">
+  <router-link class="text-item" to="/infos">
     <div class="image-placeholder">
       <img src="/mountains.svg" alt="Placeholder" class="placeholder-image">
       <span class="text-label">Text</span>

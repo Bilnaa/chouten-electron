@@ -11,106 +11,180 @@
             <h1 class="primary-title">{{ media.primaryTitle }}</h1>
             <p class="status">{{ media.status }}</p>
           </div>
-          <div class="rating">{{ media.rating }} ❤️</div>
+          <div class="rating">{{ media.rating }}</div>
         </div>
       </div>
       
       <div class="main-content">
-        <p class="description">{{ media.description }}</p>
-      </div>
-      
-      <div class="episodes-section">
-        <div class="season-selector">
-          <h2>Season {{ media.season }}</h2>
-          <p>{{ currentEpisodes.length }} Episodes</p>
+        <div class="metadata">
+          
+          <div class="tags">
+            <span class="tag" v-for="tag in media.tags" :key="tag">{{ tag }}</span>
+          </div>
+          
+          <div class="synopsis">
+            <h2>Synopsis</h2>
+            <p>{{ media.synopsis }}</p>
+          </div>
+        </div>
+        
+        <div class="episodes-section">
+            
+            <div class="season-selector" @click="toggleSeasonModal">
+          <h2>Season {{ selectedSeason }}</h2>
+          <p>{{ media.episodes[selectedSeason][selectedCategory].length }} Episodes</p>
           <div class="chevron-right">›</div>
         </div>
-        
-        <div class="tags">
-          <span 
-            v-for="category in categories" 
-            :key="category"
-            :class="['tag', { active: currentCategory === category }]"
-            @click="setCategory(category)"
-          >
-            {{ category }}
-          </span>
-        </div>
-        
-        <div class="episodes-list">
-          <div v-for="episode in currentEpisodes" :key="episode.id" class="episode">
-            <h3>{{ episode.title }}</h3>
-            <p>Episode {{ episode.number }}</p>
+          
+          <div class="category-selector">
+            <button 
+              v-for="category in categories" 
+              :key="category"
+              @click="selectCategory(category)"
+              :class="{ active: selectedCategory === category }"
+            >
+              {{ category }}
+            </button>
+          </div>
+          
+          <div class="episodes-list">
+            <div v-for="episode in filteredEpisodes" :key="episode.id" class="episode">
+              <div class="episode-info">
+                <h3>{{ episode.title }}</h3>
+                <p>{{ episode.releaseInfo }}</p>
+              </div>
+              <span class="episode-duration">{{ episode.duration }}</span>
+            </div>
           </div>
         </div>
       </div>
+      <transition name="modal-fade">
+      <div v-if="showSeasonModal" class="season-modal" @click.self="toggleSeasonModal">
+        <transition name="modal-scale">
+          <div v-if="showSeasonModal" class="season-modal-content">
+            <transition-group name="list-complete" tag="div">
+              <h2 v-for="season in seasons" 
+                  :key="season" 
+                  @click="selectSeason(season)"
+                  :class="{ 'selected': season === selectedSeason }"
+                  class="list-complete-item">
+                Season {{ season }}
+              </h2>
+            </transition-group>
+            <button class="close-button" @click="toggleSeasonModal">×</button>
+          </div>
+        </transition>
+      </div>
+    </transition>
     </div>
     <div v-else class="loading">
       <div class="spinner"></div>
     </div>
   </template>
   
-  <script>
-  export default {
-    data() {
-      return {
-        loading: true,
-        currentCategory: 'Sub',
-        categories: ['Sub', 'Softsub', 'Dub'],
-        media: {
-          secondaryTitle: 'Kimetsu no Yaiba: Hashira Geiko-h...',
-          primaryTitle: 'Demon Slayer: Kimetsu no Yaiba Hashira Train...',
-          status: 'Unknown',
-          rating: 10.0,
-          description: 'New season of Kimetsu no Yaiba.',
-          season: 5,
-        },
+  
+<script>
+export default {
+  data() {
+    return {
+      loading: true,
+      selectedCategory: 'Sub',
+      categories: ['Sub', 'Softsub'],
+      selectedSeason: 1,
+      showSeasonModal: false,
+      seasons: [1, 2],
+      media: {
+        secondaryTitle: 'Placeholder Series',
+          primaryTitle: '[Placeholder] 2nd Season',
+          status: 'Ongoing',
+          rating: '10.0',
+          format: 'TV Series',
+          episodeCount: 13,
+          tags: ['Summer 2024', 'Releasing', 'Manga','Drama', 'Mystery', 'Psychological', 'Supernatural'],
+          synopsis: 'This is a placeholder synopsis for the second season of a fictional show. It involves characters navigating complex situations in a unique setting.',
+          season: 2,
         episodes: {
-          Sub: [
-            { id: 1, title: 'To Defeat Muzan Kibutsuji', number: 1 },
-            { id: 2, title: 'Water Hashira Giyu Tomioka`s Pain', number: 2 },
-            { id: 3, title: 'Fully Recovered Tanjiro Joins the Hashira Training!!', number: 3 },
-            { id: 4, title: 'To Bring a Smile to One`s Face', number: 4 },
-          ],
-          Softsub: [
-            { id: 1, title: 'The Beginning of Hashira Training', number: 1 },
-            { id: 2, title: 'Challenges Ahead', number: 2 },
-            { id: 3, title: 'Unlocking New Powers', number: 3 },
-          ],
-          Dub: [
-            { id: 1, title: 'Demon Slayer Corps Assembles', number: 1 },
-            { id: 2, title: 'The Path of the Hashira', number: 2 },
-          ]
+          1: {
+            Sub: [
+              { id: 1, title: 'Tokyo Blade', releaseInfo: 'Episode 1', duration: '24m' },
+              // Add more episodes for season 1
+            ],
+            Softsub: [
+              { id: 1, title: 'Tokyo Blade (Softsub)', releaseInfo: 'Episode 1', duration: '24m' },
+              // Add more episodes for season 1 softsub
+            ]
+          },
+          2: {
+            Sub: [
+              { id: 1, title: 'Season 2 Episode 1', releaseInfo: 'Episode 1', duration: '24m' },
+              // Add more episodes for season 2
+            ],
+            Softsub: [
+              { id: 1, title: 'Season 2 Episode 1 (Softsub)', releaseInfo: 'Episode 1', duration: '24m' },
+              // Add more episodes for season 2 softsub
+            ]
+          }
         }
       }
-    },
-    computed: {
-      currentEpisodes() {
-        return this.episodes[this.currentCategory];
-      }
-    },
-    methods: {
-      setCategory(category) {
-        this.currentCategory = category;
-      }
-    },
-    mounted() {
-      setTimeout(() => {
-        this.loading = false
-      }, 2000)
     }
+  },
+  computed: {
+    filteredEpisodes() {
+      return this.media.episodes[this.selectedSeason][this.selectedCategory]
+    }
+  },
+  methods: {
+    selectCategory(category) {
+      this.selectedCategory = category
+    },
+    toggleSeasonModal() {
+      this.showSeasonModal = !this.showSeasonModal;
+      
+      if (this.showSeasonModal) {
+        this.$nextTick(() => {
+          const items = this.$el.querySelectorAll('.list-complete-item');
+          items.forEach((item, index) => {
+            item.style.transitionDelay = `${index * 0.05}s`;
+          });
+        });
+      }
+    },
+    selectSeason(season) {
+      this.selectedSeason = season;
+      
+      // Animate the selected season
+      const selectedItem = this.$el.querySelector('.selected');
+      selectedItem.style.transform = 'scale(1.1)';
+      setTimeout(() => {
+        selectedItem.style.transform = 'scale(1)';
+      }, 300);
+      
+      // Close the modal with a slight delay
+      setTimeout(() => {
+        this.toggleSeasonModal();
+      }, 500);
+    }
+  
+
+  },
+  mounted() {
+    setTimeout(() => {
+      this.loading = false
+    }, 2000)
+    console.log(JSON.stringify(this.media.episodes))
   }
-  </script>
+}
+</script>
   
   <style scoped>
-    .media-details {
-    color: white;
-    font-family: Arial, sans-serif;
-  }
+.media-details {
+  color: #ffffff;
+  font-family: Arial, sans-serif;
+}
   
   .header {
     position: relative;
-    height: 400px;
+    height: 300px;
     overflow: hidden;
   }
   
@@ -126,7 +200,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    filter: brightness(60%) blur(5px);
+    filter: brightness(50%) blur(5px);
   }
   
   .content {
@@ -139,8 +213,8 @@
   }
   
   .cover-image {
-    width: 200px;
-    height: 300px;
+    width: 150px;
+    height: 225px;
     object-fit: cover;
     border-radius: 10px;
     margin-right: 20px;
@@ -167,121 +241,303 @@
   
   .rating {
     font-size: 24px;
-    align-self: flex-start;
     margin-top: 20px;
   }
   
   .main-content {
+    display: flex;
     padding: 20px;
   }
   
-  .description {
-    line-height: 1.6;
+  .metadata {
+    flex: 1;
+    margin-right: 40px;
+  }
+  
+  .info {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .tag, .genre {
+    background-color: #333;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+  }
+  
+  .synopsis h2 {
+    font-size: 18px;
+    margin-bottom: 10px;
   }
   
   .episodes-section {
-    padding: 20px;
+    flex: 1;
   }
   
-  .episodes-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
-  }
   
-  .episode {
-    background-color: #333;
-    border-radius: 10px;
-    overflow: hidden;
-  }
-  
-  .episode img {
-    width: 100%;
-    height: 150px;
-    object-fit: cover;
-  }
-  
-  .episode-details {
-    padding: 10px;
-  }
-  
-  .loading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: #1a1a1a;
-  }
-  
-  .spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #3498db;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-  }
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-  
-  .season-selector {
+  .category-selector {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 20px;
 }
 
-.chevron-right {
-  font-size: 24px;
-}
-
-.tags {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.tag {
-  padding: 5px 15px;
-  border-radius: 20px;
-  background-color: #333;
-  color: #fff;
-  font-size: 14px;
+.category-selector button {
+  background-color: transparent;
+  border: none;
+  color: #ffffff;
+  padding: 10px 20px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  font-size: 16px;
 }
 
-.tag:hover {
-  background-color: #444;
-}
-
-.tag.active {
-  background-color: #6666ff;
+.category-selector button.active {
+  background-color: #333;
+  border-radius: 20px;
 }
 
 .episodes-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 .episode {
-  background-color: #333;
-  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #1e1e1e;
   padding: 15px;
+  border-radius: 5px;
 }
 
-.episode h3 {
+.episode-info h3 {
   margin: 0;
   font-size: 16px;
 }
 
-.episode p {
+.episode-info p {
   margin: 5px 0 0;
   font-size: 14px;
   color: #999;
 }
-</style>
+
+.episode-duration {
+  font-size: 14px;
+  color: #999;
+}
+  
+  .chevron-right {
+    font-size: 24px;
+  }
+
+  
+  
+  .loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  
+  .spinner {
+    border: 4px solid #333;
+    border-top: 4px solid #fff;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+  }
+
+
+
+
+.season-modal-content h2.selected {
+  color: #a855f7;
+}
+
+.close-button {
+  position: absolute;
+  bottom: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ffffff;
+  color: #000000;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+  .season-selector {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 15px 20px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.season-selector:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.season-selector:active {
+  transform: scale(0.98);
+}
+
+.season-selector.active {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.season-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.season-info h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.season-info p {
+  margin: 5px 0 0;
+  font-size: 14px;
+  color: #999;
+}
+
+.chevron-right {
+  font-size: 24px;
+  transition: transform 0.3s ease;
+}
+
+.chevron-right.rotate {
+  transform: rotate(90deg);
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.season-selector:active .chevron-right {
+  animation: pulse 0.3s ease;
+}
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+
+  .season-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.season-modal-content {
+  background-color: #1e1e1e;
+  padding: 20px;
+  border-radius: 10px;
+  width: 80%;
+  max-width: 300px;
+  position: relative;
+}
+
+.season-modal-content h2 {
+  color: #ffffff;
+  padding: 10px 0;
+  cursor: pointer;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.season-modal-content h2:hover {
+  transform: translateX(10px);
+}
+
+.season-modal-content h2.selected {
+  color: #a855f7;
+}
+
+.close-button {
+  position: absolute;
+  bottom: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ffffff;
+  color: #000000;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.close-button:hover {
+  background-color: #e0e0e0;
+  transform: translateX(-50%) scale(1.1);
+}
+
+/* Modal fade animation */
+.modal-fade-enter-active, .modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.modal-fade-enter-from, .modal-fade-leave-to {
+  opacity: 0;
+}
+
+/* Modal scale animation */
+.modal-scale-enter-active, .modal-scale-leave-active {
+  transition: all 0.3s ease;
+}
+.modal-scale-enter-from, .modal-scale-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+/* List animations */
+.list-complete-item {
+  transition: all 0.3s ease;
+  display: block;
+}
+
+.list-complete-enter-from,
+.list-complete-leave-to {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.list-complete-leave-active {
+  position: absolute;
+}
+  </style>

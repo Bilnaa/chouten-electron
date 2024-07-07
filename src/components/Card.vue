@@ -1,5 +1,5 @@
 <template>
-  <router-link class="card">
+  <router-link class="card" to="/infos">
     <img src="/mountains.svg" alt="Mountains" />
     <div class="card-content">
       <p class="secondary">Secondary</p>
@@ -17,7 +17,12 @@
 
 <script>
 export default {
-  name: 'Card'
+  name: 'Card',
+  props: {
+    title: String,
+    secondary: String,
+    description: String
+  }
 }
 </script>
 
