@@ -1,12 +1,15 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import { useStore } from 'vuex';
 import Sidebar from './components/Sidebar.vue';
 import ModuleSelector from './components/ModuleSelector.vue';
 import Modal from './components/Modal.vue';
 
+const store = useStore();
 const showModal = ref(false);
-const selectedRepo = ref(null);
-const selectedModule = ref(null);
+
+const selectedRepo = computed(() => store.state.activeModule ? store.state.repos.find(repo => repo.modules.includes(store.state.activeModule)) : null);
+const selectedModule = computed(() => store.state.activeModule);
 
 function openModal() {
   showModal.value = true;
@@ -17,8 +20,7 @@ function closeModal() {
 }
 
 function handleModuleSelection({ repo, module }) {
-  selectedRepo.value = repo;
-  selectedModule.value = module;
+  store.dispatch('setActiveModule', module);
   closeModal();
   console.log('Selected repo:', repo);
   console.log('Selected module:', module);
@@ -34,10 +36,12 @@ onMounted(() => {
   const storedModule = localStorage.getItem('selectedModule');
 
   if (storedRepo) {
-    selectedRepo.value = JSON.parse(storedRepo);
+    const repo = JSON.parse(storedRepo);
+    // Update Vuex store if needed
   }
   if (storedModule) {
-    selectedModule.value = JSON.parse(storedModule);
+    const module = JSON.parse(storedModule);
+    store.dispatch('setActiveModule', module);
   }
 });
 </script>
@@ -47,7 +51,7 @@ onMounted(() => {
   <Sidebar @open-module-selector="openModal" style="position: absolute;" />
   <div class="container">
     <div v-if="selectedModule">
-      <p>Selected Repo: {{ selectedRepo.name }}</p>
+      <p>Selected Repo: {{ selectedRepo?.name }}</p>
       <p>Selected Module: {{ selectedModule.name }}</p>
     </div>
     <router-view />
@@ -61,8 +65,6 @@ onMounted(() => {
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(50px);
   overflow: hidden;
 }
 
@@ -87,6 +89,7 @@ body {
   padding: 20px;
   overflow-y: auto;
   height: 100vh;
+  background-color: #0C0C0C;
 }
 
 .select-module-btn {
