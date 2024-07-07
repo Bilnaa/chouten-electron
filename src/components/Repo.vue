@@ -17,7 +17,7 @@
         <button class="remove-button" @click="confirmRemoveRepo(repo)">×</button>
       </div>
     </div>
-    
+
     <!-- Install Repo Modal -->
     <div v-if="showAddRepoModal" class="modal-overlay">
       <div class="modal">
@@ -54,7 +54,7 @@
           <button 
             class="install-button" 
             @click="installRepo" 
-            :disabled="!newRepo.url || urlError || isLoading"
+            :disabled="!newRepo.url || !!urlError || isLoading"
           >
             {{ isLoading ? 'Installing...' : 'Install' }}
           </button>
@@ -74,7 +74,7 @@
           <p><strong>{{ repoToRemove?.name }}</strong></p>
         </div>
         <div class="modal-footer">
-          <button class="cancel-button" @click="removeRepo" style="background-color: #ff4444;">Remove</button>
+          <button class="cancel-button" @click="handleRemoveRepo" style="background-color: #ff4444;">Remove</button>
           <button class="cancel-button" @click="closeRemoveModal">Cancel</button>
         </div>
       </div>
@@ -82,101 +82,134 @@
   </div>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      searchQuery: '',
-      showAddRepoModal: false,
-      showRemoveModal: false,
-      newRepo: { url: '' },
-      repoToRemove: null,
-      urlError: '',
-      installError: '',
-      isLoading: false,
-      repos: []
-    };
-  },
-  computed: {
-    filteredRepos() {
-      return this.repos.filter(repo => 
-        repo.name.toLowerCase().includes(this.searchQuery.toLowerCase())
-      );
-    }
-  },
-  methods: {
-    openAddRepoModal() {
-      this.showAddRepoModal = true;
-      this.newRepo = { url: '' };
-      this.urlError = '';
-      this.installError = '';
-    },
-    closeAddRepoModal() {
-      this.showAddRepoModal = false;
-      this.newRepo = { url: '' };
-      this.urlError = '';
-      this.installError = '';
-      this.isLoading = false;
-    },
-    validateUrl() {
-      const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
-      if (!this.newRepo.url) {
-        this.urlError = '';
-      } else if (!urlPattern.test(this.newRepo.url)) {
-        this.urlError = 'Please enter a valid URL';
-      } else {
-        this.urlError = '';
-      }
-    },
-    async installRepo() {
-      if (this.urlError || !this.newRepo.url) return;
+<script lang="ts">
+import { defineComponent, ref, computed } from 'vue';
+import { useStore } from 'vuex';
+import { Repo } from '../store/index';
 
-      this.isLoading = true;
-      this.installError = '';
+export default defineComponent({
+  setup() {
+    const store = useStore();
+    const searchQuery = ref('');
+    const showAddRepoModal = ref(false);
+    const showRemoveModal = ref(false);
+    const newRepo = ref({ url: '' });
+    const repoToRemove = ref<Repo | null>(null);
+    const urlError = ref('');
+    const installError = ref('');
+    const isLoading = ref(false);
+
+    const openAddRepoModal = () => {
+      showAddRepoModal.value = true;
+      newRepo.value = { url: '' };
+      urlError.value = '';
+      installError.value = '';
+    };
+
+    const closeAddRepoModal = () => {
+      showAddRepoModal.value = false;
+      newRepo.value = { url: '' };
+      urlError.value = '';
+      installError.value = '';
+      isLoading.value = false;
+    };
+
+    const validateUrl = () => {
+      const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+      if (!newRepo.value.url) {
+        urlError.value = '';
+      } else if (!urlPattern.test(newRepo.value.url)) {
+        urlError.value = 'Please enter a valid URL';
+      } else {
+        urlError.value = '';
+      }
+    };
+
+    const installRepo = async () => {
+      if (urlError.value || !newRepo.value.url) return;
+
+      isLoading.value = true;
+      installError.value = '';
 
       try {
         // Simulating an API call to install the repo
         await new Promise(resolve => setTimeout(resolve, 2000));
-        
+
         // If the installation is successful, add the repo to the list
-        const newRepo = {
-          id: this.repos.length + 1,
-          name: `Repo ${this.repos.length + 1}`,
+        const newRepoObject: Repo = {
+          id: store.state.repos.length + 1,
+          name: `Repo ${store.state.repos.length + 1}`,
           team: 'Chouten-Team',
-          url: this.newRepo.url,
-          icon: 'https://cdn-icons-png.flaticon.com/512/25/25231.png'
+          url: newRepo.value.url,
+          icon: 'https://cdn-icons-png.flaticon.com/512/25/25231.png',
+          modules: [
+            {
+              id: 1,
+              name: 'Module 1',
+              author: 'Author 1',
+              version: '1.0.0',
+              image: 'https://via.placeholder.com/150'
+            },
+            {
+              id: 2,
+              name: 'Module 2',
+              author: 'Author 2',
+              version: '1.0.0',
+              image: 'https://via.placeholder.com/150'
+            }
+          ]
         };
-        this.repos.push(newRepo);
-        
-        this.closeAddRepoModal();
-        localStorage.setItem('repos', JSON.stringify(this.repos));
+        store.dispatch('addRepo', newRepoObject);
+
+        closeAddRepoModal();
       } catch (error) {
-        this.installError = 'Failed to install the repo. Please try again.';
+        installError.value = 'Failed to install the repo. Please try again.';
       } finally {
-        this.isLoading = false;
+        isLoading.value = false;
       }
-    },
-    confirmRemoveRepo(repo) {
-      this.repoToRemove = repo;
-      this.showRemoveModal = true;
-    },
-    removeRepo() {
-      const index = this.repos.findIndex(repo => repo.id === this.repoToRemove.id);
-      if (index !== -1) {
-        this.repos.splice(index, 1);
+    };
+
+    const confirmRemoveRepo = (repo: Repo) => {
+      repoToRemove.value = repo;
+      showRemoveModal.value = true;
+    };
+
+    const handleRemoveRepo = () => {
+      if (repoToRemove.value) {
+        store.dispatch('removeRepo', repoToRemove.value.id);
       }
-      localStorage.setItem('repos', JSON.stringify(this.repos));
-      this.closeRemoveModal();
-    },
-    closeRemoveModal() {
-      this.showRemoveModal = false;
-      this.repoToRemove = null;
-    }
-  },
-  mounted() {
-    this.repos = JSON.parse(localStorage.getItem('repos')) || this.repos;    
+      closeRemoveModal();
+    };
+
+    const closeRemoveModal = () => {
+      showRemoveModal.value = false;
+      repoToRemove.value = null;
+    };
+
+    const filteredRepos = computed(() => {
+      return store.getters.filteredRepos(searchQuery.value);
+    });
+
+    return {
+      searchQuery,
+      showAddRepoModal,
+      showRemoveModal,
+      newRepo,
+      repoToRemove,
+      urlError,
+      installError,
+      isLoading,
+      filteredRepos,
+      openAddRepoModal,
+      closeAddRepoModal,
+      validateUrl,
+      installRepo,
+      confirmRemoveRepo,
+      handleRemoveRepo,
+      closeRemoveModal
+    };
   }
-}
+});
 </script>
 
 <style scoped>

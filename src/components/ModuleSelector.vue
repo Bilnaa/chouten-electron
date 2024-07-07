@@ -4,12 +4,12 @@
       <div class="repo-slider" :style="{ width: `${repos.length * 100}%` }">
         <div v-for="(repo, index) in repos" :key="repo.id" class="repo-section" :style="{ width: `${100 / repos.length}%` }">
           <div class="repo-card">
-            <img :src="repo.image" alt="Repo Image" class="repo-image">
+            <img :src="repo.icon" alt="Repo Image" class="repo-image">
             <div class="repo-info">
               <h3>{{ repo.name }}</h3>
-              <p>{{ repo.description }}</p>
+              <p>{{ repo.team }}</p>
             </div>
-            <span class="repo-version">v{{ repo.version }}</span>
+            <span class="repo-version">v1.0.0</span>
           </div>
           <h4>Modules</h4>
           <div class="modules-grid">
@@ -40,63 +40,51 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ModuleSelector',
-  data() {
+
+<script lang="ts">
+import { defineComponent, ref } from 'vue';
+import { useStore } from 'vuex';
+import { Repo } from '../store/index';
+
+export default defineComponent({
+  setup() {
+    const store = useStore();
+    const repos = store.state.repos;
+    const currentRepoIndex = ref(0);
+    const repoContainer = ref<HTMLElement | null>(null);
+
+    const handleScroll = () => {
+      if (!repoContainer.value) return;
+
+      const scrollLeft = repoContainer.value.scrollLeft;
+      const containerWidth = repoContainer.value.clientWidth;
+      currentRepoIndex.value = Math.round(scrollLeft / containerWidth);
+    };
+
+    const scrollToRepo = (index: number) => {
+      if (!repoContainer.value) return;
+
+      const containerWidth = repoContainer.value.clientWidth;
+      repoContainer.value.scrollTo({ left: index * containerWidth, behavior: 'smooth' });
+    };
+
+    const selectModule = (repo: Repo, module: any) => {
+      console.log('Selected module:', module, 'from repo:', repo);
+      store.dispatch('setActiveModule', module); // Set the active module in Vuex
+      // Emit an event to the parent component if needed
+      // this.$emit('module-selected', { repo, module });
+    };
+
     return {
-      currentRepoIndex: 0,
-      repos: [
-        {
-          id: 1,
-          name: 'Test Repo',
-          description: 'This is a test repo for internal Chouten testing.',
-          version: '1.0.0',
-          image: '/mountains.svg',
-          modules: [
-            { id: 1, name: 'Aniwave.to', image: '/mountains.svg', version: '1.0.0', author: 'Chouten-Team' },
-            { id: 2, name: 'Hianime.to', image: '/mountains.svg', version: '0.1.0', author: 'Anonymous' },
-          ]
-        },
-        {
-          id: 2,
-          name: 'Another Repo',
-          description: 'This is another repository with different modules.',
-          version: '0.5.0',
-          image: '/mountains.svg',
-          modules: [
-            { id: 3, name: 'Module A', image: '/mountains.svg', version: '0.3.0', author: 'Author A' },
-            { id: 4, name: 'Module B', image: '/mountains.svg', version: '0.2.1', author: 'Author B' },
-          ]
-        },
-      ]
-    }
-  },
-  computed: {
-    currentRepo() {
-      return this.repos[this.currentRepoIndex]
-    }
-  },
-  methods: {
-    selectModule(repo, module) {
-      this.$emit('module-selected', { repo, module })
-    },
-    handleScroll() {
-      const container = this.$refs.repoContainer;
-      const scrollPosition = container.scrollLeft;
-      const containerWidth = container.clientWidth;
-      this.currentRepoIndex = Math.round(scrollPosition / containerWidth);
-    },
-    scrollToRepo(index) {
-      const container = this.$refs.repoContainer;
-      container.scrollTo({
-        left: index * container.clientWidth,
-        behavior: 'smooth'
-      });
-      this.currentRepoIndex = index;
-    }
+      repos,
+      currentRepoIndex,
+      repoContainer,
+      handleScroll,
+      scrollToRepo,
+      selectModule
+    };
   }
-}
+});
 </script>
 
 <style scoped>
