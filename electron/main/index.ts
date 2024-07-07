@@ -61,11 +61,12 @@ async function createWindow() {
     frame: false,
     titleBarStyle: 'hidden',
     titleBarOverlay: {
-      color: '#17191c',
+      color: '#171717',
       symbolColor: '#eee',
       height: 40
     },
-    backgroundColor: null,
+    backgroundMaterial: 'acrylic',
+
     transparent : true,
     webPreferences: {
       preload,
