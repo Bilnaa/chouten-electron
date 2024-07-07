@@ -15,6 +15,14 @@
     "target": [
       "dmg"
     ],
+    "fileAssociations": [
+      {
+        "ext": "module",
+        "name": "Chouten File",
+        "role": "Editor",
+        "icon": "icons/icon.icns"
+      }
+    ],
     "icon": "icons/icon.icns",
     "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
   },
@@ -25,6 +33,15 @@
         "arch": [
           "x64"
         ]
+      }
+    ],
+    "fileAssociations" : [
+      {
+        "ext" : "module",
+        "name" : "Chouten File",
+        "description" : "Chouten File",
+        "icon" : "icons/icon.ico",
+        "isPackage" : true
       }
     ],
     "icon": "icons/icon.ico",
@@ -40,6 +57,7 @@
     "target": [
       "AppImage"
     ],
+    
     "artifactName": "${productName}-Linux-${version}.${ext}"
   }
 }
