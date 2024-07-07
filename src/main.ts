@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import routes from './routes'
 import 'vue-material-design-icons/styles.css';
+import store from './store/index'
 
 import './style.css'
 
@@ -13,6 +14,7 @@ import './demos/ipc'
 
 createApp(App)
   .use(routes)
+  .use(store)
   .mount('#app')
   .$nextTick(() => {
     postMessage({ payload: 'removeLoading' }, '*')
