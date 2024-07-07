@@ -43,23 +43,12 @@ function createDirectories() {
 
   const choutenPath = path.join(appDataPath, 'Chouten');
   const repoPath = path.join(choutenPath, 'repo');
-  const modulesPath = path.join(choutenPath, 'modules');
-
   if (!fs.existsSync(repoPath)) {
     fs.mkdirSync(repoPath, { recursive: true });
     console.log('Created repo directory');
   } else {
     console.log('repo directory already exists');
   }
-
-  if (!fs.existsSync(modulesPath)) {
-    fs.mkdirSync(modulesPath);
-    console.log('Created modules directory');
-  } else {
-    console.log('modules directory already exists');
-  }
-
-  new Discord(win);
 
 }
 
@@ -69,7 +58,7 @@ async function createWindow() {
     icon: path.join(process.env.VITE_PUBLIC, 'chouten.png'),
     width: 1600,
     height: 900,
-    frame: process.platform === 'darwin', // Only keep the native frame on Mac
+    frame: false,
     titleBarStyle: 'hidden',
     titleBarOverlay: {
       color: '#17191c',
