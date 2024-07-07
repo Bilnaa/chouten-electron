@@ -1,105 +1,105 @@
 <template>
-    <div class="module-selector">
-      <h2>Repositories and Modules</h2>
-      <div class="repo-container" ref="repoContainer" @scroll="handleScroll">
-        <div class="repo-slider" :style="{ width: `${repos.length * 100}%` }">
-          <div v-for="(repo, index) in repos" :key="repo.id" class="repo-section" :style="{ width: `${100 / repos.length}%` }">
-            <div class="repo-card">
-              <img :src="repo.image" alt="Repo Image" class="repo-image">
-              <div class="repo-info">
-                <h3>{{ repo.name }}</h3>
-                <p>{{ repo.description }}</p>
-              </div>
-              <span class="repo-version">v{{ repo.version }}</span>
+  <div class="module-selector">
+    <div class="repo-container" ref="repoContainer" @scroll="handleScroll">
+      <div class="repo-slider" :style="{ width: `${repos.length * 100}%` }">
+        <div v-for="(repo, index) in repos" :key="repo.id" class="repo-section" :style="{ width: `${100 / repos.length}%` }">
+          <div class="repo-card">
+            <img :src="repo.image" alt="Repo Image" class="repo-image">
+            <div class="repo-info">
+              <h3>{{ repo.name }}</h3>
+              <p>{{ repo.description }}</p>
             </div>
-            <div class="modules-grid">
-              <div v-for="module in repo.modules" :key="module.id" class="module-card" @click="selectModule(repo, module)">
-                <img :src="module.image" alt="Module Image" class="module-image">
-                <div class="module-info">
-                  <h4>{{ module.name }}</h4>
-                  <div class="module-meta">
-                    <span class="module-author">{{ module.author }}</span>
-                    •
-                    <span class="module-version">{{ module.version }}</span>
-                  </div>
+            <span class="repo-version">v{{ repo.version }}</span>
+          </div>
+          <h4>Modules</h4>
+          <div class="modules-grid">
+            <div v-for="module in repo.modules" :key="module.id" class="module-card" @click="selectModule(repo, module)">
+              <img :src="module.image" alt="Module Image" class="module-image">
+              <div class="module-info">
+                <h4>{{ module.name }}</h4>
+                <div class="module-meta">
+                  <span class="module-author">{{ module.author }}</span>
+                  •
+                  <span class="module-version">{{ module.version }}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div class="pagination">
-        <span
-          v-for="(repo, index) in repos"
-          :key="repo.id"
-          class="dot"
-          :class="{ active: index === currentRepoIndex }"
-          @click="scrollToRepo(index)"
-        ></span>
-      </div>
     </div>
-  </template>
-  
-  <script>
-  export default {
-    name: 'ModuleSelector',
-    data() {
-      return {
-        currentRepoIndex: 0,
-        repos: [
-          {
-            id: 1,
-            name: 'Test Repo',
-            description: 'This is a test repo for internal Chouten testing.',
-            version: '1.0.0',
-            image: '/mountains.svg',
-            modules: [
-              { id: 1, name: 'Aniwave.to', image: '/mountains.svg', version: '1.0.0', author: 'Chouten-Team' },
-              { id: 2, name: 'Hianime.to', image: '/mountains.svg', version: '0.1.0', author: 'Anonymous' },
-            ]
-          },
-          {
-            id: 2,
-            name: 'Another Repo',
-            description: 'This is another repository with different modules.',
-            version: '0.5.0',
-            image: '/mountains.svg',
-            modules: [
-              { id: 3, name: 'Module A', image: '/mountains.svg', version: '0.3.0', author: 'Author A' },
-              { id: 4, name: 'Module B', image: '/mountains.svg', version: '0.2.1', author: 'Author B' },
-            ]
-          },
-        ]
-      }
+    <div class="pagination">
+      <span
+        v-for="(repo, index) in repos"
+        :key="repo.id"
+        class="dot"
+        :class="{ active: index === currentRepoIndex }"
+        @click="scrollToRepo(index)"
+      ></span>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'ModuleSelector',
+  data() {
+    return {
+      currentRepoIndex: 0,
+      repos: [
+        {
+          id: 1,
+          name: 'Test Repo',
+          description: 'This is a test repo for internal Chouten testing.',
+          version: '1.0.0',
+          image: '/mountains.svg',
+          modules: [
+            { id: 1, name: 'Aniwave.to', image: '/mountains.svg', version: '1.0.0', author: 'Chouten-Team' },
+            { id: 2, name: 'Hianime.to', image: '/mountains.svg', version: '0.1.0', author: 'Anonymous' },
+          ]
+        },
+        {
+          id: 2,
+          name: 'Another Repo',
+          description: 'This is another repository with different modules.',
+          version: '0.5.0',
+          image: '/mountains.svg',
+          modules: [
+            { id: 3, name: 'Module A', image: '/mountains.svg', version: '0.3.0', author: 'Author A' },
+            { id: 4, name: 'Module B', image: '/mountains.svg', version: '0.2.1', author: 'Author B' },
+          ]
+        },
+      ]
+    }
+  },
+  computed: {
+    currentRepo() {
+      return this.repos[this.currentRepoIndex]
+    }
+  },
+  methods: {
+    selectModule(repo, module) {
+      this.$emit('module-selected', { repo, module })
     },
-    computed: {
-      currentRepo() {
-        return this.repos[this.currentRepoIndex]
-      }
+    handleScroll() {
+      const container = this.$refs.repoContainer;
+      const scrollPosition = container.scrollLeft;
+      const containerWidth = container.clientWidth;
+      this.currentRepoIndex = Math.round(scrollPosition / containerWidth);
     },
-    methods: {
-      selectModule(repo, module) {
-        this.$emit('module-selected', { repo, module })
-      },
-      handleScroll() {
-        const container = this.$refs.repoContainer;
-        const scrollPosition = container.scrollLeft;
-        const containerWidth = container.clientWidth;
-        this.currentRepoIndex = Math.round(scrollPosition / containerWidth);
-      },
-      scrollToRepo(index) {
-        const container = this.$refs.repoContainer;
-        container.scrollTo({
-          left: index * container.clientWidth,
-          behavior: 'smooth'
-        });
-        this.currentRepoIndex = index;
-      }
+    scrollToRepo(index) {
+      const container = this.$refs.repoContainer;
+      container.scrollTo({
+        left: index * container.clientWidth,
+        behavior: 'smooth'
+      });
+      this.currentRepoIndex = index;
     }
   }
-  </script>
-  
-  <style scoped>
+}
+</script>
+
+<style scoped>
   .module-selector {
     padding: 20px;
   }
