@@ -69,7 +69,7 @@ async function createWindow() {
     backgroundMaterial: 'acrylic',
     vibrancy: 'under-window',
     visualEffectState: 'followWindow',
-    transparent : true,
+    transparent : process.platform === 'win32' || process.platform === 'darwin',
     webPreferences: {
       preload,
       allowRunningInsecureContent: false,
