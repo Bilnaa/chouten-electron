@@ -8,9 +8,6 @@ import { Repo, Module } from './store/index';
 import ToastManager from './components/ToastManager.vue';
 import SplashScreen from './components/SplashScreen.vue'
 
-
-
-
 const store = useStore();
 const showModal = ref(false);
 
@@ -18,6 +15,10 @@ const selectedRepo = computed(() => store.state.activeModule ? store.state.repos
 const selectedModule = computed(() => store.state.activeModule);
 
 function openModal() {
+  if (!store.state.repos.length || !store.state.repos.some((repo: { modules: string | any[]; }) => repo.modules.length)) {
+    showToast('No Modules/Reposisotries', 'There are no modules or repositories to select from. Please import a module first.', 'Error', 5000);
+    return;
+  }
   showModal.value = true;
 }
 
