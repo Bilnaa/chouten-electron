@@ -75,6 +75,9 @@ body {
   right: 0;
   height: 40px;
   -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
   -webkit-app-region: drag;
 }
 
