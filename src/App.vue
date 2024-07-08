@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, provide, onMounted } from 'vue';
+import { ref, computed, provide, onMounted, onBeforeMount } from 'vue';
 import { useStore } from 'vuex';
 import Sidebar from './components/Sidebar.vue';
 import ModuleSelector from './components/ModuleSelector.vue';
 import Modal from './components/Modal.vue';
 import { Repo, Module } from './store/index';
-import { useToast } from './composables/useToast';
 import ToastManager from './components/ToastManager.vue';
+import SplashScreen from './components/SplashScreen.vue'
 
 
 
@@ -33,6 +33,8 @@ function handleModuleSelection({ repo }: { repo: Repo }, module: Module) {
 }
 
 const toastManager = ref<InstanceType<typeof ToastManager> | null>(null);
+const showSplash = ref(true);
+const fadeOutSplash = ref(false);
 
 function showToast(title: string, message: string, icon = 'System', duration = 3000) {
   toastManager.value?.addToast(title, message, icon, duration);
@@ -40,22 +42,43 @@ function showToast(title: string, message: string, icon = 'System', duration = 3
 
 provide('showToast', showToast);
 
+onMounted(() => {
+
+  let firstLoad = localStorage.getItem('firstLoad');
+  if (!firstLoad) {
+    localStorage.setItem('firstLoad', 'true');
+    showToast('Welcome to Chouten!', 'Import your first module to get started.', 'Info', 5000);
+  }
+});
+
+onBeforeMount(() => {
+  setTimeout(() => {
+    fadeOutSplash.value = true;
+    setTimeout(() => {
+      showSplash.value = false;
+    }, 300);
+  }, 2500); 
+});
 </script>
 
 <template>
-  <div class="title-bar"></div>
-  <Sidebar @open-module-selector="openModal"/>
-  <div class="container">
-    <div v-if="selectedModule">
-      <p>Selected Repo: {{ selectedRepo?.name }}</p>
-      <p>Selected Module: {{ selectedModule.name }}</p>
+  <SplashScreen v-if="showSplash" :fadeOut="fadeOutSplash" />
+  <div v-if="!showSplash">
+    <div class="title-bar"></div>
+    <Sidebar @open-module-selector="openModal" />
+    <div class="container">
+      <div v-if="selectedModule">
+        <p>Selected Repo: {{ selectedRepo?.name }}</p>
+        <p>Selected Module: {{ selectedModule.name }}</p>
+      </div>
+      <router-view />
     </div>
-    <router-view />
+    <Modal :show="showModal" @close="closeModal">
+      <ModuleSelector @module-selected="handleModuleSelection" />
+    </Modal>
+    <ToastManager ref="toastManager" />
   </div>
-  <Modal :show="showModal" @close="closeModal">
-    <ModuleSelector @module-selected="handleModuleSelection" />
-  </Modal>
-  <ToastManager ref="toastManager" />
+
 </template>
 
 
@@ -80,6 +103,7 @@ body {
 }
 
 #app {
+  position: relative;
   color: white;
   height: 100vh;
   overflow: hidden;
