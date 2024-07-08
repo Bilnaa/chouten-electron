@@ -20,7 +20,6 @@
         "ext": "module",
         "name": "Chouten File",
         "role": "Editor",
-        "icon": "icons/icon.icns"
       }
     ],
     "icon": "icons/icon.icns",
@@ -40,7 +39,6 @@
         "ext" : "module",
         "name" : "Chouten File",
         "description" : "Chouten File",
-        "icon" : "icons/icon.ico",
         "isPackage" : true
       }
     ],
