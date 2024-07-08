@@ -68,6 +68,7 @@ async function createWindow() {
     roundedCorners: true,
     backgroundMaterial: 'acrylic',
     vibrancy: 'under-window',
+    visualEffectState: 'followWindow',
     transparent : true,
     webPreferences: {
       preload,
