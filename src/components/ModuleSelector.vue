@@ -13,7 +13,13 @@
           </div>
           <h4>Modules</h4>
           <div class="modules-grid">
-            <div v-for="module in repo.modules" :key="module.id" class="module-card" @click="selectModule(repo, module)">
+            <div 
+              v-for="module in repo.modules" 
+              :key="module.id" 
+              class="module-card" 
+              :class="{ 'selected': isModuleSelected(module) }"
+              @click="selectModule(repo, module)"
+            >
               <img :src="module.image" alt="Module Image" class="module-image">
               <div class="module-info">
                 <h4>{{ module.name }}</h4>
@@ -40,16 +46,16 @@
   </div>
 </template>
 
-
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { defineComponent, ref, computed } from 'vue';
 import { useStore } from 'vuex';
-import { Repo } from '../store/index';
+import { Repo, Module } from '../store/index';
 
 export default defineComponent({
   setup() {
     const store = useStore();
-    const repos = store.state.repos;
+    const repos = computed(() => store.state.repos);
+    const activeModule = computed(() => store.state.activeModule);
     const currentRepoIndex = ref(0);
     const repoContainer = ref<HTMLElement | null>(null);
 
@@ -68,11 +74,14 @@ export default defineComponent({
       repoContainer.value.scrollTo({ left: index * containerWidth, behavior: 'smooth' });
     };
 
-    const selectModule = (repo: Repo, module: any) => {
-      console.log('Selected module:', module, 'from repo:', repo);
-      store.dispatch('setActiveModule', module); // Set the active module in Vuex
+    const selectModule = (repo: Repo, module: Module) => {
+      store.dispatch('setActiveModule', module);
       // Emit an event to the parent component if needed
       // this.$emit('module-selected', { repo, module });
+    };
+
+    const isModuleSelected = (module: Module) => {
+      return activeModule.value && activeModule.value.id === module.id;
     };
 
     return {
@@ -81,7 +90,8 @@ export default defineComponent({
       repoContainer,
       handleScroll,
       scrollToRepo,
-      selectModule
+      selectModule,
+      isModuleSelected
     };
   }
 });
@@ -230,6 +240,11 @@ export default defineComponent({
   
   .dot.active {
     background-color: #fff;
+  }
+
+  .module-card.selected {
+    background-color: #2a2a2a;
+    border: 2px solid #007AFF;
   }
   </style>
   

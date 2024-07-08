@@ -23,11 +23,12 @@ export interface State {
 }
 
 const localStorageKey = 'repos';
+const activeModuleKey = 'activeModule';
 
 const store = createStore<State>({
     state: {
         repos: JSON.parse(localStorage.getItem(localStorageKey) || '[]'),
-        activeModule: null
+        activeModule: JSON.parse(localStorage.getItem(activeModuleKey) || 'null')
     },
     mutations: {
         addRepo(state, repo: Repo) {
@@ -40,7 +41,15 @@ const store = createStore<State>({
         },
         setActiveModule(state, module: Module | null) {
             state.activeModule = module;
-        }
+            localStorage.setItem(activeModuleKey, JSON.stringify(module));
+        },
+        updateRepo(state, updatedRepo: Repo) {
+            const index = state.repos.findIndex(repo => repo.id === updatedRepo.id);
+            if (index !== -1) {
+                state.repos[index] = updatedRepo;
+                localStorage.setItem(localStorageKey, JSON.stringify(state.repos));
+            }
+        },
     },
     actions: {
         addRepo({ commit }, repo: Repo) {
@@ -51,7 +60,10 @@ const store = createStore<State>({
         },
         setActiveModule({ commit }, module: Module | null) {
             commit('setActiveModule', module);
-        }
+        },
+        updateRepo({ commit }, repo: Repo) {
+            commit('updateRepo', repo);
+        },
     },
     getters: {
         repos: state => state.repos,

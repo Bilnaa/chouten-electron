@@ -8,13 +8,13 @@
       <input type="text" placeholder="Search for repo..." v-model="searchQuery">
     </div>
     <div class="repo-list">
-      <div v-for="repo in filteredRepos" :key="repo.id" class="repo-item">
+      <div v-for="repo in filteredRepos" :key="repo.id" class="repo-item" @click="openModulesModal(repo)">
         <img :src="repo.icon" alt="Repo icon" class="repo-icon">
         <div class="repo-info">
           <h3>{{ repo.name }}</h3>
           <p>{{ repo.team }} · {{ repo.url }}</p>
         </div>
-        <button class="remove-button" @click="confirmRemoveRepo(repo)">×</button>
+        <button class="remove-button" @click.stop="confirmRemoveRepo(repo)">×</button>
       </div>
     </div>
 
@@ -79,13 +79,36 @@
         </div>
       </div>
     </div>
+    <!-- Modules Modal -->
+    <div v-if="showModulesModal" class="modal-overlay">
+    <div class="modal modules-modal">
+      <div class="modal-header">
+        <button class="modal-close" @click="closeModulesModal">Close</button>
+        <h2>{{ selectedRepo?.name }} Modules</h2>
+        <div class="placeholder"></div>
+      </div>
+      <div class="modal-content">
+        <div v-for="module in selectedRepo?.modules" :key="module.id" class="module-item">
+          <img :src="module.image" alt="Module icon" class="module-icon">
+          <div class="module-info">
+            <h3>{{ module.name }}</h3>
+            <p>{{ module.author }} · v{{ module.version }}</p>
+          </div>
+          <div class="module-actions">
+            <button class="modal-update-button" @click="updateModule(module)">Update</button>
+            <button class="modal-remove-button" @click="removeModule(module)">Remove</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+</div>
 </template>
 
 <script lang="ts">
 import { defineComponent, ref, computed } from 'vue';
 import { useStore } from 'vuex';
-import { Repo } from '../store/index';
+import { Repo, Module } from '../store/index';
 
 export default defineComponent({
   setup() {
@@ -93,8 +116,10 @@ export default defineComponent({
     const searchQuery = ref('');
     const showAddRepoModal = ref(false);
     const showRemoveModal = ref(false);
+    const showModulesModal = ref(false);
     const newRepo = ref({ url: '' });
     const repoToRemove = ref<Repo | null>(null);
+    const selectedRepo = ref<Repo | null>(null);
     const urlError = ref('');
     const installError = ref('');
     const isLoading = ref(false);
@@ -190,6 +215,30 @@ export default defineComponent({
       return store.getters.filteredRepos(searchQuery.value);
     });
 
+    const openModulesModal = (repo: Repo) => {
+      selectedRepo.value = repo;
+      showModulesModal.value = true;
+    };
+
+    const closeModulesModal = () => {
+      showModulesModal.value = false;
+      selectedRepo.value = null;
+    };
+
+    const updateModule = (module: Module) => {
+      // Implement module update logic here
+      console.log('Updating module:', module);
+    };
+
+    const removeModule = (module: Module) => {
+      if (selectedRepo.value) {
+        const updatedModules = selectedRepo.value.modules.filter(m => m.id !== module.id);
+        const updatedRepo = { ...selectedRepo.value, modules: updatedModules };
+        store.dispatch('updateRepo', updatedRepo);
+        selectedRepo.value = updatedRepo;
+      }
+    };
+
     return {
       searchQuery,
       showAddRepoModal,
@@ -206,7 +255,13 @@ export default defineComponent({
       installRepo,
       confirmRemoveRepo,
       handleRemoveRepo,
-      closeRemoveModal
+      closeRemoveModal,
+      showModulesModal,
+      selectedRepo,
+      openModulesModal,
+      closeModulesModal,
+      updateModule,
+      removeModule,
     };
   }
 });
@@ -419,6 +474,96 @@ export default defineComponent({
 
 .cancel-button {
   background-color: #333;
+}
+
+.modules-modal {
+  width: 500px;
+  max-width: 90%;
+  background-color: #1e1e1e;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: #252525;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: white;
+}
+
+.modal-close {
+  font-size: 16px;
+  color: #007AFF;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.modal-content {
+  padding: 20px;
+}
+
+.module-item {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background-color: #252525;
+  margin-bottom: 10px;
+  border-radius: 5px;
+}
+
+.module-icon {
+  width: 48px;
+  height: 48px;
+  margin-right: 15px;
+  border-radius: 5px;
+  background-color: #ccc;
+}
+
+.module-info {
+  flex-grow: 1;
+}
+
+.module-info h3 {
+  margin: 0;
+  font-size: 16px;
+  color: white;
+}
+
+.module-info p {
+  margin: 5px 0 0;
+  font-size: 14px;
+  color: #aaa;
+}
+
+.module-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.modal-update-button, .modal-remove-button {
+  padding: 5px 15px;
+  font-size: 14px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.modal-update-button {
+  background-color: #007AFF;
+  color: white;
+}
+
+.modal-remove-button {
+  background-color: #ff4444;
+  color: white;
 }
 
 </style>
