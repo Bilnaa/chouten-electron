@@ -1,14 +1,20 @@
-<script setup>
-import { ref, onMounted, computed } from 'vue';
+<script setup lang="ts">
+import { ref, computed, provide, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import Sidebar from './components/Sidebar.vue';
 import ModuleSelector from './components/ModuleSelector.vue';
 import Modal from './components/Modal.vue';
+import { Repo, Module } from './store/index';
+import { useToast } from './composables/useToast';
+import ToastManager from './components/ToastManager.vue';
+
+
+
 
 const store = useStore();
 const showModal = ref(false);
 
-const selectedRepo = computed(() => store.state.activeModule ? store.state.repos.find(repo => repo.modules.includes(store.state.activeModule)) : null);
+const selectedRepo = computed(() => store.state.activeModule ? store.state.repos.find((repo: { modules: string | any[]; }) => repo.modules.includes(store.state.activeModule)) : null);
 const selectedModule = computed(() => store.state.activeModule);
 
 function openModal() {
@@ -19,31 +25,21 @@ function closeModal() {
   showModal.value = false;
 }
 
-function handleModuleSelection({ repo, module }) {
+function handleModuleSelection({ repo }: { repo: Repo }, module: Module) {
   store.dispatch('setActiveModule', module);
   closeModal();
   console.log('Selected repo:', repo);
   console.log('Selected module:', module);
-
-  // Store the selected module and repo in localStorage
-  localStorage.setItem('selectedRepo', JSON.stringify(repo));
-  localStorage.setItem('selectedModule', JSON.stringify(module));
 }
 
-onMounted(() => {
-  // Retrieve the selected module and repo from localStorage
-  const storedRepo = localStorage.getItem('selectedRepo');
-  const storedModule = localStorage.getItem('selectedModule');
+const toastManager = ref<InstanceType<typeof ToastManager> | null>(null);
 
-  if (storedRepo) {
-    const repo = JSON.parse(storedRepo);
-    // Update Vuex store if needed
-  }
-  if (storedModule) {
-    const module = JSON.parse(storedModule);
-    store.dispatch('setActiveModule', module);
-  }
-});
+function showToast(title: string, message: string, icon = 'System', duration = 3000) {
+  toastManager.value?.addToast(title, message, icon, duration);
+}
+
+provide('showToast', showToast);
+
 </script>
 
 <template>
@@ -59,7 +55,9 @@ onMounted(() => {
   <Modal :show="showModal" @close="closeModal">
     <ModuleSelector @module-selected="handleModuleSelection" />
   </Modal>
+  <ToastManager ref="toastManager" />
 </template>
+
 
 <style>
 body {
