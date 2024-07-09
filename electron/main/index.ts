@@ -122,7 +122,7 @@ async function createWindow() {
     },
     roundedCorners: true,
     backgroundMaterial: 'acrylic',
-    // vibrancy: 'under-window',
+    vibrancy: 'under-window',
     visualEffectState: 'followWindow',
     transparent : process.platform === 'win32' || process.platform === 'darwin',
     webPreferences: {
