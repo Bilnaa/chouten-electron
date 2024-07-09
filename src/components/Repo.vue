@@ -12,7 +12,7 @@
         <img :src="repo.icon" alt="Repo icon" class="repo-icon">
         <div class="repo-info">
           <h3>{{ repo.name }}</h3>
-          <p>{{ repo.team }} · {{ repo.url }}</p>
+          <p>{{ repo.author }} · {{ repo.url }}</p>
         </div>
         <button class="remove-button" @click.stop="confirmRemoveRepo(repo)">×</button>
       </div>
@@ -46,6 +46,30 @@
             <h3>No repo url.</h3>
             <p>Please enter a repo url in the textbox at the top to install a repo and its modules.</p>
           </div>
+          <div v-if="newRepo.url && !installError" class="repo-preview">
+    <div class="repo-header">
+      <img :src="newRepo.url + '/icon.png'" alt="Repo icon" class="repo-icon">
+      <div class="repo-title">
+        <h3>{{ newRepo.name }}</h3>
+        <h2>{{ newRepo.name }}</h2>
+      </div>
+    </div>
+    <p class="install-alongside">Install alongside</p>
+    <div v-for="module in newRepo.modules" :key="module.id" class="module-item">
+      <div class="module-info">
+        <img :src="module.iconPath" alt="Module icon" class="module-icon">
+        <div class="module-details">
+          <h4>{{ module.name }}</h4>
+          <p>{{ module.author }} · v{{ module.version }}</p>
+        </div>
+      </div>
+      <button 
+        class="select-button" 
+        :class="{ 'selected': module.selected }"
+        @click="toggleModuleSelection(module)"
+      ></button>
+    </div>
+  </div>
           <div v-if="installError" class="error-message">
             <p>{{ installError }}</p>
           </div>
@@ -79,45 +103,48 @@
         </div>
       </div>
     </div>
+
     <!-- Modules Modal -->
     <div v-if="showModulesModal" class="modal-overlay">
-    <div class="modal modules-modal">
-      <div class="modal-header">
-        <button class="modal-close" @click="closeModulesModal">Close</button>
-        <h2>{{ selectedRepo?.name }} Modules</h2>
-        <div class="placeholder"></div>
-      </div>
-      <div class="modal-content">
-        <div v-for="module in selectedRepo?.modules" :key="module.id" class="module-item">
-          <img :src="module.image" alt="Module icon" class="module-icon">
-          <div class="module-info">
-            <h3>{{ module.name }}</h3>
-            <p>{{ module.author }} · v{{ module.version }}</p>
-          </div>
-          <div class="module-actions">
-            <button class="modal-update-button" @click="updateModule(module)">Update</button>
-            <button class="modal-remove-button" @click="removeModule(module)">Remove</button>
+      <div class="modal modules-modal">
+        <div class="modal-header">
+          <button class="modal-close" @click="closeModulesModal">Close</button>
+          <h2>{{ selectedRepo?.name }} Modules</h2>
+          <div class="placeholder"></div>
+        </div>
+        <div class="modal-content">
+          <div v-for="module in selectedRepo?.modules" :key="module.id" class="module-item">
+            <img :src="module.iconPath" alt="Module icon" class="module-icon">
+            <div class="module-info">
+              <h3>{{ module.name }}</h3>
+              <p>{{ module.author }} · v{{ module.version }}</p>
+            </div>
+            <div class="module-actions">
+              <button class="modal-update-button" @click="updateModule(module)">Update</button>
+              <button class="modal-remove-button" @click="removeModule(module)">Remove</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 </template>
 
 <script lang="ts">
 import { defineComponent, ref, computed } from 'vue';
 import { useStore } from 'vuex';
 import { Repo, Module } from '../store/index';
+import axios from 'axios';
 
 export default defineComponent({
   setup() {
     const store = useStore();
+    const module = ref<Module | null>(null);
     const searchQuery = ref('');
     const showAddRepoModal = ref(false);
     const showRemoveModal = ref(false);
     const showModulesModal = ref(false);
-    const newRepo = ref({ url: '' });
+    const newRepo = ref({ url: '', name: '', description: '', modules: [] });
     const repoToRemove = ref<Repo | null>(null);
     const selectedRepo = ref<Repo | null>(null);
     const urlError = ref('');
@@ -126,27 +153,54 @@ export default defineComponent({
 
     const openAddRepoModal = () => {
       showAddRepoModal.value = true;
-      newRepo.value = { url: '' };
+      newRepo.value = { url: '', name: '', description: '', modules: [] };
       urlError.value = '';
       installError.value = '';
     };
 
     const closeAddRepoModal = () => {
       showAddRepoModal.value = false;
-      newRepo.value = { url: '' };
+      newRepo.value = { url: '', name: '', description: '', modules: [] };
       urlError.value = '';
       installError.value = '';
       isLoading.value = false;
     };
 
     const validateUrl = () => {
-      const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+      const urlPattern = /^(https?:\/\/)?([^\s\/$.?#].[^\s]*)$/;
       if (!newRepo.value.url) {
         urlError.value = '';
       } else if (!urlPattern.test(newRepo.value.url)) {
         urlError.value = 'Please enter a valid URL';
       } else {
         urlError.value = '';
+        fetchRepoData();
+      }
+    };
+
+    const fetchRepoData = async () => {
+      if (urlError.value || !newRepo.value.url) return;
+
+      isLoading.value = true;
+      installError.value = '';
+
+      try {
+        const repoUrl = new URL(newRepo.value.url);
+        const metadataUrl = `${repoUrl.origin}/${repoUrl.pathname.split('/').pop()}/metadata.json`;
+        
+        const response = await axios.get(metadataUrl);
+        const repoData = response.data;
+
+        newRepo.value = {
+          url: repoData.url,
+          name: repoData.title,
+          description: repoData.description,
+          modules: repoData.modules.map((module: any) => ({ ...module, selected: false }))
+        };
+      } catch (error) {
+        installError.value = 'Failed to fetch repo data. Please try again.';
+      } finally {
+        isLoading.value = false;
       }
     };
 
@@ -157,40 +211,41 @@ export default defineComponent({
       installError.value = '';
 
       try {
-        // Simulating an API call to install the repo
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        const repoUrl = new URL(newRepo.value.url);
+        const repoId = repoUrl.pathname.split('/').pop() || '';
 
-        // If the installation is successful, add the repo to the list
+        const selectedModules = newRepo.value.modules.filter(module => module.selected);
+        
+        for (const module of selectedModules) {
+          await installModule(repoId, module);
+        }
+
         const newRepoObject: Repo = {
-          id: store.state.repos.length + 1,
-          name: `Repo ${store.state.repos.length + 1}`,
-          team: 'Chouten-Team',
+          id: repoId,
+          name: newRepo.value.name,
+          author: 'Chouten-Team', // Assuming all repos are by Chouten-Team
           url: newRepo.value.url,
-          icon: 'https://cdn-icons-png.flaticon.com/512/25/25231.png',
-          modules: [
-            {
-              id: 1,
-              name: 'Module 1',
-              author: 'Author 1',
-              version: '1.0.0',
-              image: 'https://via.placeholder.com/150'
-            },
-            {
-              id: 2,
-              name: 'Module 2',
-              author: 'Author 2',
-              version: '1.0.0',
-              image: 'https://via.placeholder.com/150'
-            }
-          ]
+          icon: `${repoUrl.origin}/${repoId}/icon.png`,
+          modules: selectedModules
         };
-        store.dispatch('addRepo', newRepoObject);
 
+        store.dispatch('addRepo', newRepoObject);
         closeAddRepoModal();
       } catch (error) {
         installError.value = 'Failed to install the repo. Please try again.';
       } finally {
         isLoading.value = false;
+      }
+    };
+
+    const installModule = async (repoId: string, module: Module) => {
+      const moduleUrl = `${newRepo.value.url}${module.filePath}`;
+      const response = await axios.get(moduleUrl, { responseType: 'arraybuffer' });
+      const moduleData = response.data;
+
+      const result = await window.ipcRenderer.invoke('install-module', repoId, moduleData, module.name);
+      if (!result.success) {
+        throw new Error(result.error);
       }
     };
 
@@ -202,6 +257,7 @@ export default defineComponent({
     const handleRemoveRepo = () => {
       if (repoToRemove.value) {
         store.dispatch('removeRepo', repoToRemove.value.id);
+        window.ipcRenderer.invoke('remove-repo', repoToRemove.value.id);
       }
       closeRemoveModal();
     };
@@ -225,19 +281,25 @@ export default defineComponent({
       selectedRepo.value = null;
     };
 
-    const updateModule = (module: Module) => {
-      // Implement module update logic here
-      console.log('Updating module:', module);
-    };
+    const updateModule = async (module: Module) => {
+  // Implement module update logic here
+  console.log('Updating module:', module);
+  // After updating the module data
+  store.dispatch('updateModule', { repoId: selectedRepo.value?.id, updatedModule: module });
+};
 
-    const removeModule = (module: Module) => {
-      if (selectedRepo.value) {
-        const updatedModules = selectedRepo.value.modules.filter(m => m.id !== module.id);
-        const updatedRepo = { ...selectedRepo.value, modules: updatedModules };
-        store.dispatch('updateRepo', updatedRepo);
-        selectedRepo.value = updatedRepo;
-      }
-    };
+const removeModule = async (module: Module) => {
+  if (selectedRepo.value) {
+    await window.ipcRenderer.invoke('remove-module', selectedRepo.value.id, module.name);
+    store.dispatch('removeModule', { repoId: selectedRepo.value.id, moduleId: module.id });
+    // Update the selectedRepo.value to reflect the change
+    selectedRepo.value = store.getters.repos.find((repo: Repo) => repo.id === selectedRepo.value?.id);
+  }
+};
+const toggleModuleSelection = (module: Module) => {
+  module.selected = !module.selected;
+};
+
 
     return {
       searchQuery,
@@ -262,6 +324,7 @@ export default defineComponent({
       closeModulesModal,
       updateModule,
       removeModule,
+      toggleModuleSelection
     };
   }
 });
@@ -411,7 +474,7 @@ export default defineComponent({
 }
 
 .modal-content input {
-  width: 100%;
+  width: 96%;
   padding: 10px;
   margin-bottom: 10px;
   background-color: #252525;
@@ -564,6 +627,99 @@ export default defineComponent({
 .modal-remove-button {
   background-color: #ff4444;
   color: white;
+}
+
+.repo-preview {
+  background-color: #1e1e1e;
+  border-radius: 10px;
+  padding: 15px;
+  margin-top: 15px;
+}
+
+.repo-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.repo-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  margin-right: 15px;
+}
+
+.repo-title h3 {
+  color: #888;
+  margin: 0;
+  font-size: 14px;
+}
+
+.repo-title h2 {
+  margin: 5px 0 0;
+  font-size: 18px;
+}
+
+.install-alongside {
+  color: #888;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.module-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #252525;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.module-info {
+  display: flex;
+  align-items: center;
+}
+
+.module-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  margin-right: 10px;
+}
+
+.module-details h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.module-details p {
+  margin: 5px 0 0;
+  font-size: 12px;
+  color: #888;
+}
+
+.select-button {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #555;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.select-button.selected {
+  background-color: #7289DA;
+  border-color: #7289DA;
+}
+
+.select-button.selected::after {
+  content: '✓';
+  color: white;
+  font-size: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 </style>

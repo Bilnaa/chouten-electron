@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import os from 'node:os'
 import fs from 'fs'
+import AdmZip from 'adm-zip'
+
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -26,7 +28,7 @@ if (!app.requestSingleInstanceLock()) {
   process.exit(0)
 }
 
-let win = null
+let win: BrowserWindow | null = null
 const preload = path.join(__dirname, '../preload/index.mjs')
 const indexHtml = path.join(RENDERER_DIST, 'index.html')
 
@@ -37,6 +39,7 @@ function createDirectories() {
     appDataPath = process.env.APPDATA;
   } else if (process.platform === 'darwin') {
     appDataPath = path.join(process.env.HOME, 'Library', 'Application Support');
+    console.log('appDataPath:', appDataPath);
   } else {
     appDataPath = path.join(process.env.HOME, '.config');
   }
@@ -49,8 +52,60 @@ function createDirectories() {
   } else {
     console.log('repo directory already exists');
   }
-
 }
+
+// Register IPC handlers
+ipcMain.handle('install-module', async (event, repoId: string, moduleData: ArrayBuffer, moduleName: string) => {
+  try {
+    const repoPath = path.join(app.getPath('userData'), 'Repos', repoId);
+    const modulePath = path.join(repoPath, moduleName);
+
+    if (!fs.existsSync(modulePath)) {
+      fs.mkdirSync(modulePath, { recursive: true });
+    }
+
+    const moduleFilePath = path.join(modulePath, `${moduleName}.module`);
+    
+    // Convert ArrayBuffer to Buffer
+    const buffer = Buffer.from(moduleData);
+
+    fs.writeFileSync(moduleFilePath, buffer);
+
+    // Unzip the module file
+    const zip = new AdmZip(moduleFilePath);
+    zip.extractAllTo(modulePath, true);
+
+    // Delete the original .module file
+    fs.unlinkSync(moduleFilePath);
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error installing module:', error);
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+ipcMain.handle('remove-repo', async (event, repoId: string) => {
+  try {
+    const repoPath = path.join(app.getPath('userData'), 'Repos', repoId);
+    fs.rmdirSync(repoPath, { recursive: true });
+    return { success: true };
+  } catch (error) {
+    console.error('Error removing repo:', error);
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+ipcMain.handle('remove-module', async (event, repoId: string, moduleName: string) => {
+  try {
+    const modulePath = path.join(app.getPath('userData'), 'Repos', repoId, moduleName);
+    fs.rmdirSync(modulePath, { recursive: true });
+    return { success: true };
+  } catch (error) {
+    console.error('Error removing module:', error);
+    return { success: false, error: (error as Error).message };
+  }
+});
 
 async function createWindow() {
   win = new BrowserWindow({
@@ -67,7 +122,7 @@ async function createWindow() {
     },
     roundedCorners: true,
     backgroundMaterial: 'acrylic',
-    vibrancy: 'under-window',
+    // vibrancy: 'under-window',
     visualEffectState: 'followWindow',
     transparent : process.platform === 'win32' || process.platform === 'darwin',
     webPreferences: {

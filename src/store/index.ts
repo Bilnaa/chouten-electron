@@ -1,17 +1,20 @@
 import { createStore } from 'vuex';
 
 export interface Module {
-    id: number;
     name: string;
     author: string;
     version: string;
-    image: string;
+    iconPath: string;
+    filePath: string;
+    subtypes: string[];
+    id: string;
+    selected?: boolean;
 }
 
 export interface Repo {
-    id: number;
+    id: string;
     name: string;
-    team: string;
+    author: string;
     url: string;
     icon: string;
     modules: Module[];
@@ -35,7 +38,7 @@ const store = createStore<State>({
             state.repos.push(repo);
             localStorage.setItem(localStorageKey, JSON.stringify(state.repos));
         },
-        removeRepo(state, repoId: number) {
+        removeRepo(state, repoId: string) {
             state.repos = state.repos.filter(repo => repo.id !== repoId);
             localStorage.setItem(localStorageKey, JSON.stringify(state.repos));
         },
@@ -50,12 +53,29 @@ const store = createStore<State>({
                 localStorage.setItem(localStorageKey, JSON.stringify(state.repos));
             }
         },
+        updateModule(state, { repoId, updatedModule }: { repoId: string, updatedModule: Module }) {
+            const repo = state.repos.find(r => r.id === repoId);
+            if (repo) {
+                const moduleIndex = repo.modules.findIndex(m => m.id === updatedModule.id);
+                if (moduleIndex !== -1) {
+                    repo.modules[moduleIndex] = updatedModule;
+                    localStorage.setItem(localStorageKey, JSON.stringify(state.repos));
+                }
+            }
+        },
+        removeModule(state, { repoId, moduleId }: { repoId: string, moduleId: string }) {
+            const repo = state.repos.find(r => r.id === repoId);
+            if (repo) {
+                repo.modules = repo.modules.filter(m => m.id !== moduleId);
+                localStorage.setItem(localStorageKey, JSON.stringify(state.repos));
+            }
+        }
     },
     actions: {
         addRepo({ commit }, repo: Repo) {
             commit('addRepo', repo);
         },
-        removeRepo({ commit }, repoId: number) {
+        removeRepo({ commit }, repoId: string) {
             commit('removeRepo', repoId);
         },
         setActiveModule({ commit }, module: Module | null) {
@@ -64,12 +84,19 @@ const store = createStore<State>({
         updateRepo({ commit }, repo: Repo) {
             commit('updateRepo', repo);
         },
+        updateModule({ commit }, payload: { repoId: string, updatedModule: Module }) {
+            commit('updateModule', payload);
+        },
+        removeModule({ commit }, payload: { repoId: string, moduleId: string }) {
+            commit('removeModule', payload);
+        }
     },
     getters: {
         repos: state => state.repos,
         filteredRepos: state => (searchQuery: string) => {
             return state.repos.filter(repo =>
-                repo.name.toLowerCase().includes(searchQuery.toLowerCase())
+                repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                repo.author.toLowerCase().includes(searchQuery.toLowerCase())
             );
         },
         activeModule: state => state.activeModule
