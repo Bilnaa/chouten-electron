@@ -2,9 +2,14 @@
   <div class="module-selector">
     <div class="repo-container" ref="repoContainer" @scroll="handleScroll">
       <div class="repo-slider" :style="{ width: `${repos.length * 100}%` }">
-        <div v-for="(repo, index) in repos" :key="repo.id" class="repo-section" :style="{ width: `${100 / repos.length}%` }">
+        <div
+          v-for="(repo, repoIndex) in repos"
+          :key="repo.id"
+          class="repo-section"
+          :style="{ width: `${100 / repos.length}%` }"
+        >
           <div class="repo-card">
-            <img :src="repo.icon" alt="Repo Image" class="repo-image">
+            <img :src="repo.icon" alt="Repo Image" class="repo-image" />
             <div class="repo-info">
               <h3>{{ repo.name }}</h3>
               <p>{{ repo.team }}</p>
@@ -13,14 +18,14 @@
           </div>
           <h4>Modules</h4>
           <div class="modules-grid">
-            <div 
-              v-for="module in repo.modules" 
-              :key="module.id" 
-              class="module-card" 
+            <div
+              v-for="(module, moduleIndex) in repo.modules"
+              :key="module.id"
+              class="module-card"
               :class="{ 'selected': isModuleSelected(module) }"
               @click="selectModule(repo, module)"
             >
-              <img :src="module.image" alt="Module Image" class="module-image">
+              <img :src="module.imagePath || placeholder" alt="Module Image" class="module-image" />
               <div class="module-info">
                 <h4>{{ module.name }}</h4>
                 <div class="module-meta">
@@ -46,8 +51,9 @@
   </div>
 </template>
 
+
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue';
+import { defineComponent, ref, computed, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import { Repo, Module } from '../store/index';
 
@@ -58,6 +64,12 @@ export default defineComponent({
     const activeModule = computed(() => store.state.activeModule);
     const currentRepoIndex = ref(0);
     const repoContainer = ref<HTMLElement | null>(null);
+    const placeholder = 'path/to/placeholder/image.png';
+
+    const getModulePath = async (repoId: string, moduleName: string) => {
+      const path = await window.ipcRenderer.invoke('get-module-path', repoId, moduleName)
+      return path || null;
+    };
 
     const handleScroll = () => {
       if (!repoContainer.value) return;
@@ -76,13 +88,28 @@ export default defineComponent({
 
     const selectModule = (repo: Repo, module: Module) => {
       store.dispatch('setActiveModule', module);
-      // Emit an event to the parent component if needed
-      // this.$emit('module-selected', { repo, module });
     };
 
     const isModuleSelected = (module: Module) => {
       return activeModule.value && activeModule.value.id === module.id;
     };
+
+    const fetchModuleImages = async () => {
+      for (const repo of repos.value) {
+        for (const module of repo.modules) {
+          console.log(repo.id, module.name)
+          console.log(await getModulePath(repo.id, module.name))
+          let modulePath = await getModulePath(repo.id, module.name);
+          let iconPath = modulePath.modulePath + '/icon.jpg'
+          module.imagePath = 'file://' + iconPath;
+          module.path = modulePath.modulePath;
+        }
+      }
+    };
+
+    onMounted(async () => {
+      await fetchModuleImages();
+    });
 
     return {
       repos,
@@ -91,11 +118,14 @@ export default defineComponent({
       handleScroll,
       scrollToRepo,
       selectModule,
-      isModuleSelected
+      isModuleSelected,
+      getModulePath,
+      placeholder,
     };
-  }
+  },
 });
 </script>
+
 
 <style scoped>
   .module-selector {
