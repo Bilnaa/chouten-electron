@@ -69,6 +69,11 @@ onMounted(() => {
       showToast('Welcome back!', 'Welcome back to Chouten.', 'System', 3000);
     }, 3000);
   }
+
+  window.addEventListener('error', (event) => {
+      showToast('Error', event.message, 'Error', 5000);
+  });
+
 }); 
 
 </script>
@@ -79,10 +84,6 @@ onMounted(() => {
     <div class="title-bar"></div>
     <Sidebar @open-module-selector="openModal" />
     <div class="container">
-      <div v-if="selectedModule">
-        <p>Selected Repo: {{ selectedRepo?.name }}</p>
-        <p>Selected Module: {{ selectedModule.name }}</p>
-      </div>
       <router-view />
     </div>
     <Modal :show="showModal" @close="closeModal">
