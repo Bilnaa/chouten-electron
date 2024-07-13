@@ -36,21 +36,13 @@ function handleModuleSelection({ repo }: { repo: Repo }, module: Module) {
 const toastManager = ref<InstanceType<typeof ToastManager> | null>(null);
 const showSplash = ref(true);
 const fadeOutSplash = ref(false);
+const initToast = ref(false);
 
 function showToast(title: string, message: string, icon = 'System', duration = 3000) {
   toastManager.value?.addToast(title, message, icon, duration);
 }
 
 provide('showToast', showToast);
-
-onMounted(() => {
-
-  let firstLoad = localStorage.getItem('firstLoad');
-  if (!firstLoad) {
-    localStorage.setItem('firstLoad', 'true');
-    showToast('Welcome to Chouten!', 'Import your first module to get started.', 'Info', 5000);
-  }
-});
 
 onBeforeMount(() => {
   setTimeout(() => {
@@ -60,6 +52,25 @@ onBeforeMount(() => {
     }, 300);
   }, 2500); 
 });
+
+onMounted(() => {
+  if (store.state.repos.length) {
+    showToast('Welcome back!', 'Welcome back to Chouten.', 'System', 3000);
+  } else {
+    initToast.value = true;
+  }
+  if (initToast.value) {
+    setTimeout(() => {
+      showToast('Welcome!', 'Welcome to Chouten. To get started, import a module or repository.', 'System', 5000);
+      initToast.value = false;
+    }, 3000);
+  } else {
+    setTimeout(() => {
+      showToast('Welcome back!', 'Welcome back to Chouten.', 'System', 3000);
+    }, 3000);
+  }
+}); 
+
 </script>
 
 <template>
