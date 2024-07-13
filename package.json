@@ -27,7 +27,7 @@
   "devDependencies": {
     "@types/discord-rpc": "^4.0.8",
     "@vitejs/plugin-vue": "^5.0.4",
-    "electron": "^31.1.0",
+    "electron": "^31.2.0",
     "electron-builder": "^24.13.3",
     "typescript": "^5.4.2",
     "vite": "^5.1.5",
