@@ -17,3 +17,7 @@ div {
 .main-nav a > span[class$="-icon"]{
   transform: translateY(-0.125em);
 }
+
+.repos-container span.material-design-icon > .material-design-icon__svg {
+  position: static;
+}
