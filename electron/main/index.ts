@@ -5,6 +5,7 @@ import path from 'node:path'
 import os from 'node:os'
 import fs from 'fs'
 import AdmZip from 'adm-zip'
+import axios from 'axios'
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -39,13 +40,12 @@ function createDirectories() {
     appDataPath = process.env.APPDATA;
   } else if (process.platform === 'darwin') {
     appDataPath = path.join(process.env.HOME, 'Library', 'Application Support');
-    console.log('appDataPath:', appDataPath);
   } else {
     appDataPath = path.join(process.env.HOME, '.config');
   }
 
   const choutenPath = path.join(appDataPath, 'Chouten');
-  const repoPath = path.join(choutenPath, 'repo');
+  const repoPath = path.join(choutenPath, 'Repos');
   if (!fs.existsSync(repoPath)) {
     fs.mkdirSync(repoPath, { recursive: true });
     console.log('Created repo directory');
@@ -53,30 +53,74 @@ function createDirectories() {
     console.log('repo directory already exists');
   }
 }
+const ModulesPath = path.join(app.getPath('userData'), 'Modules');
+if (!fs.existsSync(ModulesPath)) {
+  fs.mkdirSync(ModulesPath, { recursive: true });
+} else {
+  console.log('Modules folder directory already exists');
+}
 
-// Register IPC handlers
-ipcMain.handle('install-module', async (event, repoId: string, moduleData: ArrayBuffer, moduleName: string) => {
+ipcMain.handle('install-repo', async (event, repoData: string) => {
+  try {
+    const repo = JSON.parse(repoData);
+    const repoPath = path.join(app.getPath('userData'), 'Repos', repo.id);
+    
+    if (!fs.existsSync(repoPath)) {
+      fs.mkdirSync(repoPath, { recursive: true });
+    }
+    
+    const metadataPath = path.join(repoPath, 'metadata.json');
+    fs.writeFileSync(metadataPath, JSON.stringify(repo));
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error installing repo:', error);
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+ipcMain.handle('install-module', async (event, repoId: string, moduleId: string) => {
   try {
     const repoPath = path.join(app.getPath('userData'), 'Repos', repoId);
-    const modulePath = path.join(repoPath, moduleName);
-
-    if (!fs.existsSync(modulePath)) {
-      fs.mkdirSync(modulePath, { recursive: true });
+    const metadataPath = path.join(repoPath, 'metadata.json');
+    
+    if (!fs.existsSync(metadataPath)) {
+      throw new Error('Repo metadata not found');
     }
 
-    const moduleFilePath = path.join(modulePath, `${moduleName}.module`);
-    
-    // Convert ArrayBuffer to Buffer
-    const buffer = Buffer.from(moduleData);
+    const repoData = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+    const module = repoData.modules.find((m: any) => m.id === moduleId);
 
-    fs.writeFileSync(moduleFilePath, buffer);
+    if (!module) {
+      throw new Error('Module not found in repo metadata');
+    }
 
-    // Unzip the module file
-    const zip = new AdmZip(moduleFilePath);
-    zip.extractAllTo(modulePath, true);
+    const moduleData = await axios.get(module.filePath, { responseType: 'arraybuffer' });
+    const tempModulePath = path.join(repoPath, `${module.name}.module`);
 
-    // Delete the original .module file
-    fs.unlinkSync(moduleFilePath);
+    fs.writeFileSync(tempModulePath, Buffer.from(moduleData.data));
+
+    const zip = new AdmZip(tempModulePath);
+    const extractPath = path.join(repoPath, module.name);
+
+    // Create the extraction directory if it doesn't exist
+    if (!fs.existsSync(extractPath)) {
+      fs.mkdirSync(extractPath, { recursive: true });
+    }
+
+    // Extract files, ignoring __MACOSX and flattening the structure
+    zip.getEntries().forEach((entry) => {
+      if (!entry.entryName.startsWith('__MACOSX')) {
+        const fileName = path.basename(entry.entryName);
+        const content = zip.readFile(entry);
+        if (content) {
+          fs.writeFileSync(path.join(extractPath, fileName), content);
+        }
+      }
+    });
+
+    // Delete the temporary .module file
+    fs.unlinkSync(tempModulePath);
 
     return { success: true };
   } catch (error) {
@@ -88,7 +132,7 @@ ipcMain.handle('install-module', async (event, repoId: string, moduleData: Array
 ipcMain.handle('remove-repo', async (event, repoId: string) => {
   try {
     const repoPath = path.join(app.getPath('userData'), 'Repos', repoId);
-    fs.rmdirSync(repoPath, { recursive: true });
+    fs.rmSync(repoPath, { recursive: true });
     return { success: true };
   } catch (error) {
     console.error('Error removing repo:', error);
@@ -99,13 +143,133 @@ ipcMain.handle('remove-repo', async (event, repoId: string) => {
 ipcMain.handle('remove-module', async (event, repoId: string, moduleName: string) => {
   try {
     const modulePath = path.join(app.getPath('userData'), 'Repos', repoId, moduleName);
-    fs.rmdirSync(modulePath, { recursive: true });
+    fs.rmSync(modulePath, { recursive: true });
     return { success: true };
   } catch (error) {
     console.error('Error removing module:', error);
     return { success: false, error: (error as Error).message };
   }
 });
+
+ipcMain.handle('update-module', async (event, repoId: string, moduleId: string) => {
+  try {
+    const repoPath = path.join(app.getPath('userData'), 'Repos', repoId);
+    const metadataPath = path.join(repoPath, 'metadata.json');
+    
+    if (!fs.existsSync(metadataPath)) {
+      throw new Error('Repo metadata not found');
+    }
+
+    const repoData = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+    const module = repoData.modules.find((m: any) => m.id === moduleId);
+
+    if (!module) {
+      throw new Error('Module not found in repo metadata');
+    }
+
+    // Download and update the module
+    const moduleData = await axios.get(module.filePath, { responseType: 'arraybuffer' });
+    const tempModulePath = path.join(repoPath, `${module.name}.module`);
+
+    fs.writeFileSync(tempModulePath, Buffer.from(moduleData.data));
+
+    const zip = new AdmZip(tempModulePath);
+    const extractPath = path.join(repoPath, module.name);
+
+    // Remove existing module files
+    if (fs.existsSync(extractPath)) {
+      fs.rmSync(extractPath, { recursive: true, force: true });
+    }
+
+    // Create the extraction directory
+    fs.mkdirSync(extractPath, { recursive: true });
+
+    // Extract files, ignoring __MACOSX and flattening the structure
+    zip.getEntries().forEach((entry) => {
+      if (!entry.entryName.startsWith('__MACOSX')) {
+        const fileName = path.basename(entry.entryName);
+        const content = zip.readFile(entry);
+        if (content) {
+          fs.writeFileSync(path.join(extractPath, fileName), content);
+        }
+      }
+    });
+
+    // Delete the temporary .module file
+    fs.unlinkSync(tempModulePath);
+
+    // Update the metadata
+    repoData.modules = repoData.modules.map((m: any) => m.id === moduleId ? module : m);
+    fs.writeFileSync(metadataPath, JSON.stringify(repoData, null, 2));
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating module:', error);
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+ipcMain.handle('get-repo-list', async (event) => {
+  try { 
+    const repoPath = path.join(app.getPath('userData'), 'Repos');
+    const repos = fs.readdirSync(repoPath)
+      .filter((file) => file.startsWith('.') === false)
+      .map((repoId) => {
+        const repo = { id: repoId, modules: [] };
+        const repoDir = path.join(repoPath, repoId);
+        const moduleDirs = fs.readdirSync(repoDir)
+          .filter((file) => file.startsWith('.') === false);
+        moduleDirs.forEach((moduleDir) => {
+          const modulePath = path.join(repoDir, moduleDir);
+          const metadataPath = path.join(modulePath, 'metadata.json');
+          if (fs.existsSync(metadataPath)) {
+            const metadata = fs.readFileSync(metadataPath, 'utf8');
+            const module = JSON.parse(metadata);
+            repo.modules.push(module);
+          }
+        });
+        return repo;
+      });
+    return { success: true, repos };
+  } catch (error) {
+    console.error('Error getting repo list:', error);
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+ipcMain.handle('get-repo-path', async (event, repoId: string) => {
+  const repoPath = path.join(app.getPath('userData'), 'Repos', repoId);
+  if (fs.existsSync(repoPath)) {
+    return { success: true, repoPath };
+  }
+  return new Error('Repo not found');
+});
+
+ipcMain.handle('get-module-path', async (event, repoId: string, moduleName: string) => {
+  const modulePath = path.join(app.getPath('userData'), 'Repos', repoId, moduleName);
+  if (fs.existsSync(modulePath)) {
+    return { success: true, modulePath };
+  }
+  const modulePath2 = path.join(app.getPath('userData'), 'Modules', moduleName);
+  if (fs.existsSync(modulePath2)) {
+    return { success: true, modulePath: modulePath2 };
+  }
+  return new Error('Module not found');
+});
+
+ipcMain.handle('get-icon', async (event, repoId: string,moduleName : string) => {
+  // get the icon.png from the module folder encode it to base64 and return it
+  const modulePath = path.join(app.getPath('userData'), 'Repos', repoId, moduleName);
+  if (fs.existsSync(modulePath)) {
+    const iconPath = path.join(modulePath, 'icon.png');
+    if(fs.existsSync(iconPath)){
+      const icon = fs.readFileSync(iconPath);
+      return { success: true, icon: icon.toString('base64') };
+    }
+  }
+  return { success: false, error: 'Icon not found' };
+});
+
 
 async function createWindow() {
   win = new BrowserWindow({
@@ -130,11 +294,16 @@ async function createWindow() {
       allowRunningInsecureContent: false,
       enableBlinkFeatures: 'FontAccess, AudioVideoTracks',
       backgroundThrottling: false,
+      webSecurity: false,
     },
   })
 
+
+
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
+    // disable vibrancy macos
+    win.setVibrancy(null);
     // win.webContents.openDevTools()
   } else {
     win.loadFile(indexHtml)
@@ -143,6 +312,8 @@ async function createWindow() {
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', new Date().toLocaleString())
   })
+
+  
 
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('https:')) shell.openExternal(url)

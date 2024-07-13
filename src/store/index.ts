@@ -1,4 +1,5 @@
 import { createStore } from 'vuex';
+import axios from 'axios';
 
 export interface Module {
     name: string;
@@ -35,6 +36,8 @@ const store = createStore<State>({
     },
     mutations: {
         addRepo(state, repo: Repo) {
+            const exists = state.repos.some(r => r.id === repo.id);
+            if (exists) return;
             state.repos.push(repo);
             localStorage.setItem(localStorageKey, JSON.stringify(state.repos));
         },
@@ -89,7 +92,52 @@ const store = createStore<State>({
         },
         removeModule({ commit }, payload: { repoId: string, moduleId: string }) {
             commit('removeModule', payload);
-        }
+        },
+        async refreshRepos({ commit, state }) {
+            for (const repo of state.repos) {
+              try {
+                const response = await axios.get(`${repo.url}/metadata.json`);
+                const remoteRepo = response.data;
+                
+                let repoUpdated = false;
+                
+                for (const remoteModule of remoteRepo.modules) {
+                  const localModule = repo.modules.find(m => m.id === remoteModule.id);
+                  if (localModule && remoteModule.version !== localModule.version) {
+                    commit('updateModule', { repoId: repo.id, updatedModule: remoteModule });
+                    repoUpdated = true;
+                  }
+                }
+      
+                if (repoUpdated) {
+                  commit('updateRepo', { ...repo, modules: remoteRepo.modules });
+                }
+              } catch (error) {
+                console.error(`Failed to refresh repo ${repo.name}:`, error);
+              }
+            }
+          },
+      
+          async refreshModule({ commit, state }, { repoId, moduleId }) {
+            const repo = state.repos.find(r => r.id === repoId);
+            if (!repo) return;
+      
+            try {
+              const response = await axios.get(`${repo.url}/metadata.json`);
+              const remoteRepo = response.data;
+            const remoteModule: Module | undefined = remoteRepo.modules.find((m: Module) => m.id === moduleId);
+      
+              if (remoteModule) {
+                const localModule = repo.modules.find(m => m.id === moduleId);
+                if (localModule && remoteModule.version !== localModule.version) {
+                  await window.ipcRenderer.invoke('update-module', repoId, remoteModule);
+                  commit('updateModule', { repoId, updatedModule: remoteModule });
+                }
+              }
+            } catch (error) {
+              console.error(`Failed to refresh module ${moduleId}:`, error);
+            }
+          },
     },
     getters: {
         repos: state => state.repos,
