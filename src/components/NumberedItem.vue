@@ -1,26 +1,29 @@
 <template>
-   <router-link class="numbered-item" to="/infos">
-    <div class="content">
-      <div class="image-placeholder">
-        <img src="/mountains.svg" alt="Placeholder" class="placeholder-image">
-      </div>
-      <div class="text-content">
-        <span class="title">Title</span>
-        <span class="count">{{ number }}/12</span> 
-      </div>
-    </div>
-    <span class="number">{{ number }}</span>
-  </router-link>
-  
+  <router-link class="numbered-item" :to="'/infos?url='+url">
+   <div class="content">
+     <div class="image-placeholder">
+       <img :src="poster" :alt="titles.primary" class="placeholder-image">
+     </div>
+     <div class="text-content">
+       <span class="title">{{ titles.primary }}</span>
+       <span class="count">{{ current }}/{{ total }}</span> 
+     </div>
+   </div>
+   <span class="number">{{ indicator }}</span>
+ </router-link>
 </template>
 
 <script>
 export default {
-  name: 'NumberedItem',
-  props: {
-    title: String,
-    number: Number
-  }
+ name: 'NumberedItem',
+ props: {
+   url: String,
+   poster: String,
+   titles: Object,
+   indicator: String,
+   current: Number,
+   total: Number
+ }
 }
 </script>
 

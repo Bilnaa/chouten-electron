@@ -30,7 +30,8 @@ export default createRouter({
       },
       {
         path:'/infos',
-        component: Info
+        component: Info,
+        props : route => ({ url: route.query.url })
       }
      ]
 });

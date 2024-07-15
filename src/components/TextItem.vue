@@ -1,12 +1,12 @@
 <template>
-  <router-link class="text-item" to="/infos">
+  <router-link class="text-item" :to="'/infos?url='+url">
     <div class="image-placeholder">
-      <img src="/mountains.svg" alt="Placeholder" class="placeholder-image">
-      <span class="text-label">Text</span>
+      <img :src="poster" :alt="titles.primary" class="placeholder-image">
+      <span class="text-label">{{ indicator }}</span>
     </div>
     <div class="text-content">
-      <h3 class="title">{{ title }}</h3>
-      <span class="index">{{ index }}/12</span>
+      <h3 class="title">{{ titles.primary }}</h3>
+      <span class="index">{{ current ? current + '/' : '??/'}}{{ total ? total : '??' }}</span>
     </div>
   </router-link>
 </template>
@@ -15,8 +15,12 @@
 export default {
   name: 'TextItem',
   props: {
-    title: String,
-    index: Number
+    url: String,
+    poster: String,
+    titles: Object,
+    indicator: String,
+    current: Number,
+    total: Number
   }
 }
 </script>

@@ -11,8 +11,9 @@ import SplashScreen from './components/SplashScreen.vue'
 const store = useStore();
 const showModal = ref(false);
 
-const selectedRepo = computed(() => store.state.activeModule ? store.state.repos.find((repo: { modules: string | any[]; }) => repo.modules.includes(store.state.activeModule)) : null);
 const selectedModule = computed(() => store.state.activeModule);
+const selectedRepo = computed(() => store.state.repos.find((repo: { modules: any[]; }) => repo.modules.includes(selectedModule.value)) || null);
+
 
 function openModal() {
   if (!store.state.repos.length || !store.state.repos.some((repo: { modules: string | any[]; }) => repo.modules.length)) {
@@ -73,7 +74,8 @@ onMounted(() => {
   window.addEventListener('error', (event) => {
       showToast('Error', event.message, 'Error', 5000);
   });
-
+  console.log(selectedRepo.value);
+  console.log(selectedModule.value);
 }); 
 
 </script>

@@ -2,75 +2,73 @@
   <div class="media-details" v-if="!loading">
     <div class="header">
       <div class="background-image-container">
-        <img src="/mountains.svg" alt="Background" class="background-image" />
+        <img :src="media.banner ? media.banner : media.poster" alt="Background" class="background-image" />
       </div>
       <div class="content">
-        <img src="/mountains.svg" alt="Cover" class="cover-image" />
+        <img :src="media.poster" alt="Cover" class="cover-image" />
         <div class="title-area">
-          <p class="secondary-title">{{ media.secondaryTitle }}</p>
-          <h1 class="primary-title">{{ media.primaryTitle }}</h1>
-          <p class="status">{{ media.status }}</p>
+          <p class="secondary-title">{{ media.titles.secondary}}</p>
+          <h1 class="primary-title">{{ media.titles.primary }}</h1>
+          <p class="status">{{ getStatus(media.status) }}</p>
         </div>
-        <div class="rating">{{ media.rating }}</div>
+        <div class="rating">{{ media.rating.toFixed(1) }}</div>
       </div>
     </div>
 
     <div class="main-content">
       <div class="metadata">
-
         <div class="tags">
-          <span class="tag" v-for="tag in media.tags" :key="tag">{{ tag }}</span>
+          <span class="tag">{{ media.yearReleased }}</span>
+          <span class="tag">{{ getMediaType(media.mediaType) }}</span>
         </div>
 
         <div class="synopsis">
           <h2>Synopsis</h2>
-          <p>{{ media.synopsis }}</p>
+          <p>{{ media.description }}</p>
         </div>
       </div>
 
       <div class="episodes-section">
-
-        <div class="season-selector" @click="toggleSeasonModal">
-          <h2>Season {{ selectedSeason }}</h2>
-          <p>{{ media.episodes[selectedSeason][selectedCategory].length }} Episodes</p>
+        <div class="season-selector" @click="toggleSeasonModal" v-if="hasMultipleSeasons">
+          <h2>{{ currentSeason.name }}</h2>
+          <p>{{ currentEpisodes.length }} Episodes</p>
           <div class="chevron-right">›</div>
         </div>
 
         <div class="category-selector">
           <button 
             v-for="category in categories" 
-            :key="category"
-            @click="selectCategory(category)"
-            :class="{ active: selectedCategory === category }"
+            :key="category.title"
+            @click="selectCategory(category.title)"
+            :class="{ active: selectedCategory === category.title }"
           >
-            {{ category }}
+            {{ category.title }}
           </button>
         </div>
 
-        <div class="episodes-list">
-          <transition-group name="episode-fade" tag="div">
-            <div v-for="episode in filteredEpisodes" :key="episode.id" class="episode">
+        <transition-group class="episodes-list" name="episode-fade" tag="div">
+            <div v-for="episode in currentEpisodes" :key="episode.number" class="episode">
               <div class="episode-info">
                 <h3>{{ episode.title }}</h3>
-                <p>{{ episode.releaseInfo }}</p>
+                <p>Episode {{ episode.number }}</p>
               </div>
-              <span class="episode-duration">{{ episode.duration }}</span>
+              <span class="episode-duration">{{ episode.duration || 'N/A' }}</span>
             </div>
-          </transition-group>
-        </div>
+        </transition-group>
+
       </div>
     </div>
+
     <transition name="modal-fade">
-      <div v-if="showSeasonModal" class="season-modal" @click.self="toggleSeasonModal">
+      <div v-if="showSeasonModal && hasMultipleSeasons" class="season-modal" @click.self="toggleSeasonModal">
         <transition name="modal-scale">
           <div v-if="showSeasonModal" class="season-modal-content">
             <transition-group name="list-complete" tag="div">
-              <h2 v-for="season in seasons" 
-                  :key="season" 
+              <h2 v-for="season in media.seasons" 
+                  :key="season.name" 
                   @click="selectSeason(season)"
-                  :class="{ 'selected': season === selectedSeason }"
-                  class="list-complete-item">
-                Season {{ season }}
+                  :class="{ 'selected': season.selected }">
+                {{ season.name }}
               </h2>
             </transition-group>
             <button class="close-button" @click="toggleSeasonModal">×</button>
@@ -84,94 +82,89 @@
   </div>
 </template>
 
+
 <script>
 export default {
   data() {
     return {
       loading: true,
       selectedCategory: 'Sub',
-      categories: ['Sub', 'Softsub'],
-      selectedSeason: 1,
+      categories: [],
+      media: {},
       showSeasonModal: false,
-      seasons: [1, 2],
-      media: {
-        secondaryTitle: 'Placeholder Series',
-        primaryTitle: '[Placeholder] 2nd Season',
-        status: 'Ongoing',
-        rating: '10.0',
-        format: 'TV Series',
-        episodeCount: 13,
-        tags: ['Summer 2024', 'Releasing', 'Manga','Drama', 'Mystery', 'Psychological', 'Supernatural'],
-        synopsis: 'This is a placeholder synopsis for the second season of a fictional show. It involves characters navigating complex situations in a unique setting.',
-        season: 2,
-        episodes: {
-          1: {
-            Sub: [
-              { id: 1, title: 'Tokyo Blade', releaseInfo: 'Episode 1', duration: '24m' },
-            ],
-            Softsub: [
-              { id: 1, title: 'Tokyo Blade (Softsub)', releaseInfo: 'Episode 1', duration: '24m' },
-            ]
-          },
-          2: {
-            Sub: [
-              { id: 1, title: 'Season 2 Episode 1', releaseInfo: 'Episode 1', duration: '24m' },
-            ],
-            Softsub: [
-              { id: 1, title: 'Season 2 Episode 1 (Softsub)', releaseInfo: 'Episode 1', duration: '24m' },
-            ]
-          }
-        }
-      }
+      hasMultipleSeasons: false,
+      currentSeasonUrl: '',
+    }
+  },
+  props: {
+    url: {
+      type: String,
+      required: true
     }
   },
   computed: {
-    filteredEpisodes() {
-      return this.media.episodes[this.selectedSeason][this.selectedCategory]
+    currentSeason() {
+      return this.media.seasons.find(season => season.selected) || {};
+    },
+    currentEpisodes() {
+      const category = this.categories.find(cat => cat.title === this.selectedCategory);
+      return category ? category.pagination[0].items : [];
     }
   },
   methods: {
     selectCategory(category) {
-      this.selectedCategory = category
+      this.selectedCategory = category;
     },
     toggleSeasonModal() {
       this.showSeasonModal = !this.showSeasonModal;
-      
-      if (this.showSeasonModal) {
-        this.$nextTick(() => {
-          const items = this.$el.querySelectorAll('.list-complete-item');
-          items.forEach((item, index) => {
-            item.style.transitionDelay = `${index * 0.05}s`;
-          });
-        });
+    },
+    async selectSeason(season) {
+      this.media.seasons.forEach(s => s.selected = (s.name === season.name));
+      this.currentSeasonUrl = season.url;
+      await this.fetchEpisodes(season.url);
+      this.toggleSeasonModal();
+    },
+    getStatus(status) {
+      const statuses = ['Unknown', 'Ongoing', 'Completed', 'Cancelled', 'Upcoming'];
+      return statuses[status] || 'Unknown';
+    },
+    getMediaType(type) {
+      const types = ['TV', 'Movie', 'OVA', 'ONA', 'Special', 'Music'];
+      return types[type] || 'Unknown';
+    },
+    async fetchData(url) {
+      try {
+        const infoRes = await window.ipcRenderer.invoke('execute-script', `const instance = new source.default(); return instance.info("${url}")`);
+        this.media = infoRes.result;
+        console.log('Media:', this.media);
+        if(this.media.seasons.length > 0) {
+          this.currentSeasonUrl = this.media.seasons.find(season => season.selected).url;
+          this.hasMultipleSeasons = this.media.seasons.length > 1;
+        } else {
+          this.currentSeasonUrl = url;
+        }
+        await this.fetchEpisodes(this.currentSeasonUrl);
+        this.loading = false;
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        this.loading = false;
       }
     },
-    selectSeason(season) {
-      this.selectedSeason = season;
-      
-      const selectedItem = this.$el.querySelector('.selected');
-      selectedItem.style.transform = 'scale(1.1)';
-      setTimeout(() => {
-        selectedItem.style.transform = 'scale(1)';
-      }, 300);
-      
-      setTimeout(() => {
-        this.toggleSeasonModal();
-      }, 500);
-
-      this.$nextTick(() => {
-        const episodes = this.$el.querySelectorAll('.episode');
-        episodes.forEach((episode, index) => {
-          episode.style.transitionDelay = `${index * 0.05}s`;
-        });
-      });
+    async fetchEpisodes(url) {
+      console.log('Fetching episodes for:', url);
+      try {
+        this.loading = true;
+        const mediaRes = await window.ipcRenderer.invoke('execute-script', `const instance = new source.default(); return instance.media("${url}")`);
+        this.categories = mediaRes.result;
+      } catch (error) {
+        console.error('Error fetching episodes:', error);
+      } finally {
+        this.loading = false;
+      }
     }
   },
-  mounted() {
-    setTimeout(() => {
-      this.loading = false
-    }, 2000)
-    console.log(JSON.stringify(this.media.episodes))
+  beforeMount() {
+    this.fetchData(this.url);
   }
 }
 </script>
@@ -184,8 +177,10 @@ export default {
 
 .header {
   position: relative;
-  height: 300px;
+  height: 400px;
   overflow: hidden;
+  border-radius: 12px;
+  margin-bottom: 20px;
 }
 
 .background-image-container {
@@ -200,7 +195,7 @@ export default {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: brightness(50%) blur(5px);
+  filter: brightness(30%) blur(5px);
 }
 
 .content {
@@ -216,7 +211,7 @@ export default {
   width: 150px;
   height: 225px;
   object-fit: cover;
-  border-radius: 10px;
+  border-radius: 8px;
   margin-right: 20px;
 }
 
@@ -225,39 +220,43 @@ export default {
 }
 
 .secondary-title {
-  font-size: 18px;
+  font-size: 16px;
   margin-bottom: 5px;
+  color: #a0a0a0;
 }
 
 .primary-title {
-  font-size: 36px;
-  margin-bottom: 5px;
+  font-size: 32px;
+  margin-bottom: 10px;
 }
 
 .status {
-  color: #a855f7;
-  font-size: 16px;
+  display: inline-block;
+  color: #6458ED;
+  background-color: #4a4a4a;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 14px;
 }
 
 .rating {
   font-size: 24px;
-  margin-top: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.rating::after {
+  content: '❤️';
+  margin-left: 5px;
 }
 
 .main-content {
   display: flex;
-  padding: 20px;
+  gap: 40px;
 }
 
 .metadata {
   flex: 1;
-  margin-right: 40px;
-}
-
-.info {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 20px;
 }
 
 .tags {
@@ -267,76 +266,97 @@ export default {
   margin-bottom: 20px;
 }
 
-.tag, .genre {
-  background-color: #333;
+.tag {
+  background-color: #2a2a2a;
   padding: 5px 10px;
-  border-radius: 15px;
-  font-size: 12px;
+  border-radius: 4px;
+  font-size: 14px;
 }
 
 .synopsis h2 {
-  font-size: 18px;
+  font-size: 20px;
   margin-bottom: 10px;
+}
+
+.synopsis p {
+  line-height: 1.6;
 }
 
 .episodes-section {
   flex: 1;
 }
 
-.category-selector {
-display: flex;
-margin-bottom: 20px;
+.season-selector {
+  background-color: #2a2a2a;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.category-selector button {
-background-color: transparent;
-border: none;
-color: #ffffff;
-padding: 10px 20px;
-cursor: pointer;
-font-size: 16px;
-}
-
-.category-selector button.active {
-background-color: #333;
-border-radius: 20px;
-}
-
-.episodes-list {
-display: flex;
-flex-direction: column;
-gap: 10px;
-max-height: 400px;
-overflow-y: auto;
-}
-
-.episode {
-display: flex;
-justify-content: space-between;
-align-items: center;
-background-color: #1e1e1e;
-padding: 15px;
-border-radius: 5px;
-}
-
-.episode-info h3 {
-margin: 0;
-font-size: 16px;
-}
-
-.episode-info p {
-margin: 5px 0 0;
-font-size: 14px;
-color: #999;
-}
-
-.episode-duration {
-font-size: 14px;
-color: #999;
+.season-selector h2 {
+  margin: 0;
+  font-size: 18px;
 }
 
 .chevron-right {
   font-size: 24px;
+}
+
+.category-selector {
+  display: flex;
+  margin-bottom: 20px;
+  background-color: #2a2a2a;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.category-selector button {
+  background-color: transparent;
+  border: none;
+  color: #ffffff;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  flex-grow: 1;
+}
+
+.category-selector button.active {
+  background-color: #3a3a3a;
+}
+
+.episodes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.episode {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #2a2a2a;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.episode-info h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.episode-info p {
+  margin: 5px 0 0;
+  font-size: 14px;
+  color: #a0a0a0;
+}
+
+.episode-duration {
+  font-size: 14px;
+  color: #a0a0a0;
 }
 
 .loading {
@@ -355,197 +375,73 @@ color: #999;
   animation: spin 1s linear infinite;
 }
 
-.season-modal-content h2.selected {
-color: #a855f7;
-}
-
-.close-button {
-position: absolute;
-bottom: -60px;
-left: 50%;
-transform: translateX(-50%);
-background-color: #ffffff;
-color: #000000;
-border: none;
-border-radius: 50%;
-width: 40px;
-height: 40px;
-font-size: 24px;
-cursor: pointer;
-display: flex;
-justify-content: center;
-align-items: center;
-}
-
-.season-selector {
-display: flex;
-justify-content: space-between;
-align-items: center;
-background-color: rgba(255, 255, 255, 0.05);
-padding: 15px 20px;
-border-radius: 10px;
-margin-bottom: 10px;
-cursor: pointer;
-transition: background-color 0.3s ease, transform 0.3s ease;
-}
-
-.season-selector:hover {
-background-color: rgba(255, 255, 255, 0.1);
-}
-
-.season-selector:active {
-transform: scale(0.98);
-}
-
-.season-selector.active {
-background-color: rgba(255, 255, 255, 0.15);
-}
-
-.season-info {
-display: flex;
-flex-direction: column;
-}
-
-.season-info h2 {
-margin: 0;
-font-size: 18px;
-}
-
-.season-info p {
-margin: 5px 0 0;
-font-size: 14px;
-color: #999;
-}
-
-.chevron-right {
-font-size: 24px;
-transition: transform 0.3s ease;
-}
-
-.chevron-right.rotate {
-transform: rotate(90deg);
-}
-
-@keyframes pulse {
-0% { transform: scale(1); }
-50% { transform: scale(1.05); }
-100% { transform: scale(1); }
-}
-
-.season-selector:active .chevron-right {
-animation: pulse 0.3s ease;
-}
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
 .season-modal {
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-background-color: rgba(0, 0, 0, 0.8);
-display: flex;
-justify-content: center;
-align-items: center;
-z-index: 1000;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
 .season-modal-content {
-background-color: #1e1e1e;
-padding: 20px;
-border-radius: 10px;
-width: 80%;
-max-width: 300px;
-position: relative;
+  background-color: #2a2a2a;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
 }
 
 .season-modal-content h2 {
-color: #ffffff;
-padding: 10px 0;
-cursor: pointer;
-transition: color 0.3s ease, transform 0.3s ease;
+  color: #ffffff;
+  padding: 10px 0;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .season-modal-content h2:hover {
-transform: translateX(10px);
+  background-color: #3a3a3a;
 }
 
 .season-modal-content h2.selected {
-color: #a855f7;
+  color: #6458ED;
 }
 
 .close-button {
-position: absolute;
-bottom: -60px;
-left: 50%;
-transform: translateX(-50%);
-background-color: #ffffff;
-color: #000000;
-border: none;
-border-radius: 50%;
-width: 40px;
-height: 40px;
-font-size: 24px;
-cursor: pointer;
-display: flex;
-justify-content: center;
-align-items: center;
-transition: background-color 0.3s ease, transform 0.3s ease;
+  background-color: #3a3a3a;
+  color: #ffffff;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
 }
 
-.close-button:hover {
-background-color: #e0e0e0;
-transform: translateX(-50%) scale(1.1);
+/* Transitions */
+.modal-fade-enter-active, .modal-fade-leave-active,
+.modal-scale-enter-active, .modal-scale-leave-active,
+.list-complete-item, .episode-fade-enter-active, .episode-fade-leave-active {
+  transition: all 0.3s ease;
 }
 
-.modal-fade-enter-active, .modal-fade-leave-active {
-transition: opacity 0.3s ease, transform 0.3s ease;
-}
-.modal-fade-enter-from, .modal-fade-leave-to {
-opacity: 0;
-transform: translateY(-20px);
-}
-
-.modal-scale-enter-active, .modal-scale-leave-active {
-transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-}
-.modal-scale-enter-from, .modal-scale-leave-to {
-opacity: 0;
-transform: scale(0.9) translateY(20px);
-}
-
-.list-complete-item {
-transition: all 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
-display: block;
-}
-
-.list-complete-enter-from,
-.list-complete-leave-to {
-opacity: 0;
-transform: translateY(30px) rotateX(90deg);
-}
-
-.list-complete-leave-active {
-position: absolute;
-}
-
-
-.episode-fade-enter-active,
-.episode-fade-leave-active {
-  transition: all 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
-}
-
-.episode-fade-enter-from,
-.episode-fade-leave-to {
+.modal-fade-enter-from, .modal-fade-leave-to,
+.modal-scale-enter-from, .modal-scale-leave-to,
+.list-complete-enter-from, .list-complete-leave-to,
+.episode-fade-enter-from, .episode-fade-leave-to {
   opacity: 0;
-  transform: translateX(-30px);
-}
-
-
-.episode {
-transition: all 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+  transform: scale(0.9);
 }
 </style>

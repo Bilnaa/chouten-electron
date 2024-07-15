@@ -6,11 +6,24 @@ import NumberedItem from './NumberedItem.vue';
 <template>
   <section class="section">
     <h2>{{ title }}</h2>
-    <div :class="componentClass">
-      <component v-for="i in 10" :key="i" :is="component" :title="'Title ' + i" :number="i"  />
+    <div class="scroll-container">
+      <div class="card-container">
+        <component 
+          v-for="(item, index) in data" 
+          :key="index" 
+          :is="component" 
+          v-bind="item"
+          class="card fade-in"
+          v-observe-visibility="{
+  callback: visibilityChanged,
+  once: true,
+}"
+        />
+      </div>
     </div>
   </section>
 </template>
+
 
 <script>
 export default {
@@ -21,7 +34,8 @@ export default {
   },
   props: {
     title: String,
-    use: String
+    use: String,
+    data: Array
   },
   data() {
     return {
@@ -39,36 +53,63 @@ export default {
       this.componentClass = this.use === 'NumberedItem' ? 'section-content-numbered' : ''
     }
   },
+  methods: {
+    visibilityChanged(isVisible, entry) {
+      if (isVisible) {
+        entry.target.classList.add('fade-in');
+      }
+    }
+  },
   mounted() {
     this.component = this.components[this.use],
-      this.componentClass = this.use === 'NumberedItem' ? 'section-content-numbered' : 'section-content'
+    this.componentClass = this.use === 'NumberedItem' ? 'section-content-numbered' : 'section-content'
   }
 }
 </script>
 
 <style scoped>
-.section-content {
-  display: flex;
+.section {
+  margin-bottom: 20px;
+}
+
+.scroll-container {
   overflow-x: auto;
-  padding: 20px 0;
-  gap: 10px;
+  overflow-y: hidden;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
 }
 
-.section-content-numbered {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Adjust min width as needed */
-  grid-template-rows: repeat(2, auto); /* Two rows, adjust height as needed */
-  gap: 10px;
-  padding: 10px;
-  /* Optional: add align-items to align grid items vertically if needed */
-  align-items: start; /* Align items to the start of the grid area */
-}
-.section-content-numbered {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive columns */
-  grid-auto-rows: minmax(100px, auto); /* Ensure rows grow based on content */
-  gap: 10px; /* Space between cards */
-  padding: 10px;
+.scroll-container::-webkit-scrollbar { /* WebKit */
+  width: 0;
+  height: 0;
 }
 
+.card-container {
+  display: inline-flex;
+  padding: 10px 0;
+}
+
+.card {
+  flex: 0 0 auto;
+  width: 200px; /* Adjust based on your card size */
+  margin-right: 10px;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.card.fade-in {
+  opacity: 0;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out forwards;
+}
+ 
 </style>

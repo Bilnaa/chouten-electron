@@ -66,8 +66,8 @@ export default defineComponent({
     const repoContainer = ref<HTMLElement | null>(null);
     const placeholder = 'path/to/placeholder/image.png';
 
-    const getModulePath = async (repoId: string, moduleName: string) => {
-      const path = await window.ipcRenderer.invoke('get-module-path', repoId, moduleName)
+    const getModulePath = async (moduleName: string) => {
+      const path = await window.ipcRenderer.invoke('get-module-path',moduleName)
       return path || null;
     };
 
@@ -97,11 +97,17 @@ export default defineComponent({
     const fetchModuleImages = async () => {
       for (const repo of repos.value) {
         for (const module of repo.modules) {
-          console.log(repo.id, module.name)
-          console.log(await getModulePath(repo.id, module.name))
-          let modulePath = await getModulePath(repo.id, module.name);
+          console.log(await getModulePath(module.id))
+          let modulePath = await getModulePath(module.id);
           let iconPath = modulePath.modulePath + '/icon.jpg'
           module.imagePath = 'file://' + iconPath;
+          let image;
+          try {
+            image = await fetch(module.imagePath, { method: 'get' });
+          } catch (error) {
+            iconPath = modulePath.modulePath + '/icon.png'
+            module.imagePath = 'file://' + iconPath;
+          }
           module.path = modulePath.modulePath;
         }
       }

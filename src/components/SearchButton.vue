@@ -16,7 +16,10 @@
             />
           </div>
           <div class="search-results">
-            <!-- Add your search results here -->
+              <router-link v-for="result in results" :key="result" :to="'/infos?url='+result.url">
+                {{ result.titles.primary }}
+                <br>
+              </router-link>
           </div>
         </div>
       </div>
@@ -25,16 +28,19 @@
   
   <script>
   import MagnifyIcon from 'vue-material-design-icons/Magnify.vue'
+  import TextItem from './TextItem.vue';
   
   export default {
     name: 'SearchButton',
     components: {
-      MagnifyIcon
+      MagnifyIcon,
+      TextItem
     },
     data() {
       return {
         isSearchOpen: false,
         searchQuery: '',
+        results : {}
       }
     },
     methods: {
@@ -46,9 +52,13 @@
         this.isSearchOpen = false;
         this.searchQuery = '';
       },
-      onSearch() {
-        // Implement search logic here
+      async onSearch() {
         console.log('Searching for:', this.searchQuery);
+        const search = await window.ipcRenderer.invoke('execute-script', `const instance = new source.default(); return instance.search("${this.searchQuery}")`);
+        if(search.success){
+          this.results = search.result.results;
+        }
+        console.log('Results:', this.results);
       }
     }
   }

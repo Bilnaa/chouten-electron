@@ -1,7 +1,7 @@
 <template>
   <div class="card-grid-container">
     <div class="card-grid">
-      <Card v-for="i in 3" :key="i" />
+      <Card v-for="card in cards" :key="card.url" v-bind="card" />
     </div>
   </div>
 </template>
@@ -13,6 +13,12 @@ export default {
   name: 'CardGrid',
   components: {
     Card
+  },
+  props: {
+    cards: {
+      type: Array,
+      required: true
+    }
   }
 }
 </script>
@@ -30,5 +36,4 @@ export default {
   padding: 0 20px;
   min-width: min-content;
 }
-
 </style>

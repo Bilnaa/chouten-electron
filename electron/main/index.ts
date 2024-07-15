@@ -30,8 +30,11 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 let win: BrowserWindow | null = null
+let hiddenWin: BrowserWindow | null = null
 const preload = path.join(__dirname, '../preload/index.mjs')
 const indexHtml = path.join(RENDERER_DIST, 'index.html')
+const hiddenHtml = path.join(RENDERER_DIST, 'hidden.html')
+
 
 function createDirectories() {
   let appDataPath;
@@ -101,14 +104,13 @@ ipcMain.handle('install-module', async (event, repoId: string, moduleId: string)
     fs.writeFileSync(tempModulePath, Buffer.from(moduleData.data));
 
     const zip = new AdmZip(tempModulePath);
-    const extractPath = path.join(repoPath, module.name);
+    const extractPath = path.join(repoPath, module.id);
 
     // Create the extraction directory if it doesn't exist
     if (!fs.existsSync(extractPath)) {
       fs.mkdirSync(extractPath, { recursive: true });
     }
 
-    // Extract files, ignoring __MACOSX and flattening the structure
     zip.getEntries().forEach((entry) => {
       if (!entry.entryName.startsWith('__MACOSX')) {
         const fileName = path.basename(entry.entryName);
@@ -245,16 +247,25 @@ ipcMain.handle('get-repo-path', async (event, repoId: string) => {
   return new Error('Repo not found');
 });
 
-ipcMain.handle('get-module-path', async (event, repoId: string, moduleName: string) => {
-  const modulePath = path.join(app.getPath('userData'), 'Repos', repoId, moduleName);
+ipcMain.handle('get-module-path', async (event, moduleId: string) => {
+  const reposPath = path.join(app.getPath('userData'), 'Repos');
+  const repos = fs.readdirSync(reposPath)
+    .filter((file) => file.startsWith('.') === false);
+  for (const repoId of repos) {
+    const repoPath = path.join(reposPath, repoId);
+    const modules = fs.readdirSync(repoPath)
+      .filter((file) => file.startsWith('.') === false);
+    for (const module of modules) {
+      if (module === moduleId) {
+        return { success: true, modulePath: path.join(repoPath, module) };
+      }
+    }
+  }
+  const modulePath = path.join(ModulesPath, moduleId);
   if (fs.existsSync(modulePath)) {
     return { success: true, modulePath };
   }
-  const modulePath2 = path.join(app.getPath('userData'), 'Modules', moduleName);
-  if (fs.existsSync(modulePath2)) {
-    return { success: true, modulePath: modulePath2 };
-  }
-  return new Error('Module not found');
+  return { success: false, error: 'Module not found' };
 });
 
 ipcMain.handle('get-icon', async (event, repoId: string,moduleName : string) => {
@@ -270,6 +281,34 @@ ipcMain.handle('get-icon', async (event, repoId: string,moduleName : string) => 
   return { success: false, error: 'Icon not found' };
 });
 
+ipcMain.handle('load-script', (event, scriptPath) => {
+  fs.readFile(scriptPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading script file:', err);
+    } else {
+      if (hiddenWin) {
+       // push the script to the hidden window into the dom
+       hiddenWin.webContents.send('load-script-in-webview', data);
+      }
+    }
+  }
+  );
+});
+
+ipcMain.handle('execute-script', async (event, scriptContent) => {
+  if (hiddenWin) {
+    try {
+      // Ensure the script returns a value
+      const result = await hiddenWin.webContents.executeJavaScript(`(async () => { ${scriptContent} })()`);
+      return { success: true, result };
+    } catch (error) {
+      console.error('Error executing script:', error);
+      return { success: false, error: error.message };
+    }
+  } else {
+    return { success: false, error: 'Hidden window not available' };
+  }
+});
 
 async function createWindow() {
   win = new BrowserWindow({
@@ -298,27 +337,65 @@ async function createWindow() {
     },
   })
 
-
-
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
-    // disable vibrancy macos
-    win.setVibrancy(null);
-    // win.webContents.openDevTools()
   } else {
     win.loadFile(indexHtml)
   }
+
+  win.webContents.on('devtools-opened', () => {
+   if (process.platform === 'darwin') {
+    win.setVibrancy(null)
+   }
+  });
+  win.webContents.on('devtools-closed', () => {
+    if (process.platform === 'darwin') {
+      win.setVibrancy('under-window')
+    }
+  });
 
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', new Date().toLocaleString())
   })
 
-  
-
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('https:')) shell.openExternal(url)
     return { action: 'deny' }
   })
+
+  win.webContents.on('did-finish-load', createHiddenWindow)
+}
+
+function createHiddenWindow() {
+  hiddenWin = new BrowserWindow({
+    show: true,  // Changed to false for production
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: true,
+      webviewTag: true,
+      webSecurity: false,
+      preload
+    }
+  });
+
+  console.log('Hidden HTML path:', hiddenHtml);
+
+  if (VITE_DEV_SERVER_URL) {
+    hiddenWin.loadURL(`${VITE_DEV_SERVER_URL}/hidden.html`)
+      .catch(err => console.error('Error loading hidden window from URL:', err));
+  } else {
+    hiddenWin.loadFile(hiddenHtml)
+      .catch(err => console.error('Error loading hidden window from file:', err));
+  }
+
+  hiddenWin.webContents.on('did-finish-load', () => {
+    console.log('Hidden window finished loading');
+  });
+
+  hiddenWin.on('closed', () => {
+    hiddenWin = null;
+    console.log('Hidden window closed');
+  });
 }
 
 app.whenReady().then(() => {
@@ -326,17 +403,13 @@ app.whenReady().then(() => {
   createWindow();
 
   app.on('activate', () => {
-    const allWindows = BrowserWindow.getAllWindows()
-    if (allWindows.length) {
-      allWindows[0].focus()
-    } else {
-      createWindow()
-    }
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
 
 app.on('window-all-closed', () => {
   win = null
+  hiddenWin = null
   if (process.platform !== 'darwin') app.quit()
 })
 
@@ -352,7 +425,7 @@ ipcMain.handle('open-win', (_, arg) => {
     webPreferences: {
       preload,
       nodeIntegration: true,
-      contextIsolation: false,
+      contextIsolation: true,
     },
     parent: win,
     modal: true,
