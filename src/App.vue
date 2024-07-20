@@ -74,6 +74,15 @@ onMounted(() => {
   window.addEventListener('error', (event) => {
       showToast('Error', event.message, 'Error', 5000);
   });
+  window.addEventListener('unhandledrejection', (event) => {
+      showToast('Error', event.reason, 'Error', 5000);
+  });
+
+  const originalError = console.error;
+  console.error = function (...args: any[]) {
+    originalError.apply(console, args);
+    showToast('Error', args.join(' '), 'Error', 5000);
+  };
   console.log(selectedRepo.value);
   console.log(selectedModule.value);
 }); 
@@ -110,6 +119,7 @@ body {
   left: 0;
   right: 0;
   height: 40px;
+  z-index: 9999; /* Ensure it's on top of everything */
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
