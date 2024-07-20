@@ -26,6 +26,7 @@ import NumberedItem from './NumberedItem.vue';
 
 
 <script>
+import { shallowRef } from 'vue';
 export default {
   components: {
     TextItem,
@@ -40,10 +41,10 @@ export default {
   data() {
     return {
       components: {
-        TextItem,
-        NumberedItem
+        TextItem: shallowRef(TextItem),
+        NumberedItem: shallowRef(NumberedItem)
       },
-      component: TextItem,
+      component: shallowRef(TextItem),
       componentClass: ''
     }
   },
