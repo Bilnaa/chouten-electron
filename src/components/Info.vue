@@ -47,7 +47,7 @@
         </div>
 
         <transition-group class="episodes-list" name="episode-fade" tag="div">
-            <router-link :to="'/streams?episodeId='+episode.url + '&episodeTitle='+`${episode.number} - ${episode.title}` + '&title=' +  media.titles.primary" v-for="episode in currentEpisodes" :key="episode.number" class="episode">
+            <router-link :to="'/streams?episodeId='+episode.url + '&episodeTitle='+`${episode.title}` + '&title=' +  media.titles.primary" v-for="episode in currentEpisodes" :key="episode.number" class="episode">
               <div class="episode-info">
                 <h3>{{ episode.title }}</h3>
                 <p>Episode {{ episode.number }}</p>
