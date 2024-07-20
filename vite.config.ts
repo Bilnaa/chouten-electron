@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { vite as vidstack } from 'vidstack/plugins';
 import electron from 'vite-plugin-electron/simple'
 import pkg from './package.json'
 import path from 'path'
@@ -14,7 +15,14 @@ export default defineConfig(({ command }) => {
 
   return {
     plugins: [
-      vue(),
+      vue({
+        template: {
+          compilerOptions: {
+            isCustomElement: (tag) => tag.startsWith('media-'),
+          },
+        },
+      }),
+      vidstack({ include: /player\// }),
       electron({
         main: {
           // Shortcut of `build.lib.entry`
