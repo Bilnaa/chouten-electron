@@ -28,8 +28,8 @@ const { thumbnails } = defineProps<{
       <TimeSlider :thumbnails="thumbnails" />
     </media-controls-group>
     <media-controls-group class="vds-controls-group controls-group">
-      <PlayButton tooltip-placement="top start" />
-      <SeekMinus10Button tooltip-placement="top"/>
+      <SeekMinus10Button tooltip-placement="top start"/>
+      <PlayButton tooltip-placement="top" />
       <Seek10Button tooltip-placement="top"/>
       <MuteButton tooltip-placement="top" />
       <VolumeSlider />
@@ -50,7 +50,7 @@ const { thumbnails } = defineProps<{
 }
 
 .controls :deep(media-time-slider media-slider-value) {
-  background-color: unset;
+    background-color: unset;
 }
 
 .controls :deep(media-volume-slider) {
@@ -61,6 +61,7 @@ const { thumbnails } = defineProps<{
 }
 
 .controls-group {
+  background-color: rgb(0 0 0.5 / 60%);
   display: flex;
   align-items: center;
   width: 100%;
@@ -69,7 +70,6 @@ const { thumbnails } = defineProps<{
   padding-inline: 8px;
 }
 .controls-group:last-child {
-  margin-top: -4px;
   padding-bottom: 8px;
 }
 </style>

@@ -4,7 +4,7 @@
       <media-player ref="mediaPlayer" viewType="video" streamType="on-demand" logLevel="warn" :crossOrigin="true"
         :playsInline="true" :title="`${episodeTitle} - ${title}`" @provider-change="onProviderChange" :type="type" canAirPlay canChromecast @controls-change="onControlsChange"
         storage="local"
-        @canPlay="onCanPlay">
+        @canPlay="onCanPlay" x-webkit-airplay="allow">
         <media-provider>
           <div class="top-bar" :style="{visibility: showInterface ? 'visible' : 'hidden'}">
             <button class="back" @click="$router.back()">
@@ -17,9 +17,14 @@
               </div>
             </button>
           </div>
-          <media-title class="title">
-            {{ `${episodeTitle} - ${title}` }}
-          </media-title>
+          <div class="bottombar" :style="{visibility: showInterface ? 'visible' : 'hidden'}">
+            <div class="episodeTitle">
+              {{ title }}
+            </div>
+            <div class="title">
+              {{ episodeTitle  }}
+            </div>
+          </div>
           <media-poster :src="posterUrl" default="" class="vds-poster" />
           <source :src="streamUrl" />
           <track v-for="subtitle in subtitles" :src="subtitle.url" :srclang="subtitle.language" :kind="'subtitles'" :label="subtitle.language" />
@@ -46,11 +51,8 @@ import type { TextTrackInit } from 'vidstack';
 import VideoLayout from './layouts/VideoLayout.vue';
 
 import { MediaPlayer, isHLSProvider, type MediaCanPlayEvent, type MediaProviderChangeEvent, type MediaControlsChangeEvent,
-  type MediaQualitiesChangeEvent,
-  type MediaQualityChangeEvent,
-  type VideoQuality 
 } from 'vidstack';
-import { ref } from 'vue';
+import { ref, VideoHTMLAttributes } from 'vue';
 
 
 const mediaPlayer = ref<MediaPlayerElement | null>(null);
@@ -111,7 +113,7 @@ export default {
       showSettings : false,
       qualities : [] as string[],
       tracks : [] as TextTrackInit[],
-      showInterface : false
+      showInterface : true
     }
   },
   components: {
@@ -157,13 +159,12 @@ export default {
       }
     },
     changeQuality(HLSQuality: string) {
-      this.currentQuality = HLSQuality;
-      this.streamUrl = this.streams.find(stream => stream.quality === HLSQuality)?.file || '';
-      let currentTime = this.currentTime;
-      this.loadStream();
       const player = this.$refs.mediaPlayer as HTMLVideoElement;
+      this.currentQuality = HLSQuality;
+      const currentTime = player.currentTime;
+      this.streamUrl = this.streams.find(stream => stream.quality === HLSQuality)?.file || '';
+      this.loadStream();
       player.currentTime = currentTime;
-
     },
     skipOpening() {
       const player = this.$refs.mediaPlayer as HTMLVideoElement;
@@ -290,8 +291,7 @@ export default {
     player.addEventListener('pause', () => this.isPlaying = false);
   },
   beforeUnmount() {
-    const player = this.$refs.mediaPlayer as HTMLVideoElement;
-    player.removeEventListener('timeupdate', this.updateTime);
+    (this.$refs.mediaPlayer as MediaPlayerElement).destroy();
   }
 }
 </script>
@@ -313,7 +313,29 @@ export default {
   display: flex;
   justify-content: space-between;
   padding: 10px;
-  z-index: 10;
+  z-index: 100;
+}
+
+.bottombar {
+    position: absolute;
+    bottom: 88px;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    color: white;
+    z-index: 100;
+    transition: opacity 0.5s;
+}
+
+.title{
+  font-size: 16px;
+  margin-bottom: 5px;
+  color: #D4D4D4;
+}
+
+.episodeTitle {
+  font-size: 24px;
+  font-weight: bold;
 }
 
 .fullscreen-container {
@@ -429,15 +451,6 @@ export default {
 
 .poster[data-visible] {
   opacity: 1;
-}
-
-.quality {
-  position: relative;
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-  padding: 10px;
 }
 
 .quality-dropdown {
