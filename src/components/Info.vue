@@ -47,13 +47,13 @@
         </div>
 
         <transition-group class="episodes-list" name="episode-fade" tag="div">
-            <div v-for="episode in currentEpisodes" :key="episode.number" class="episode">
+            <router-link :to="'/streams?episodeId='+episode.url + '&episodeTitle='+`${episode.number} - ${episode.title}` + '&title=' +  media.titles.primary" v-for="episode in currentEpisodes" :key="episode.number" class="episode">
               <div class="episode-info">
                 <h3>{{ episode.title }}</h3>
                 <p>Episode {{ episode.number }}</p>
               </div>
               <span class="episode-duration">{{ episode.duration || 'N/A' }}</span>
-            </div>
+            </router-link>
         </transition-group>
 
       </div>
@@ -88,7 +88,7 @@ export default {
   data() {
     return {
       loading: true,
-      selectedCategory: 'Sub',
+      selectedCategory: '',
       categories: [],
       media: {},
       showSeasonModal: false,
@@ -132,10 +132,26 @@ export default {
       const types = ['TV', 'Movie', 'OVA', 'ONA', 'Special', 'Music'];
       return types[type] || 'Unknown';
     },
+    async injectInstance() {
+      let activeModule = localStorage.getItem('activeModule');
+      activeModule = JSON.parse(activeModule);
+      let modulePath = await window.ipcRenderer.invoke('get-module-path', activeModule.id);
+      let code = modulePath.modulePath + '/code.js';
+      let injectJs = await window.ipcRenderer.invoke('load-script', code);
+      while (injectJs.success === false) {
+        console.log(injectJs.error);
+        if (injectJs.error === 'ENOENT: no such file or directory') {
+          break;
+        }
+        injectJs = await window.ipcRenderer.invoke('load-script', code);
+      }
+    },
     async fetchData(url) {
       try {
+        await this.injectInstance();
         const infoRes = await window.ipcRenderer.invoke('execute-script', `const instance = new source.default(); return instance.info("${url}")`);
         this.media = infoRes.result;
+        this.media.description = this.media.description.replace(/<[^>]*>?/gm, '');
         console.log('Media:', this.media);
         if(this.media.seasons.length > 0) {
           this.currentSeasonUrl = this.media.seasons.find(season => season.selected).url;
@@ -156,6 +172,7 @@ export default {
         this.loading = true;
         const mediaRes = await window.ipcRenderer.invoke('execute-script', `const instance = new source.default(); return instance.media("${url}")`);
         this.categories = mediaRes.result;
+        this.selectedCategory = this.categories[0].title;
       } catch (error) {
         console.error('Error fetching episodes:', error);
       } finally {
@@ -165,6 +182,13 @@ export default {
   },
   beforeMount() {
     this.fetchData(this.url);
+  },
+  mounted () {
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && this.showSeasonModal) {
+        this.toggleSeasonModal();
+      }
+    });
   }
 }
 </script>

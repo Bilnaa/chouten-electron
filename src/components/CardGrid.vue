@@ -1,7 +1,7 @@
 <template>
   <div class="card-grid-container">
     <div class="card-grid">
-      <Card v-for="card in cards" :key="card.url" v-bind="card" />
+      <Card v-for="card in data" :key="card.url" v-bind="card" />
     </div>
   </div>
 </template>
@@ -15,7 +15,7 @@ export default {
     Card
   },
   props: {
-    cards: {
+    data : {
       type: Array,
       required: true
     }

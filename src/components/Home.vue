@@ -4,72 +4,150 @@
       <SearchButton />
     </div>
     <div class="main-content">
-      <CardGrid :cards="carouselData" />
-      <Section v-for="section in sections" :key="section.title" v-bind="section" use="TextItem" />
+      <component
+        v-for="(item, index) in discover"
+        :key="index"
+        :is="getComponent(item.type)"
+        v-bind="item"
+        :data="item.data"
+        :use="use(item.type)"
+      />
     </div>
   </div>
 </template>
 
-<script>
-import Sidebar from './Sidebar.vue'
-import CardGrid from './CardGrid.vue'
-import Section from './Section.vue'
-import SearchButton from './SearchButton.vue'
+<script lang="ts">
+import { defineComponent } from "vue";
+import Sidebar from "./Sidebar.vue";
+import CardGrid from "./CardGrid.vue";
+import Section from "./Section.vue";
+import SearchButton from "./SearchButton.vue";
+import { useStore } from "vuex";
+import store from "../store";
 
-export default {
-  name: 'Home',
+type HexColor = `#${string}`;
+
+type Titles = {
+  primary: string;
+  secondary?: string;
+};
+type Label = {
+  text: string;
+  color: HexColor;
+};
+enum DiscoverTypes {
+  CAROUSEL,
+  LIST,
+  GRID_2x,
+  GRID_3x,
+}
+
+type DiscoverListing = {
+  url: string;
+  titles: Titles;
+  poster: string;
+  description: string;
+  label?: Label;
+  indicator: string;
+  current?: number;
+  total?: number;
+};
+
+type DiscoverListings = {
+  type: DiscoverTypes;
+  title: string;
+  data: DiscoverListing[];
+};
+
+export default defineComponent({
+  name: "Home",
   components: {
     Sidebar,
     CardGrid,
     Section,
     SearchButton,
   },
+  setup() {
+    const store = useStore();
+    return {
+      store,
+    };
+  },
   data() {
     return {
-      discover: {},
-      carouselData: [],
-      sections: [],
-      module : {}
-    }
+      discover: [] as DiscoverListings[],
+      module: {},
+    };
   },
-  methods : {
-    async executeJs(code){
-      let executedJs = await window.ipcRenderer.invoke('execute-script',code);
-      if(executedJs.success){
+  methods: {
+    async injectInstance() {
+      let activeModule = store.state.activeModule;
+      console.log(activeModule);
+      let modulePath = await window.ipcRenderer.invoke(
+        "get-module-path",
+        activeModule?.id
+      );
+      let code = modulePath.modulePath + "/code.js";
+      console.log(code);
+      let injectJs = await window.ipcRenderer.invoke("load-script", code);
+      while (injectJs.success === false) {
+        console.log(injectJs.error);
+        if (injectJs.error === "ENOENT: no such file or directory") {
+          console.error("No code.js file found in module directory");
+          break;
+        }
+        injectJs = await window.ipcRenderer.invoke("load-script", code);
+      }
+    },
+    async executeJs(code : string) {
+      let executedJs = await window.ipcRenderer.invoke("execute-script", code);
+      if (executedJs.success) {
         return executedJs.result;
       }
     },
-    processDiscoverData() {
-      if (this.discover && Array.isArray(this.discover)) {
-        this.carouselData = this.discover.find(item => item.title === "Carousel")?.data || [];
-        this.sections = this.discover.filter(item => item.title !== "Carousel");
-      } 
-      if(this.carouselData.length === 0){
-        this.carouselData = this.discover[0].data;
-        this.sections = this.discover.slice(1);
+    getComponent(type: DiscoverTypes) {
+      switch (type) {
+        case DiscoverTypes.CAROUSEL:
+          return CardGrid;
+        case DiscoverTypes.LIST:
+        case DiscoverTypes.GRID_2x:
+        case DiscoverTypes.GRID_3x:
+          return Section;
+        default:
+          return null;
+      }
+    },
+    use (type: DiscoverTypes) {
+      switch (type) {
+        case DiscoverTypes.LIST:
+          return "NumberedItem";
+        case DiscoverTypes.GRID_2x:
+        case DiscoverTypes.GRID_3x:
+          return "TextItem";
+        default:
+          return null;
       }
     }
   },
-  mounted : async function() {
-    let activeModule = localStorage.getItem('activeModule');
-    activeModule = JSON.parse(activeModule);
-    let modulePath = await window.ipcRenderer.invoke('get-module-path', activeModule.id);
-    let code = modulePath.modulePath + '/code.js';
-    console.log(code);
-    await window.ipcRenderer.invoke('load-script', code);
-    let getDiscover = await window.ipcRenderer.invoke('execute-script','const instance = new source.default(); return instance.discover();');
+  mounted: async function () {
+    console.log("Home mounted");
+    await this.injectInstance();
+    let getDiscover = await window.ipcRenderer.invoke(
+      "execute-script",
+      "const instance = new source.default(); return instance.discover()"
+    );
     if (getDiscover.success) {
-    this.discover = getDiscover.result;
-    console.log(this.discover);
-    let getModuleInfo = await window.ipcRenderer.invoke('execute-script','const instance = new source.default(); return instance');
-    if(getModuleInfo.success){
-      this.module = getModuleInfo.result;
+      this.discover = getDiscover.result;
+      let getModuleInfo = await window.ipcRenderer.invoke(
+        "execute-script",
+        "const instance = new source.default(); return instance"
+      );
+      if (getModuleInfo.success) {
+        this.module = getModuleInfo.result;
+      }
     }
-  this.processDiscoverData();
-
-}
-  }
-}
+  },
+});
 </script>
 
 <style scoped>
@@ -77,7 +155,7 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  color: #ffffff; /* Light text color for contrast */
+  color: #ffffff;
 }
 
 .top-bar {

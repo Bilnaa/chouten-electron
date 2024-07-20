@@ -1,12 +1,13 @@
 <template>
-  <router-link :to="'/infos?url='+url">
+
   <div class="card">
-    <img :src="poster" :alt="titles.primary" />
     <button class="add-button" @click="showToast('Not Implemented', 'This feature is not implemented yet', 'Info', 3000)">+</button>
+    <router-link :to="'/infos?url='+url">
+    <img :src="poster" :alt="titles?.primary" />
     <div class="card-content">
-      <p class="secondary">{{ titles.secondary }}</p>
+      <p class="secondary">{{ titles?.secondary }}</p>
       <div class="primary-row">
-        <h2 class="primary">{{ titles.primary }}</h2>
+        <h2 class="primary">{{ titles?.primary }}</h2>
         <div class="card-footer">
           <span>{{ indicator }}</span>
           <span class="heart">❤️</span>
@@ -14,8 +15,9 @@
       </div>
       <p class="description">{{ description }}</p>
     </div>
+    </router-link>
+
   </div>
-</router-link>
 
 </template>
 
