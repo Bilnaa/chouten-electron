@@ -48,6 +48,7 @@ const store = createStore<State>({
         setActiveModule(state, module: Module | null) {
             state.activeModule = module;
             localStorage.setItem(activeModuleKey, JSON.stringify(module));
+            window.location.href = '/discover'
         },
         updateRepo(state, updatedRepo: Repo) {
             const index = state.repos.findIndex(repo => repo.id === updatedRepo.id);
