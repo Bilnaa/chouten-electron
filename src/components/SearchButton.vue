@@ -54,6 +54,7 @@
       },
       async onSearch() {
         console.log('Searching for:', this.searchQuery);
+        await new Promise(resolve => setTimeout(resolve, 1000));
         const search = await window.ipcRenderer.invoke('execute-script', `const instance = new source.default(); return instance.search("${this.searchQuery}")`);
         if(search.success){
           this.results = search.result.results;
