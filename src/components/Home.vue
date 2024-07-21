@@ -131,6 +131,10 @@ export default defineComponent({
   },
   mounted: async function () {
     console.log("Home mounted");
+    if(!store.state.activeModule){
+      console.error("No active module selected");
+      return;
+    }
     await this.injectInstance();
     let getDiscover = await window.ipcRenderer.invoke(
       "execute-script",
