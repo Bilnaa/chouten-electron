@@ -14,8 +14,12 @@
             <div class="repo-info">
               <h3>{{ repo.title }}</h3>
               <p>{{ repo.author }}</p>
+              <span class="repo-desc">
+              {{ repo.description }}
+            </span>
             </div>
             <span class="repo-version">v1.0.0</span>
+            
           </div>
           <h4>Modules</h4>
           <div class="modules-grid">
@@ -319,5 +323,14 @@ export default defineComponent({
 
 .module-card.orphan {
   border: 1px dashed #666;
+}
+
+.module-card.orphan.selected {
+  border: 2px dashed #007AFF;
+}
+
+.repo-desc {
+  margin-top: 10px;
+  color: #888;
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <router-link class="text-item" :to="'/infos?url='+url">
-    <div class="image">
+    <div class="image-container">
       <img :src="poster" :alt="titles.primary" class="cover">
       <span class="text-label">{{ indicator }}</span>
     </div>
@@ -25,6 +25,7 @@ export default {
 }
 </script>
 
+
 <style scoped>
 .text-item {
   width: 160px;
@@ -34,24 +35,26 @@ export default {
   flex-direction: column;
 }
 
-.image {
+.image-container {
   width: 100%;
-  background-color: #2a2a2a;
+  height: 240px; /* Fixed height for all images */
   position: relative;
-  border-radius: 25px;
+  overflow: hidden;
 }
 
 .cover {
   width: 100%;
-  display: block;
-  border-radius: 25px;
+  height: 100%;
+  object-fit: cover; /* This will maintain aspect ratio and cover the container */
+  object-position: center; /* Center the image within the container */
+  border-radius: 12px;
 }
 
 .text-label {
   position: absolute;
   top: 10px;
   right: 10px;
-  background-color: #333;
+  background-color: rgba(51, 51, 51, 0.8);
   color: #fff;
   padding: 4px 8px;
   border-radius: 12px;
@@ -60,12 +63,19 @@ export default {
 
 .text-content {
   padding: 10px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .title {
   margin: 0 0 4px 0;
   font-size: 16px;
   color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .index {

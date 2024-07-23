@@ -46,16 +46,26 @@
           </button>
         </div>
 
-        <transition-group class="episodes-list" name="episode-fade" tag="div">
-            <router-link :to="'/streams?episodeId='+episode.url + '&episodeTitle='+`${episode.title}` + '&title=' +  media.titles.primary" v-for="episode in currentEpisodes" :key="episode.number" class="episode">
-              <div class="episode-info">
-                <h3>{{ episode.title }}</h3>
-                <p>Episode {{ episode.number }}</p>
-              </div>
-              <span class="episode-duration">{{ episode.duration || 'N/A' }}</span>
-            </router-link>
-        </transition-group>
+        <div class="pagination-controls">
+          <button @click="prevPage" :disabled="currentPage === 0">Previous</button>
+          <span>Page {{ currentPage + 1 }} of {{ totalPages }}</span>
+          <button @click="nextPage" :disabled="currentPage >= totalPages - 1">Next</button>
+        </div>
 
+        <transition-group class="episodes-list" name="episode-fade" tag="div">
+          <router-link 
+            :to="'/streams?episodeId='+episode.url + '&episodeTitle='+`${episode.title}` + '&title=' +  media.titles.primary" 
+            v-for="episode in paginatedEpisodes" 
+            :key="episode.number" 
+            class="episode"
+          >
+            <div class="episode-info">
+              <h3>{{ episode.title }}</h3>
+              <p>Episode {{ episode.number }}</p>
+            </div>
+            <span class="episode-duration">{{ episode.duration || 'N/A' }}</span>
+          </router-link>
+        </transition-group>
       </div>
     </div>
 
@@ -83,6 +93,7 @@
 </template>
 
 
+
 <script>
 export default {
   data() {
@@ -94,6 +105,8 @@ export default {
       showSeasonModal: false,
       hasMultipleSeasons: false,
       currentSeasonUrl: '',
+      currentPage: 0,  // Current page for pagination
+      episodesPerPage: 100,  // Number of episodes per page
     }
   },
   props: {
@@ -109,11 +122,20 @@ export default {
     currentEpisodes() {
       const category = this.categories.find(cat => cat.title === this.selectedCategory);
       return category ? category.pagination[0].items : [];
+    },
+    paginatedEpisodes() {
+      const start = this.currentPage * this.episodesPerPage;
+      const end = start + this.episodesPerPage;
+      return this.currentEpisodes.slice(start, end);
+    },
+    totalPages() {
+      return Math.ceil(this.currentEpisodes.length / this.episodesPerPage);
     }
   },
   methods: {
     selectCategory(category) {
       this.selectedCategory = category;
+      this.currentPage = 0;  // Reset to the first page when category changes
     },
     toggleSeasonModal() {
       this.showSeasonModal = !this.showSeasonModal;
@@ -173,10 +195,21 @@ export default {
         const mediaRes = await window.ipcRenderer.invoke('execute-script', `const instance = new source.default(); return instance.media("${url}")`);
         this.categories = mediaRes.result;
         this.selectedCategory = this.categories[0].title;
+        this.currentPage = 0;  // Reset to the first page when fetching new episodes
       } catch (error) {
         console.error('Error fetching episodes:', error);
       } finally {
         this.loading = false;
+      }
+    },
+    nextPage() {
+      if (this.currentPage < this.totalPages - 1) {
+        this.currentPage++;
+      }
+    },
+    prevPage() {
+      if (this.currentPage > 0) {
+        this.currentPage--;
       }
     }
   },
@@ -192,6 +225,7 @@ export default {
   }
 }
 </script>
+
 
 <style scoped>
 .media-details {
@@ -308,6 +342,8 @@ export default {
 
 .episodes-section {
   flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .season-selector {
@@ -353,6 +389,8 @@ export default {
 }
 
 .episodes-list {
+  max-height: 500px; /* Set a maximum height for the episodes list */
+  overflow-y: auto; /* Enable vertical scrolling */
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -468,4 +506,27 @@ export default {
   opacity: 0;
   transform: scale(0.9);
 }
+
+.pagination-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.pagination-controls button {
+  background-color: #3a3a3a;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.pagination-controls button:disabled {
+  background-color: #2a2a2a;
+  cursor: not-allowed;
+}
+
 </style>

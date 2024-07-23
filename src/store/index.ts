@@ -17,6 +17,7 @@ export interface Repo {
     id: string;
     title: string;
     author: string;
+    description: string;
     url: string;
     icon: string;
     modules: Module[];
