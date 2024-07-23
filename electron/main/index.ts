@@ -46,6 +46,8 @@ function createDirectories() {
     appDataPath = path.join(process.env.HOME, '.config');
   }
 
+
+
   const choutenPath = path.join(appDataPath, 'Chouten');
   const repoPath = path.join(choutenPath, 'Repos');
   if (!fs.existsSync(repoPath)) {
@@ -128,6 +130,11 @@ async function createWindow() {
     win.loadFile(indexHtml)
   }
 
+  win.on('closed', () => {
+    win = null
+    process.exit(0)
+  })
+
   win.webContents.on('devtools-opened', () => {
    if (process.platform === 'darwin') {
     win.setVibrancy(null)
@@ -194,7 +201,7 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   win = null
   hiddenWin = null
-  if (process.platform !== 'darwin') app.quit()
+   app.quit()
 })
 
 app.on('second-instance', () => {
