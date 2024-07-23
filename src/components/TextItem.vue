@@ -1,7 +1,7 @@
 <template>
   <router-link class="text-item" :to="'/infos?url='+url">
-    <div class="image-placeholder">
-      <img :src="poster" :alt="titles.primary" class="placeholder-image">
+    <div class="image">
+      <img :src="poster" :alt="titles.primary" class="cover">
       <span class="text-label">{{ indicator }}</span>
     </div>
     <div class="text-content">
@@ -34,15 +34,17 @@ export default {
   flex-direction: column;
 }
 
-.image-placeholder {
+.image {
   width: 100%;
   background-color: #2a2a2a;
   position: relative;
+  border-radius: 25px;
 }
 
-.placeholder-image {
+.cover {
   width: 100%;
   display: block;
+  border-radius: 25px;
 }
 
 .text-label {

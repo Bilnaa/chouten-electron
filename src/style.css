@@ -21,7 +21,3 @@ div {
 .repos-container span.material-design-icon > .material-design-icon__svg {
   position: static;
 }
-
-.vds-controls-spacer {
-  background-color: rgb(0 0 0.5 / 60%) !important;
-}

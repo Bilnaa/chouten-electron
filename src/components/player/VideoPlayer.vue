@@ -2,9 +2,9 @@
   <div class="fullscreen-container">
     <div class="video-player-container">
       <media-player ref="mediaPlayer" viewType="video" streamType="on-demand" logLevel="warn" :crossOrigin="true"
-        :playsInline="true" :title="`${episodeTitle} - ${title}`" @provider-change="onProviderChange" :type="type" canAirPlay canChromecast @controls-change="onControlsChange"
-        storage="local"
-        @canPlay="onCanPlay" x-webkit-airplay="allow">
+        :playsInline="true" @provider-change="onProviderChange" :type="type" canAirPlay canChromecast @controls-change="onControlsChange"
+        :storage="urlMedia" load="idle"
+        @canPlay="onCanPlay">
         <media-provider>
           <div class="top-bar" :style="{visibility: showInterface ? 'visible' : 'hidden'}">
             <button class="back" @click="$router.back()">
@@ -27,7 +27,6 @@
           </div>
           <media-poster :src="posterUrl" default="" class="vds-poster" />
           <source :src="streamUrl" />
-          <track v-for="subtitle in subtitles" :src="subtitle.url" :srclang="subtitle.language" :kind="'subtitles'" :label="subtitle.language" />
         </media-provider>
         <VideoLayout :thumbnails="thumbnails"/>
       </media-player>
@@ -52,7 +51,7 @@ import VideoLayout from './layouts/VideoLayout.vue';
 
 import { MediaPlayer, isHLSProvider, type MediaCanPlayEvent, type MediaProviderChangeEvent, type MediaControlsChangeEvent,
 } from 'vidstack';
-import { ref, VideoHTMLAttributes } from 'vue';
+import { ref, VideoHTMLAttributes} from 'vue';
 
 
 const mediaPlayer = ref<MediaPlayerElement | null>(null);
@@ -112,8 +111,8 @@ export default {
       currentQuality: '',
       showSettings : false,
       qualities : [] as string[],
-      tracks : [] as TextTrackInit[],
-      showInterface : true
+      showInterface : true,
+      urlMedia : window.location.href
     }
   },
   components: {
@@ -137,12 +136,19 @@ export default {
     },
     loadSubtitles() {
       const player = this.$refs.mediaPlayer as MediaPlayerElement;
-      const textTracks = player.textTracks;
-      for (let i = 0; i < this.tracks.length; i++) {
-        console.log(this.tracks[i]);
-        textTracks.add(this.tracks[i]);
+      for (let i = 0; i < this.subtitles.length; i++) {
+        if(this.subtitles[i].language === 'Thumbnails') {
+          this.thumbnails = this.subtitles[i].url;
+          continue;
+        }
+        const track: TextTrackInit = {
+          src: this.subtitles[i].url,
+          label: this.subtitles[i].language,
+          kind: (this.subtitles[i].language === 'chapters' ? 'chapters' : 'subtitles') as TextTrackKind,
+          default: i === 0,
+        };
+        player.textTracks.add(track);
       }
-      console.log(textTracks);
     },
     onProviderChange(event: MediaProviderChangeEvent) {
       const provider = event.detail;
@@ -154,6 +160,7 @@ export default {
     },
     onCanPlay(event: MediaCanPlayEvent) {
       if (event.detail) {
+        this.loadSubtitles();
         const player = this.$refs.mediaPlayer as HTMLVideoElement;
         player.play();
       }
@@ -253,26 +260,19 @@ export default {
     } else {
       console.error(sourcesRes.error);
     }
-    this.streamUrl = this.streams.find(stream => stream.quality === 'default')?.file || '';
-    this.currentQuality = 'default';
-      const tracks: TextTrackInit[] = [];
-      for(let subs = 0; subs < this.subtitles.length; subs++) {
-        if (subs === 0) {
-          tracks.push({
-            src: this.subtitles[subs].url,
-            label: this.subtitles[subs].language,
-            kind: 'subtitles',
-            default: true
-          });
-        } else {
-          tracks.push({
-            src: this.subtitles[subs].url,
-            label: this.subtitles[subs].language,
-            kind: 'subtitles'
-          });
-        }
+
+    if(this.skips.length > 0) {
+      let begin = 'WEBVTT\n\n';
+      for(let i = 0; i < this.skips.length; i++) {
+        begin += `${this.skips[i].start}.000 --> ${this.skips[i].end}.000\n${this.skips[i].title}\n\n`;
       }
-    this.tracks = tracks;
+      const blob = new Blob([begin], {type: 'text/vtt'});
+      const url = URL.createObjectURL(blob);
+      this.subtitles.push({url: url, language: 'chapters', type: SubtitleType.VTT});
+    }
+
+    this.streamUrl = this.streams.find(stream => stream.quality === 'auto' || stream.quality === 'default' )?.file || this.streams[0].file;
+    this.currentQuality = this.streams.find(stream => stream.quality === 'auto' || stream.quality === 'default' )?.quality || this.streams[0].quality;
     this.loadStream();
     this.loadSubtitles();
     if ((this.streams[0].type === MediaDataType.HLS) && Hls.isSupported() || (this.$refs.mediaPlayer as HTMLVideoElement).canPlayType('application/vnd.apple.mpegurl')) {
@@ -323,8 +323,8 @@ export default {
     right: 0;
     padding: 20px;
     color: white;
-    z-index: 100;
     transition: opacity 0.5s;
+    text-shadow: 2px 2px 4px #000000;
 }
 
 .title{
