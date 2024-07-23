@@ -12,11 +12,24 @@ const store = useStore();
 const showModal = ref(false);
 
 const selectedModule = computed(() => store.state.activeModule);
-const selectedRepo = computed(() => store.state.repos.find((repo: { modules: any[]; }) => repo.modules.includes(selectedModule.value)) || null);
 
+const loadRepos = async () => {
+      try {
+        const result = await window.ipcRenderer.invoke('get-repo-list');
+        if (result.success) {
+          return result.repoList;
+        } else {
+          throw new Error(result.error);
+        }
+      } catch (error) {
+        console.error('Failed to load repos:', error);
+        showToast('Failed to load repos', 'An error occurred while trying to load the repos.', 'Error', 5000);
+      }
+    };
 
-function openModal() {
-  if (!store.state.repos.length || !store.state.repos.some((repo: { modules: string | any[]; }) => repo.modules.length)) {
+async function openModal() {
+  const repos = await loadRepos();
+  if (repos.length === 0) {
     showToast('No Modules/Reposisotries', 'There are no modules or repositories to select from. Please import a module first.', 'Error', 5000);
     return;
   }
@@ -55,7 +68,7 @@ onBeforeMount(() => {
 });
 
 onMounted(() => {
-  if (store.state.repos.length) {
+  if (selectedModule.value) {
     showToast('Welcome back!', 'Welcome back to Chouten.', 'System', 3000);
   } else {
     initToast.value = true;
@@ -83,7 +96,6 @@ onMounted(() => {
     originalError.apply(console, args);
     showToast('Error', args.join(' '), 'Error', 5000);
   };
-  console.log(selectedRepo.value);
   console.log(selectedModule.value);
 }); 
 

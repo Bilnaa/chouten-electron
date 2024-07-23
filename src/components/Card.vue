@@ -3,9 +3,11 @@
   <div class="card">
     <button class="add-button" @click="showToast('Not Implemented', 'This feature is not implemented yet', 'Info', 3000)">+</button>
     <router-link :to="'/infos?url='+url">
-    <img :src="poster" :alt="titles?.primary" />
-    <div class="card-content">
-      <p class="secondary">{{ titles?.secondary }}</p>
+      <div class="card-content">
+      <img :src="poster" alt="poster" />
+      <div class="overlay">
+        <div class="infos">
+          <p class="secondary">{{ titles?.secondary }}</p>
       <div class="primary-row">
         <h2 class="primary">{{ titles?.primary }}</h2>
         <div class="card-footer">
@@ -14,7 +16,10 @@
         </div>
       </div>
       <p class="description">{{ description }}</p>
+        </div>
+      </div>
     </div>
+    
     </router-link>
 
   </div>
@@ -22,7 +27,7 @@
 </template>
 
 <script lang="ts">
-import {inject} from 'vue';
+import {inject, onMounted} from 'vue';
 
 export default {
   name: 'Card',
@@ -33,10 +38,20 @@ export default {
     indicator: String,
     description: String
   },
-  setup() {
+  setup(props) {
     const showToast = inject('showToast') as (title: string, message: string, icon?: string, duration?: number) => void;
+
+    let truncatedDescription = (props.description ?? '').length > 100 ? (props.description ?? '').slice(0, 150) + '...' : (props.description ?? '');
+    truncatedDescription = truncatedDescription.replace(/<[^>]*>?/gm, '');
+
+    const truncatedTitles = {
+      primary: (props.titles?.primary ?? '').length > 20 ? (props.titles?.primary ?? '').slice(0, 20) + '...' : (props.titles?.primary ?? ''),
+      secondary: (props.titles?.secondary ?? '').length > 20 ? (props.titles?.secondary ?? '').slice(0, 20) + '...' : (props.titles?.secondary ?? '')
+    }
     return {
-      showToast
+      showToast,
+      description: truncatedDescription,
+      titles: truncatedTitles
     }
   }
 }
@@ -64,19 +79,34 @@ export default {
   object-fit: cover;
 }
 
-.card-content {
+.overlay {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 30%; /* This ensures consistent height */
-  padding: 15px;
-  background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: #fff;
-  display: flex;
-  flex-direction: column;
+    top: 0;
+    bottom: 29px;
+    right: 0px;
+    left: -13px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    background-color: rgba(0, 0, 0, 0.5);
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 10px;
+}
+
+.infos {
+  position: absolute;
+    top: 263px;
+    margin: 10px;
+}
+.card-content {
+   position: relative;
+    right: 0;
+    height: 146%;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
 }
 
 .secondary {
@@ -130,6 +160,7 @@ export default {
 }
 
 .add-button {
+  z-index: 1;
   position: absolute;
   top: 10px;
   right: 10px;

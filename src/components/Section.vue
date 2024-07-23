@@ -27,6 +27,7 @@ import NumberedItem from './NumberedItem.vue';
 
 <script>
 import { shallowRef } from 'vue';
+import { ObserveVisibility } from 'vue-observe-visibility';
 export default {
   components: {
     TextItem,
@@ -90,15 +91,16 @@ export default {
 .card-container {
   display: inline-flex;
   padding: 10px 0;
+  gap: 10px; /* Use gap instead of margin for consistent spacing */
 }
 
 .card {
   flex: 0 0 auto;
-  width: 200px; /* Adjust based on your card size */
-  margin-right: 10px;
+  width: 160px; /* Match the width in TextItem.vue */
   opacity: 0;
   transition: opacity 0.5s ease-in-out;
 }
+
 
 .card.fade-in {
   opacity: 0;

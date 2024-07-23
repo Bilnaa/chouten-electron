@@ -89,11 +89,12 @@ export function setupIpcHandlers() {
         }
       });
       
-      ipcMain.handle('remove-module', async (event, repoId: string, moduleName: string) => {
+      ipcMain.handle('remove-module', async (event, repoName: string, moduleId: string) => {
         try {
-          const modulePath = path.join(app.getPath('userData'), 'Repos', repoId, moduleName);
-          fs.rmSync(modulePath, { recursive: true });
+          const repoPath = path.join(app.getPath('userData'), 'Repos', repoName,'Modules', moduleId);
+          fs.rmSync(repoPath, { recursive: true });
           return { success: true };
+          
         } catch (error) {
           console.error('Error removing module:', error);
           return { success: false, error: (error as Error).message };
@@ -115,8 +116,13 @@ export function setupIpcHandlers() {
           if (!module) {
             throw new Error('Module not found in repo metadata');
           }
-      
-          // Download and update the module
+          if(!module.filePath.includes('https://')){
+            if (module.filePath.startsWith('./')) {
+              module.filePath = module.filePath.slice(1);
+            }
+            module.filePath = repoData.url + module.filePath;
+          }
+
           const moduleData = await axios.get(module.filePath, { responseType: 'arraybuffer' });
           const tempModulePath = path.join(repoPath, `${module.name}.module`);
       
@@ -159,32 +165,44 @@ export function setupIpcHandlers() {
       });
       
       ipcMain.handle('get-repo-list', async (event) => {
-        try { 
-          const repoPath = path.join(app.getPath('userData'), 'Repos');
-          const repos = fs.readdirSync(repoPath)
-            .filter((file) => file.startsWith('.') === false)
-            .map((repoId) => {
-              const repo = { id: repoId, modules: [] };
-              const repoDir = path.join(repoPath, repoId);
-              const moduleDirs = fs.readdirSync(repoDir)
+       try {
+          const reposPath = path.join(app.getPath('userData'), 'Repos');
+          const repos = fs.readdirSync(reposPath)
+            .filter((file) => file.startsWith('.') === false);
+          const repoList = [];
+          for (const repoId of repos) {
+            const repoPath = path.join(reposPath, repoId);
+            const metadataPath = path.join(repoPath, 'metadata.json');
+            if (fs.existsSync(metadataPath)) {
+              const repoData = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+              repoData.icon = 'data:image/png;base64,' + fs.readFileSync(path.join(repoPath, 'icon.png')).toString('base64');
+              const modules = fs.readdirSync(repoPath)
                 .filter((file) => file.startsWith('.') === false);
-              moduleDirs.forEach((moduleDir) => {
-                const modulePath = path.join(repoDir, moduleDir);
-                const metadataPath = path.join(modulePath, 'metadata.json');
-                if (fs.existsSync(metadataPath)) {
-                  const metadata = fs.readFileSync(metadataPath, 'utf8');
-                  const module = JSON.parse(metadata);
-                  repo.modules.push(module);
+              for (const module of repoData.modules) {
+                const modulePath = path.join(repoPath+'/Modules/', module.id);
+                if (modules.includes(module.id) || fs.existsSync(modulePath)) {
+                  module.installed = true;
+                  const moduleFiles = fs.readdirSync(modulePath);
+                  for (const file of moduleFiles) {
+                    if (file.startsWith('icon')) {
+                      module.iconPath = 'data:image/png;base64,' + fs.readFileSync(path.join(modulePath, file)).toString('base64');
+                      break;
+                    }
+                  }
                 }
-              });
-              return repo;
-            });
-          return { success: true, repos };
-        } catch (error) {
-          console.error('Error getting repo list:', error);
-          return { success: false, error: (error as Error).message };
-        }
+              }
+              repoList.push(repoData);
+            }
+          }
+          return { success: true, repoList };
+       } catch (error) {
+         console.error('Error getting repo list:', error);
+         return { success: false, error: (error as Error).message };
+       }
+
+       
       });
+        
       
       ipcMain.handle('get-repo-path', async (event, repoId: string) => {
         const repoPath = path.join(app.getPath('userData'), 'Repos', repoId);
@@ -195,25 +213,62 @@ export function setupIpcHandlers() {
       });
       
       ipcMain.handle('get-module-path', async (event, moduleId: string) => {
-        const reposPath = path.join(app.getPath('userData'), 'Repos');
-        const repos = fs.readdirSync(reposPath)
-          .filter((file) => file.startsWith('.') === false);
-        for (const repoId of repos) {
-          const repoPath = path.join(reposPath, repoId);
-          const modules = fs.readdirSync(repoPath)
-            .filter((file) => file.startsWith('.') === false);
-          for (const module of modules) {
-            if (module === moduleId) {
-              return { success: true, modulePath: path.join(repoPath, module) };
+        try {
+          const ModulesFolder= fs.readdirSync(ModulesPath);
+          if(ModulesFolder.filter( 
+            (file) => file.startsWith('.') === false
+          ).includes(moduleId)){
+            return { success: true, modulePath: path.join(ModulesPath, moduleId) };
+          }
+          const reposFolder = fs.readdirSync(path.join(app.getPath('userData'), 'Repos')).filter((file) => file.startsWith('.') === false);
+          for(const repo of reposFolder){
+            // get inside the Modules folder of the repo
+            const repoPath = path.join(app.getPath('userData'), 'Repos', repo, 'Modules');
+            if(fs.existsSync(repoPath)){
+              const modules = fs.readdirSync(repoPath).filter((file) => file.startsWith('.') === false);
+              if(modules.includes(moduleId)){
+                return { success: true, modulePath: path.join(repoPath, moduleId) };
+              }
+              break;
+            }
+            return { success: false, error: 'Module not found' };
+          }
+          return { success: false, error: 'Module not found' };
+        } catch (error) {
+          console.error('Error getting module path:', error);
+          return { success: false, error: (error as Error).message };
+        }
+      });
+
+      ipcMain.handle('get-module-list', async (event) => {
+        try {
+          const modules = [];
+          const ModulesFolder= fs.readdirSync(ModulesPath);
+          for(const module of ModulesFolder){
+            if(module.startsWith('.')){
+              continue;
+            }
+            const modulePath = path.join(ModulesPath, module);
+            const metadataPath = path.join(modulePath, 'metadata.json');
+            if (fs.existsSync(metadataPath)) {
+              const moduleData = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+              const moduleFiles = fs.readdirSync(modulePath);
+              for (const file of moduleFiles) {
+                if (file.startsWith('icon')) {
+                  moduleData.iconPath = 'data:image/png;base64,' + fs.readFileSync(path.join(modulePath, file)).toString('base64');
+                  break;
+                }
+              }
+              modules.push(moduleData);
             }
           }
+          return { success: true, moduleList: modules };
+        } catch (error) {
+          console.error('Error getting module list:', error);
+          return { success: false, error: (error as Error).message };
         }
-        const modulePath = path.join(ModulesPath, moduleId);
-        if (fs.existsSync(modulePath)) {
-          return { success: true, modulePath };
-        }
-        return { success: false, error: 'Module not found' };
       });
+
       
       ipcMain.handle('get-icon', async (event, repoId: string,moduleName : string) => {
         // get the icon.png from the module folder encode it to base64 and return it
