@@ -82,7 +82,10 @@ export default defineComponent({
   methods: {
     async injectInstance() {
       let activeModule = store.state.activeModule;
-      console.log(activeModule);
+      if (!activeModule) {
+        console.error("No active module found");
+        return;
+      }
       let modulePath = await window.ipcRenderer.invoke(
         "get-module-path",
         activeModule?.id
@@ -114,7 +117,7 @@ export default defineComponent({
         case DiscoverTypes.GRID_3x:
           return Section;
         default:
-          return null;
+          return Section;
       }
     },
     use (type: DiscoverTypes) {
