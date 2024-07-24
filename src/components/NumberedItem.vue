@@ -23,7 +23,16 @@ export default {
    indicator: String,
    current: Number,
    total: Number
- }
+ },
+ setup(props) {
+  let truncatedTitles = props.titles
+  if (props.titles.primary.length > 50) {
+    truncatedTitles.primary = props.titles.primary.substring(0, 50) + '...'
+  }
+   return {
+     titles: truncatedTitles,
+   }
+  }
 }
 </script>
 
@@ -39,7 +48,10 @@ export default {
   padding: 15px;
   margin-bottom: 10px;
   max-width: 34vw;
+  min-width: 20vw;
 }
+
+
 
 .image-placeholder {
   width: 50px;
