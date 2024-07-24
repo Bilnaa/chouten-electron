@@ -104,6 +104,7 @@ async function createWindow() {
     width: 1600,
     height: 900,
     frame: false,
+    transparent : process.platform === 'win32' || process.platform === 'darwin',
     titleBarStyle: 'hidden',
     titleBarOverlay: {
       color: '#171717',
@@ -114,7 +115,6 @@ async function createWindow() {
     backgroundMaterial: 'acrylic',
     vibrancy: 'under-window',
     visualEffectState: 'followWindow',
-    transparent : process.platform === 'win32' || process.platform === 'darwin',
     webPreferences: {
       preload,
       allowRunningInsecureContent: false,
