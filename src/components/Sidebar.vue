@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar">
+  <div class="sidebar" :style="{backgroundColor : isLinux ? '#171717': ''}">
     <div class="logo-container">
       <div class="logo-placeholder">
         <span>LOGO</span>
@@ -56,7 +56,12 @@ export default {
     PackageVariantClosedIcon,
     CogIcon,
     Archive 
-  }
+  },
+  data() {
+    return {
+      isLinux: navigator.userAgent.includes('Linux'),
+    }
+  },
 }
 </script>
 
