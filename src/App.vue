@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, provide, onMounted, onBeforeMount } from 'vue';
+import { ref, computed, provide, onMounted, onBeforeMount, watch} from 'vue';
 import { useStore } from 'vuex';
 import Sidebar from './components/Sidebar.vue';
 import ModuleSelector from './components/ModuleSelector.vue';
@@ -7,6 +7,8 @@ import Modal from './components/Modal.vue';
 import { Repo, Module } from './store/index';
 import ToastManager from './components/ToastManager.vue';
 import SplashScreen from './components/SplashScreen.vue'
+import { useRouter } from 'vue-router';
+
 
 const store = useStore();
 const showModal = ref(false);
@@ -82,6 +84,17 @@ onMounted(() => {
     setTimeout(() => {
       showToast('Welcome back!', 'Welcome back to Chouten.', 'System', 3000);
     }, 3000);
+  }
+
+  
+  const router = useRouter();
+  if(window.location.hash !== '#discover') {
+    watch(selectedModule, (newModule) => {
+      if (newModule) {
+          showToast('Module Selected', `Selected module: ${newModule.name}`, 'System', 3000);
+          router.push({ name: 'Discover' });
+      }
+  });
   }
 
   window.addEventListener('error', (event) => {

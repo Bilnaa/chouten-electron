@@ -35,7 +35,6 @@ const store = createStore({
     setActiveModule(state, module) {
       state.activeModule = module;
       localStorage.setItem(activeModuleKey, JSON.stringify(module));
-      window.location.href = '/discover';
     }
   },
   actions: {

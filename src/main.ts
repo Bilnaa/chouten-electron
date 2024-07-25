@@ -18,6 +18,5 @@ createApp(App)
   .use(store)
   .directive('observe-visibility', ObserveVisibility)
   .mount('#app')
-  .$nextTick(() => {
-    postMessage({ payload: 'removeLoading' }, '*')
-  })
+
+  

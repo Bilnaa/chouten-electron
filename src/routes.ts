@@ -1,6 +1,6 @@
 import {
     createRouter,
-    createWebHistory
+    createWebHashHistory,
   } from "vue-router";
 
 import Home from './components/Home.vue';
@@ -11,13 +11,14 @@ import VideoPlayer from './components/player/VideoPlayer.vue';
 
 
 export default createRouter({
-    history: createWebHistory(),
+    history: createWebHashHistory(),
     routes: [
       {
         path: '/',
         component: ComingSoon
       },
       {
+        name: 'Discover',
         path:'/discover',
         component: Home
       },

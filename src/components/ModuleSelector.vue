@@ -83,8 +83,7 @@
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, inject } from 'vue';
 import { useStore } from 'vuex';
-import { Repo, Module } from '../store/index';
-
+import store, { Repo, Module } from '../store/index';
 export default defineComponent({
   setup() {
     const store = useStore();
@@ -143,9 +142,6 @@ export default defineComponent({
       repoContainer.value.scrollTo({ left: index * containerWidth, behavior: 'smooth' });
     };
 
-    const selectModule = (module: Module) => {
-      store.dispatch('setActiveModule', module);
-    };
 
     const isModuleSelected = (module: Module) => {
       return activeModule.value && activeModule.value.id === module.id;
@@ -162,12 +158,16 @@ export default defineComponent({
       repoContainer,
       handleScroll,
       scrollToRepo,
-      selectModule,
       isModuleSelected,
       loadModules,
       placeholder,
     };
   },
+  methods : {
+      selectModule(module: Module) {
+      store.dispatch('setActiveModule', module);
+    }
+  }
 });
 </script>
 

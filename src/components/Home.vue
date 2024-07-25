@@ -130,7 +130,24 @@ export default defineComponent({
         default:
           return null;
       }
-    }
+    },
+    async loadDiscover() {
+      await this.injectInstance();
+      let getDiscover = await window.ipcRenderer.invoke(
+        "execute-script",
+        "const instance = new source.default(); return instance.discover()"
+      );
+      if (getDiscover.success) {
+        this.discover = getDiscover.result;
+        let getModuleInfo = await window.ipcRenderer.invoke(
+          "execute-script",
+          "const instance = new source.default(); return instance"
+        );
+        if (getModuleInfo.success) {
+          this.module = getModuleInfo.result;
+        }
+      }
+    },
   },
   mounted: async function () {
     console.log("Home mounted");
@@ -138,21 +155,15 @@ export default defineComponent({
       console.error("No active module selected");
       return;
     }
-    await this.injectInstance();
-    let getDiscover = await window.ipcRenderer.invoke(
-      "execute-script",
-      "const instance = new source.default(); return instance.discover()"
-    );
-    if (getDiscover.success) {
-      this.discover = getDiscover.result;
-      let getModuleInfo = await window.ipcRenderer.invoke(
-        "execute-script",
-        "const instance = new source.default(); return instance"
-      );
-      if (getModuleInfo.success) {
-        this.module = getModuleInfo.result;
-      }
-    }
+    await this.loadDiscover();
+  },
+  watch: {
+    'store.getters.activeModule': {
+      handler: function (val) {
+        this.loadDiscover();
+      },
+      deep: true,
+    },
   },
 });
 </script>
