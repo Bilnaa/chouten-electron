@@ -103,6 +103,8 @@ async function createWindow() {
     icon: path.join(process.env.VITE_PUBLIC, 'chouten.png'),
     width: 1600,
     height: 900,
+    minHeight: 600,
+    minWidth: 800,
     frame: false,
     transparent : process.platform === 'win32' || process.platform === 'darwin',
     titleBarStyle: 'hidden',
@@ -111,9 +113,8 @@ async function createWindow() {
       symbolColor: '#eee',
       height: 40
     },
-    roundedCorners: true,
     backgroundMaterial: 'acrylic',
-    vibrancy: 'under-window',
+    vibrancy: 'fullscreen-ui',
     visualEffectState: 'followWindow',
     webPreferences: {
       preload,
@@ -132,6 +133,7 @@ async function createWindow() {
 
   win.on('closed', () => {
     win = null
+    hiddenWin?.close()
     process.exit(0)
   })
 
