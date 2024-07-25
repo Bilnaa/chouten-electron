@@ -73,12 +73,12 @@ ipcMain.handle('load-script', async (event, scriptPath) => {
         return { success: true };
       } catch (error) {
         console.error('Error executing script:', error);
-        return { success: false, error: error.message };
+        return { success: false, error: error };
       }
     }
   } catch (error) {
     console.error('Error loading script:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error };
   }
 });
 
@@ -89,7 +89,7 @@ ipcMain.handle('execute-script', async (event, scriptContent) => {
       return { success: true, result };
     } catch (error) {
       console.error('Error executing script:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: error };
     }
   } else {
     return { success: false, error: 'Hidden window not available' };
