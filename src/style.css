@@ -5,7 +5,7 @@ a {
 
 /* Hide scrollbars in WebKit-based browsers (e.g., Chrome, Safari) */
 div::-webkit-scrollbar {
-  display: none;
+ visibility: hidden;
 }
 
 /* Hide scrollbars in IE, Edge, and Firefox */
