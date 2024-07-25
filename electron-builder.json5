@@ -15,15 +15,11 @@
     "target": [
       "dmg"
     ],
-    "extendInfo": {
-            "NSBonjourServices": ["_airplay._tcp"],
-            "NSAllowsArbitraryLoads": true
-      },
     "fileAssociations": [
       {
         "ext": "module",
-        "name": "Chouten File",
-        "role": "Editor",
+        "name": "Chouten Module",
+        "role": "Editor"
       }
     ],
     "icon": "icons/icon.icns",
@@ -43,7 +39,6 @@
         "ext" : "module",
         "name" : "Chouten File",
         "description" : "Chouten File",
-        "isPackage" : true
       }
     ],
     "icon": "icons/icon.ico",
@@ -53,13 +48,13 @@
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
-    "deleteAppDataOnUninstall": false
+    "deleteAppDataOnUninstall": true
   },
   "linux": {
     "target": [
-      "AppImage"
+      "AppImage",
+      "deb",
     ],
-    
     "artifactName": "${productName}-Linux-${version}.${ext}"
   }
 }
