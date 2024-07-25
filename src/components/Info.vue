@@ -105,7 +105,7 @@ export default {
       showSeasonModal: false,
       hasMultipleSeasons: false,
       currentSeasonUrl: '',
-      currentPage: 0,  // Current page for pagination
+      currentPage: 0,  // Current page of episodes
       episodesPerPage: 100,  // Number of episodes per page
     }
   },
@@ -136,6 +136,7 @@ export default {
     selectCategory(category) {
       this.selectedCategory = category;
       this.currentPage = 0;  // Reset to the first page when category changes
+      this.saveCurrentPage();
     },
     toggleSeasonModal() {
       this.showSeasonModal = !this.showSeasonModal;
@@ -195,21 +196,39 @@ export default {
         const mediaRes = await window.ipcRenderer.invoke('execute-script', `const instance = new source.default(); return instance.media("${url}")`);
         this.categories = mediaRes.result;
         this.selectedCategory = this.categories[0].title;
-        this.currentPage = 0;  // Reset to the first page when fetching new episodes
+        this.restoreCurrentPage();
+
       } catch (error) {
         console.error('Error fetching episodes:', error);
       } finally {
         this.loading = false;
       }
     },
+    saveCurrentPage() {
+      const currentPages = JSON.parse(localStorage.getItem('currentPages')) || {};
+      let url = window.location.href;
+      let page = this.currentPage;
+      currentPages.push({url, page});
+      localStorage.setItem('currentPages', JSON.stringify(currentPages));
+    },
+    restoreCurrentPage() {
+      const currentPages = JSON.parse(localStorage.getItem('currentPages')) || {};
+      let url = window.location.href;
+      let page = currentPages.find(page => page.url === url);
+      if (page) {
+        this.currentPage = page.page;
+      }
+    },
     nextPage() {
       if (this.currentPage < this.totalPages - 1) {
         this.currentPage++;
+        this.saveCurrentPage();
       }
     },
     prevPage() {
       if (this.currentPage > 0) {
         this.currentPage--;
+        this.saveCurrentPage();
       }
     }
   },
@@ -227,7 +246,16 @@ export default {
 </script>
 
 
+
 <style scoped>
+
+
+.episodes-list::-webkit-scrollbar {
+  width: 10px !important;
+  visibility: visible !important;
+  color: #ffffff;
+}
+
 .media-details {
   color: #ffffff;
   font-family: Arial, sans-serif;
@@ -344,6 +372,7 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
+  height: 75vh;
 }
 
 .season-selector {
@@ -389,7 +418,7 @@ export default {
 }
 
 .episodes-list {
-  max-height: 500px; /* Set a maximum height for the episodes list */
+  max-height: 46vh;
   overflow-y: auto; /* Enable vertical scrolling */
   display: flex;
   flex-direction: column;
