@@ -1,12 +1,11 @@
 <template>
-  <div class="fullscreen-container">
+  <div class="fullscreen-container" v-if="!error">
     <div class="video-player-container">
       <media-player ref="mediaPlayer" viewType="video" streamType="on-demand" logLevel="warn" :crossOrigin="true"
-        :playsInline="true" @provider-change="onProviderChange" :type="type" canAirPlay canChromecast @controls-change="onControlsChange"
-        :storage="urlMedia" load="idle"
-        @canPlay="onCanPlay">
+        :playsInline="true" @provider-change="onProviderChange" :type="type" canAirPlay canChromecast
+        @controls-change="onControlsChange" storage="test" load="eager" @canPlay="onCanPlay">
         <media-provider>
-          <div class="top-bar" :style="{visibility: showInterface ? 'visible' : 'hidden'}">
+          <div class="top-bar" :style="{ visibility: showInterface ? 'visible' : 'hidden' }">
             <button class="back" @click="$router.back()">
               <media-icon type="arrow-left" />
             </button>
@@ -17,21 +16,31 @@
               </div>
             </button>
           </div>
-          <div class="bottombar" :style="{visibility: showInterface ? 'visible' : 'hidden'}">
+          <div class="bottombar" :style="{ visibility: showInterface ? 'visible' : 'hidden' }">
             <div class="episodeTitle">
               {{ title }}
             </div>
             <div class="title">
-              {{ episodeTitle  }}
+              {{ episodeTitle }}
             </div>
           </div>
           <media-poster :src="posterUrl" default="" class="vds-poster" />
           <source :src="streamUrl" />
         </media-provider>
-        <VideoLayout :thumbnails="thumbnails"/>
+
+        <div class="vds-buffering-indicator">
+          <media-spinner class="vds-buffering-spinner"></media-spinner>
+        </div>
+        <VideoLayout :thumbnails="thumbnails" />
       </media-player>
     </div>
- </div>
+  </div>
+  <div v-else class="error-message">
+    <alert-circle-outline class="icon" />
+    <p class="error-title">{{ errorMessage }}</p>
+    <p class="error-details">{{ errorDetails }}</p>
+    <button class="back-button" @click="$router.back()">Go Back</button>
+  </div>
 </template>
 
 <script lang="ts">
@@ -49,14 +58,13 @@ import type { MediaPlayerElement } from 'vidstack/elements';
 import type { TextTrackInit } from 'vidstack';
 import VideoLayout from './layouts/VideoLayout.vue';
 
-import { MediaPlayer, isHLSProvider, type MediaCanPlayEvent, type MediaProviderChangeEvent, type MediaControlsChangeEvent,
+import {
+  MediaPlayer, isHLSProvider, type MediaCanPlayEvent, type MediaProviderChangeEvent, type MediaControlsChangeEvent,
 } from 'vidstack';
-import { ref, VideoHTMLAttributes} from 'vue';
-
+import { ref, VideoHTMLAttributes } from 'vue';
+import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
 
 const mediaPlayer = ref<MediaPlayerElement | null>(null);
-
-
 
 enum SubtitleType {
   VTT = 0,
@@ -77,7 +85,7 @@ type SkipData = {
 };
 
 enum MediaDataType {
-  HLS, 
+  HLS,
   MP4,
 }
 
@@ -109,14 +117,18 @@ export default {
       currentTime: 0,
       duration: 0,
       currentQuality: '',
-      showSettings : false,
-      qualities : [] as string[],
-      showInterface : true,
-      urlMedia : window.location.href
+      showSettings: false,
+      qualities: [] as string[],
+      showInterface: true,
+      urlMedia: window.location.href,
+      error: false,
+      errorMessage: 'An error occured',
+      errorDetails: '',
     }
   },
   components: {
-    VideoLayout
+    VideoLayout,
+    AlertCircleOutline
   },
   props: ["episodeId", "episodeTitle", "title"],
   computed: {
@@ -137,7 +149,7 @@ export default {
     loadSubtitles() {
       const player = this.$refs.mediaPlayer as MediaPlayerElement;
       for (let i = 0; i < this.subtitles.length; i++) {
-        if(this.subtitles[i].language === 'Thumbnails') {
+        if (this.subtitles[i].language === 'Thumbnails') {
           this.thumbnails = this.subtitles[i].url;
           continue;
         }
@@ -186,7 +198,7 @@ export default {
       }
       this.isPlaying = !player.paused;
     },
-    toggleSettings (){
+    toggleSettings() {
       this.showSettings = !this.showSettings;
     },
     skipBackward() {
@@ -244,35 +256,42 @@ export default {
       } catch (error) {
         console.error(error);
       }
+    },
+    handleError(e: Error) {
+      this.error = true;
+      this.errorDetails = e.message;
     }
   },
   async mounted() {
     await this.injectInstance();
     const sourcesRes = await this.executeJs(`const instance = new source.default(); return instance.streams("${this.episodeId}")`);
-    if (sourcesRes && sourcesRes.success === true) {
+    if (sourcesRes.success === true) {
       let res = sourcesRes.result;
+      if (res.streams.length === 0) {
+        this.handleError(new Error('No streams found, please check with the module developer if this behavior is expected'));
+        return;
+      }
       this.streams = res.streams;
-      console.log(this.streams);
       this.qualities = this.streams.filter(stream => stream.type === 0).map(stream => stream.quality);
       this.subtitles = res.subtitles;
       this.skips = res.skips;
       this.previews = res.previews;
     } else {
-      console.error(sourcesRes.error);
+      this.handleError(new Error(sourcesRes.error));
     }
 
-    if(this.skips.length > 0) {
+    if (this.skips.length > 0) {
       let begin = 'WEBVTT\n\n';
-      for(let i = 0; i < this.skips.length; i++) {
+      for (let i = 0; i < this.skips.length; i++) {
         begin += `${this.skips[i].start}.000 --> ${this.skips[i].end}.000\n${this.skips[i].title}\n\n`;
       }
-      const blob = new Blob([begin], {type: 'text/vtt'});
+      const blob = new Blob([begin], { type: 'text/vtt' });
       const url = URL.createObjectURL(blob);
-      this.subtitles.push({url: url, language: 'chapters', type: SubtitleType.VTT});
+      this.subtitles.push({ url: url, language: 'chapters', type: SubtitleType.VTT });
     }
 
-    this.streamUrl = this.streams.find(stream => stream.quality === 'auto' || stream.quality === 'default' )?.file || this.streams[0].file;
-    this.currentQuality = this.streams.find(stream => stream.quality === 'auto' || stream.quality === 'default' )?.quality || this.streams[0].quality;
+    this.streamUrl = this.streams.find(stream => stream.quality === 'auto' || stream.quality === 'default')?.file || this.streams[0].file;
+    this.currentQuality = this.streams.find(stream => stream.quality === 'auto' || stream.quality === 'default')?.quality || this.streams[0].quality;
     this.loadStream();
     this.loadSubtitles();
     if ((this.streams[0].type === MediaDataType.HLS) && Hls.isSupported() || (this.$refs.mediaPlayer as HTMLVideoElement).canPlayType('application/vnd.apple.mpegurl')) {
@@ -291,15 +310,20 @@ export default {
     player.addEventListener('pause', () => this.isPlaying = false);
   },
   beforeUnmount() {
-    (this.$refs.mediaPlayer as MediaPlayerElement).destroy();
+    const player = this.$refs.mediaPlayer as MediaPlayerElement;
+    if (player) {
+      player.destroy();
+    }
   }
 }
 </script>
 
 <style scoped>
-[data-media-player]:not([data-view-type='audio']) [data-media-provider], [data-media-player][data-fullscreen] [data-media-provider] {
-    height: 100vh !important;
+[data-media-player]:not([data-view-type='audio']) [data-media-provider],
+[data-media-player][data-fullscreen] [data-media-provider] {
+  height: 100vh !important;
 }
+
 .title-bar {
   background: rgba(0, 0, 0, 0.5);
 }
@@ -317,17 +341,17 @@ export default {
 }
 
 .bottombar {
-    position: absolute;
-    bottom: 88px;
-    left: 0;
-    right: 0;
-    padding: 20px;
-    color: white;
-    transition: opacity 0.5s;
-    text-shadow: 2px 2px 4px #000000;
+  position: absolute;
+  bottom: 88px;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  color: white;
+  transition: opacity 0.5s;
+  text-shadow: 2px 2px 4px #000000;
 }
 
-.title{
+.title {
   font-size: 16px;
   margin-bottom: 5px;
   color: #D4D4D4;
@@ -344,8 +368,10 @@ export default {
   left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 9998; /* Ensure it's on top of everything */
-  background-color: black; /* To cover any potential gaps */
+  z-index: 9998;
+  /* Ensure it's on top of everything */
+  background-color: black;
+  /* To cover any potential gaps */
 }
 
 .video-player-container {
@@ -375,7 +401,8 @@ export default {
   z-index: 10;
 }
 
-.back, .quality {
+.back,
+.quality {
   background: rgba(0, 0, 0, 0.5);
   border: none;
   border-radius: 50%;
@@ -389,12 +416,14 @@ export default {
 }
 
 .skip-backward :deep(svg),
-.skip-forward :deep(svg), .back :deep(svg),.quality :deep(svg) {
+.skip-forward :deep(svg),
+.back :deep(svg),
+.quality :deep(svg) {
   width: 26px;
   height: 28px;
 }
 
-.skip-button{
+.skip-button {
   position: absolute;
   bottom: 60px;
   right: 20px;
@@ -469,6 +498,7 @@ export default {
 .quality:focus .quality-dropdown {
   display: flex;
 }
+
 .quality-dropdown button {
   background: none;
   border: none;
@@ -483,4 +513,60 @@ export default {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Error message styles */
+.error-message {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9998;
+  background-color: black;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: white;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.error-message .icon {
+  font-size: 48px;
+  color: #5c5cff;
+  margin-bottom: 20px;
+}
+
+.error-message .error-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.error-message .error-details {
+  font-size: 16px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.error-message .back-button {
+  background-color: #5c5cff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.error-message .back-button:hover {
+  background-color: #4a4aff;
+}
+
+.error-message .back-button:active {
+  background-color: #3939ff;
+}
 </style>
