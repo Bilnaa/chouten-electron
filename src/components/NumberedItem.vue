@@ -49,6 +49,7 @@ export default {
   margin-bottom: 10px;
   max-width: 34vw;
   min-width: 20vw;
+  overflow: hidden;
 }
 
 
