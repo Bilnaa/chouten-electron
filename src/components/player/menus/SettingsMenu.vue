@@ -2,8 +2,8 @@
 import type { MenuPlacement, TooltipPlacement } from 'vidstack';
 
 import CaptionSubmenu from './CaptionSubmenu.vue';
-import QualitySubmenu from './QualitySubMenu.vue';
-import SpeedSubmenu from './SpeedSubMenu.vue';
+import QualitySubmenu from './QualitySubmenu.vue'
+import SpeedSubmenu from './SpeedSubmenu.vue';
 
 import Menu from './Menu.vue';
 
