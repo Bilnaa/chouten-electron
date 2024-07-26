@@ -15,6 +15,10 @@ const showModal = ref(false);
 
 const selectedModule = computed(() => store.state.activeModule);
 
+if(localStorage.getItem('currentPages') === null) {
+  localStorage.setItem('currentPages', '[]');
+}
+
 const loadRepos = async () => {
       try {
         const result = await window.ipcRenderer.invoke('get-repo-list');
