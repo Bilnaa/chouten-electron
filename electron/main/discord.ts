@@ -17,10 +17,8 @@ export default class Discord {
         this.discord.on('ready', () => {
             console.log('Discord client ready')
             this.discord.setActivity(this.cachedPresence || this.defaultActivity)
-        })
-        this.discord.login({ clientId }).catch(() => {
-            setTimeout(() => this.discord.login({ clientId }), 5000).unref()
-        })
+        }) 
+        this.login()
     }
     login() {
         this.discord.login({ clientId }).catch(() => {
