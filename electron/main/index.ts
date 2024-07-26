@@ -5,6 +5,7 @@ import path from 'node:path'
 import os from 'node:os'
 import fs from 'fs'
 import { setupIpcHandlers } from './ipcHandlers';
+import Discord from './discord'
 
 
 const require = createRequire(import.meta.url)
@@ -194,7 +195,7 @@ app.whenReady().then(() => {
   createDirectories();
   createWindow();
   setupIpcHandlers();
-
+  new Discord();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
