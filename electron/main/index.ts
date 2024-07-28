@@ -47,9 +47,7 @@ function createDirectories() {
     appDataPath = path.join(process.env.HOME, '.config');
   }
 
-
-
-  const choutenPath = path.join(appDataPath, 'Chouten');
+  const choutenPath = path.join(appDataPath, 'chouten');
   const repoPath = path.join(choutenPath, 'Repos');
   if (!fs.existsSync(repoPath)) {
     fs.mkdirSync(repoPath, { recursive: true });
