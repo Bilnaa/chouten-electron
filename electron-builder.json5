@@ -52,10 +52,7 @@
   },
   "linux": {
     "target": [
-      "rpm",
-      "AppImage",
-      "deb",
-      "tar.gz"
+      "AppImage"
     ],
     "artifactName": "${productName}-Linux-${version}.${ext}"
   }
