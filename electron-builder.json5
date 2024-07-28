@@ -3,7 +3,7 @@
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "com.nabil.chouten",
   "asar": true,
-  "productName": "Chouten",
+  "productName": "chouten",
   "directories": {
     "output": "release/${version}"
   },
@@ -52,7 +52,10 @@
   },
   "linux": {
     "target": [
-      "AppImage"
+      "rpm",
+      "AppImage",
+      "deb",
+      "tar.gz"
     ],
     "artifactName": "${productName}-Linux-${version}.${ext}"
   }
