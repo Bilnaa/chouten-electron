@@ -44,7 +44,7 @@
         </div>
 
         <!-- Orphan Modules -->
-        <div class="repo-section orphan-section" :style="{ width: `${100 / (repos.length + 1)}%` }">
+        <div class="repo-section orphan-section" :style="{ width: `${100 / (repos.length + 1)}%` }" v-if="orphanModules.length > 0">
           <h4>Orphan Modules</h4>
           <div class="modules-grid">
             <div
@@ -70,8 +70,17 @@
     </div>
     <div class="pagination">
       <span
+        v-if="orphanModules.length > 0"
         v-for="(repo, index) in [...repos, { id: 'orphan' }]"
         :key="repo.id"
+        class="dot"
+        :class="{ active: index === currentRepoIndex }"
+        @click="scrollToRepo(index)"
+      ></span>
+      <span
+        v-else
+        v-for="(repo, index) in repos"
+        :key="repo.title"
         class="dot"
         :class="{ active: index === currentRepoIndex }"
         @click="scrollToRepo(index)"
