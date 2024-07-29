@@ -4,12 +4,13 @@ import fs from 'fs';
 import AdmZip from 'adm-zip';
 import axios from 'axios';
 import https from 'https';
+import Discord from './discord'
 
 
 const ModulesPath = path.join(app.getPath('userData'), 'Modules');
 
-
 export function setupIpcHandlers() {
+    let discord = new Discord();
     ipcMain.handle('install-repo', async (event, repoData: string) => {
         try {
           const repo = JSON.parse(repoData);
@@ -315,5 +316,7 @@ export function setupIpcHandlers() {
         });
       });
 
-      
+      ipcMain.handle('set-discord-presence', async (event, presence) => {
+        discord.setActivity(presence);
+      });
 }

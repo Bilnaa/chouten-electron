@@ -1,5 +1,5 @@
 <template>
-  <media-captions class="captions" />
+  <media-captions default-showing class="captions" />
 </template>
 
 <style scoped>
@@ -75,7 +75,6 @@
   display: inline-block;
   contain: content;
   border-radius: 2px;
-  backdrop-filter: blur(8px);
   padding: var(--cue-padding-y) var(--cue-padding-x);
   line-height: var(--cue-line-height);
   background-color: var(--cue-bg-color);
