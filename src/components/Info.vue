@@ -18,10 +18,10 @@
     <div class="main-content">
       <div class="metadata">
         <div class="tags">
+          <span class="tag">{{media.titles.primary}}</span>
+          <span class="tag"> {{ currentEpisodes.length + ' ' + (media.mediaType === 0 ? 'Episodes' : 'Chapters') }}</span>
           <span class="tag">{{ media.yearReleased }}</span>
-          <span class="tag">{{ getMediaType(media.mediaType) }}</span>
         </div>
-
         <div class="synopsis">
           <h2>Synopsis</h2>
           <p>{{ media.description }}</p>
@@ -94,14 +94,80 @@
 
 
 
-<script>
+<script lang="ts">
+import { useStore } from 'vuex';
+
+export type Titles = {
+  primary: string;
+  secondary?: string;
+};
+
+export enum Status {
+  COMPLETED,
+  CURRENT,
+  HIATUS,
+  NOT_RELEASED,
+  UNKNOWN,
+}
+
+export enum MediaType {
+  EPISODES, // Video
+  CHAPTERS, // Book
+  UNKNOWN,
+}
+
+export type InfoData = {
+  titles: Titles;
+  altTitles: string[];
+  description: string;
+  poster: string;
+  banner?: string;
+  status: Status;
+  rating: number;
+  yearReleased: number;
+  mediaType: MediaType;
+  seasons: SeasonData[];
+};
+
+export type SeasonData = {
+  name: string;
+  url: string;
+  selected?: boolean;
+};
+
+export type MediaList = {
+  title: string;
+  pagination: MediaPagination[];
+};
+
+export type MediaPagination = {
+  id: string;
+  title?: string;
+  items: MediaInfo[];
+};
+
+export type MediaInfo = {
+  url: string;
+  number: number;
+  thumbnail?: string;
+  title?: string;
+  description?: string;
+  indicator?: string;
+};
+
 export default {
+  setup() {
+    const store = useStore();
+    return {
+      store,
+    };
+  },
   data() {
     return {
       loading: true,
-      selectedCategory: '',
-      categories: [],
-      media: {},
+      selectedCategory: '' as SeasonData['name'],
+      categories: [] as MediaList[],
+      media: {} as InfoData,
       showSeasonModal: false,
       hasMultipleSeasons: false,
       currentSeasonUrl: '',
@@ -133,31 +199,26 @@ export default {
     }
   },
   methods: {
-    selectCategory(category) {
+    selectCategory(category = '') {
       this.selectedCategory = category;
-      this.currentPage = 0;  // Reset to the first page when category changes
+      this.currentPage = 0;  
       this.saveCurrentPage();
     },
     toggleSeasonModal() {
       this.showSeasonModal = !this.showSeasonModal;
     },
-    async selectSeason(season) {
+    async selectSeason(season : SeasonData) {
       this.media.seasons.forEach(s => s.selected = (s.name === season.name));
       this.currentSeasonUrl = season.url;
       await this.fetchEpisodes(season.url);
       this.toggleSeasonModal();
     },
-    getStatus(status) {
-      const statuses = ['Unknown', 'Ongoing', 'Completed', 'Cancelled', 'Upcoming'];
+    getStatus(status : Status) {
+      const statuses = ['Completed', 'Current', 'Hiatus', 'Not Released', 'Unknown'];
       return statuses[status] || 'Unknown';
     },
-    getMediaType(type) {
-      const types = ['TV', 'Movie', 'OVA', 'ONA', 'Special', 'Music'];
-      return types[type] || 'Unknown';
-    },
     async injectInstance() {
-      let activeModule = localStorage.getItem('activeModule');
-      activeModule = JSON.parse(activeModule);
+      let activeModule = this.store.state.activeModule;
       let modulePath = await window.ipcRenderer.invoke('get-module-path', activeModule.id);
       let code = modulePath.modulePath + '/code.js';
       let injectJs = await window.ipcRenderer.invoke('load-script', code);
@@ -169,15 +230,14 @@ export default {
         injectJs = await window.ipcRenderer.invoke('load-script', code);
       }
     },
-    async fetchData(url) {
+    async fetchData(url: string) {
       try {
         await this.injectInstance();
         const infoRes = await window.ipcRenderer.invoke('execute-script', `const instance = new source.default(); return instance.info("${url}")`);
         this.media = infoRes.result;
         this.media.description = this.media.description.replace(/<[^>]*>?/gm, '');
-        console.log('Media:', this.media);
         if(this.media.seasons.length > 0) {
-          this.currentSeasonUrl = this.media.seasons.find(season => season.selected).url;
+          this.currentSeasonUrl = this.media.seasons.find(season => season.selected)?.url ?? '';
           this.hasMultipleSeasons = this.media.seasons.length > 1;
         } else {
           this.currentSeasonUrl = url;
@@ -189,7 +249,7 @@ export default {
         this.loading = false;
       }
     },
-    async fetchEpisodes(url) {
+    async fetchEpisodes(url : string) {
       console.log('Fetching episodes for:', url);
       try {
         this.loading = true;
@@ -205,16 +265,16 @@ export default {
       }
     },
     saveCurrentPage() {
-      const currentPages = JSON.parse(localStorage.getItem('currentPages')) || {};
+      const currentPages = JSON.parse(localStorage.getItem('currentPages') as string) || {};
       let url = window.location.href;
       let page = this.currentPage;
       currentPages.push({url, page});
       localStorage.setItem('currentPages', JSON.stringify(currentPages));
     },
     restoreCurrentPage() {
-      const currentPages = JSON.parse(localStorage.getItem('currentPages')) || {};
+      const currentPages = JSON.parse(localStorage.getItem('currentPages') as string) || {};
       let url = window.location.href;
-      let page = currentPages.find(page => page.url === url);
+      let page = currentPages.find((page: { page : number, url: string; }) => page.url === url);
       if (page) {
         this.currentPage = page.page;
       }
@@ -230,10 +290,29 @@ export default {
         this.currentPage--;
         this.saveCurrentPage();
       }
-    }
+    },
   },
   beforeMount() {
     this.fetchData(this.url);
+    const interval = setInterval(() => {
+      if (!this.loading) {
+        const presence = {
+          details: `Browsing ${this.media.titles.primary}`,
+          startTimestamp: Date.now(),
+          largeImageKey: this.media.poster ? this.media.poster : 'icon',
+          largeImageText: this.media.titles.primary,
+          smallImageKey: 'icon',
+          smallImageText: 'Chouten',
+          buttons: [
+            { label: 'Get Chouten', url: 'https://github.com/Bilnaa/chouten-electron' },
+            { label: 'Join Discord', url: 'https://discord.gg/j5ETh7uSy6' },
+          ],
+          instance: false,
+        };
+        window.ipcRenderer.invoke('set-discord-presence', presence);
+        clearInterval(interval); 
+      } 
+    }, 1000);
   },
   mounted () {
     window.addEventListener('keydown', (event) => {
@@ -241,6 +320,7 @@ export default {
         this.toggleSeasonModal();
       }
     });
+    
   }
 }
 </script>

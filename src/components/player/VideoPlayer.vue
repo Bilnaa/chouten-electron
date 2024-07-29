@@ -3,7 +3,7 @@
     <div class="video-player-container">
       <media-player ref="mediaPlayer" viewType="video" streamType="on-demand" logLevel="warn" :crossOrigin="true"
         :playsInline="true" @provider-change="onProviderChange" :type="type" canAirPlay canChromecast
-        @controls-change="onControlsChange" storage="test" load="eager" @canPlay="onCanPlay">
+        @controls-change="onControlsChange" storage="local" load="eager" @canPlay="onCanPlay" captions="default-showing">
         <media-provider>
           <div class="top-bar" :style="{ visibility: showInterface ? 'visible' : 'hidden' }">
             <button class="back" @click="$router.back()">
@@ -12,7 +12,7 @@
             <button class="quality">
               <media-icon type="menu-vertical" />
               <div class="quality-dropdown">
-                <button v-for="quality in qualities" @click="changeQuality(quality)">{{ quality }}</button>
+                <button v-if="qualities.length !== 0" v-for="quality in qualities" @click="changeQuality(quality)">{{ quality }}</button>
               </div>
             </button>
           </div>
@@ -26,6 +26,9 @@
           </div>
           <media-poster :src="posterUrl" default="" class="vds-poster" />
           <source :src="streamUrl" />
+          <track v-for="(subtitle, index) in subtitles" :key="index" :src="subtitle.url" :srclang="subtitle.language"
+            :label="subtitle.language" :kind="subtitle.type === SubtitleType.VTT ? 'subtitles' : 'chapters'"
+            :default="index === 0" />
         </media-provider>
 
         <div class="vds-buffering-indicator">
@@ -61,6 +64,7 @@ import VideoLayout from './layouts/VideoLayout.vue';
 import {
   MediaPlayer, isHLSProvider, type MediaCanPlayEvent, type MediaProviderChangeEvent, type MediaControlsChangeEvent,
 } from 'vidstack';
+import { type Presence } from 'discord-rpc';
 import { ref, VideoHTMLAttributes } from 'vue';
 import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
 
@@ -113,7 +117,6 @@ export default {
       previews: [] as MediaPreview[],
       thumbnails: '',
       type: '',
-      isPlaying: false,
       currentTime: 0,
       duration: 0,
       currentQuality: '',
@@ -124,6 +127,7 @@ export default {
       error: false,
       errorMessage: 'An error occured',
       errorDetails: '',
+      SubtitleType,
     }
   },
   components: {
@@ -146,22 +150,6 @@ export default {
         (this.$refs.mediaPlayer as MediaPlayerElement).src = this.streams.find(stream => stream.file === this.streamUrl)?.file || '';
       }
     },
-    loadSubtitles() {
-      const player = this.$refs.mediaPlayer as MediaPlayerElement;
-      for (let i = 0; i < this.subtitles.length; i++) {
-        if (this.subtitles[i].language === 'Thumbnails') {
-          this.thumbnails = this.subtitles[i].url;
-          continue;
-        }
-        const track: TextTrackInit = {
-          src: this.subtitles[i].url,
-          label: this.subtitles[i].language,
-          kind: (this.subtitles[i].language === 'chapters' ? 'chapters' : 'subtitles') as TextTrackKind,
-          default: i === 0,
-        };
-        player.textTracks.add(track);
-      }
-    },
     onProviderChange(event: MediaProviderChangeEvent) {
       const provider = event.detail;
       if (isHLSProvider(provider)) {
@@ -172,7 +160,6 @@ export default {
     },
     onCanPlay(event: MediaCanPlayEvent) {
       if (event.detail) {
-        this.loadSubtitles();
         const player = this.$refs.mediaPlayer as HTMLVideoElement;
         player.play();
       }
@@ -196,7 +183,6 @@ export default {
       } else {
         player.pause();
       }
-      this.isPlaying = !player.paused;
     },
     toggleSettings() {
       this.showSettings = !this.showSettings;
@@ -222,15 +208,24 @@ export default {
       const percent = (event.target as HTMLInputElement).value;
       player.currentTime = (parseFloat(percent) / 100) * this.duration;
     },
-    formatTime(time: number) {
-      const minutes = Math.floor(time / 60);
-      const seconds = Math.floor(time % 60);
-      return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    },
+    padZero(value: number): string {
+            return value.toString().padStart(2, "0");
+        },
+    formatTime(time: number | string): string {
+            const seconds = Number(time);
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const remainingSeconds = seconds % 60;
+
+            const formattedHours = this.padZero(Math.floor(hours));
+            const formattedMinutes = this.padZero(Math.floor(minutes));
+            const formattedSeconds = this.padZero(Math.floor(remainingSeconds));
+
+            return `${formattedHours}:${formattedMinutes}:${formattedSeconds}.000`;
+        },
     updateTime() {
-      const player = this.$refs.mediaPlayer as HTMLVideoElement;
-      this.currentTime = player.currentTime;
-      this.duration = player.duration;
+      const player = this.$refs.mediaPlayer as MediaPlayerElement
+      console.log(player.currentTime, player.duration);
     },
     async injectInstance() {
       const store = useStore();
@@ -260,9 +255,56 @@ export default {
     handleError(e: Error) {
       this.error = true;
       this.errorDetails = e.message;
+    },
+    updateDiscordPresence(state: string) {
+      const { episodeTitle, title } = this;
+      const player = this.$refs.mediaPlayer as MediaPlayerElement;
+      
+      const presence: Presence = {
+        details: episodeTitle,
+        state: `${state} ${title}`,
+        largeImageKey: 'icon',
+        largeImageText: 'Chouten',
+        buttons: [
+          { label: 'Get Chouten', url: 'https://github.com/Bilnaa/chouten-electron' },
+          { label: 'Join Discord', url: 'https://discord.gg/j5ETh7uSy6' },
+        ],
+        instance: false,
+      };
+
+      if (state === 'Watching') {
+        presence.startTimestamp = Date.now();
+        presence.endTimestamp = Date.now() + (player.duration - player.currentTime) * 1000;
+      }
+
+      window.ipcRenderer.invoke('set-discord-presence', presence);
+    },
+    onPause() {
+      this.updateDiscordPresence('Paused');
+    },
+    onPlay() {
+      this.updateDiscordPresence('Watching');
+    },
+    onTimeUpdate() {
+      this.updateDiscordPresence('Watching');
+    },
+    convertToWebVTT(data: { start: number; end: number; title: string }[]): string {
+        let webVTT = "WEBVTT\n\n";
+    
+        for (let i = 0; i < data.length; i++) {
+            const entry = data[i];
+            const start = this.formatTime(entry?.start ?? 0);
+            const end = this.formatTime(entry?.end ?? 0);
+    
+            webVTT += `${start} --> ${end}\n`;
+            webVTT += `${entry?.title ?? ""}\n`;
+            webVTT += "\n";
+        }
+        return webVTT;
     }
   },
   async mounted() {
+    this.updateDiscordPresence('Waiting to play');
     await this.injectInstance();
     const sourcesRes = await this.executeJs(`const instance = new source.default(); return instance.streams("${this.episodeId}")`);
     if (sourcesRes.success === true) {
@@ -274,26 +316,28 @@ export default {
       this.streams = res.streams;
       this.qualities = this.streams.filter(stream => stream.type === 0).map(stream => stream.quality);
       this.subtitles = res.subtitles;
+      this.thumbnails = this.subtitles.find(sub => sub.language.toLowerCase() === 'thumbnails')?.url || '';
+      this.subtitles = this.subtitles.filter(sub => sub.language.toLowerCase() !== 'thumbnails');
       this.skips = res.skips;
       this.previews = res.previews;
     } else {
       this.handleError(new Error(sourcesRes.error));
     }
-
     if (this.skips.length > 0) {
-      let begin = 'WEBVTT\n\n';
-      for (let i = 0; i < this.skips.length; i++) {
-        begin += `${this.skips[i].start}.000 --> ${this.skips[i].end}.000\n${this.skips[i].title}\n\n`;
-      }
-      const blob = new Blob([begin], { type: 'text/vtt' });
+      const webvtt = this.convertToWebVTT(this.skips);
+      const blob = new Blob([webvtt], { type: 'text/vtt' });
       const url = URL.createObjectURL(blob);
-      this.subtitles.push({ url: url, language: 'chapters', type: SubtitleType.VTT });
+      (this.$refs.mediaPlayer as MediaPlayerElement).textTracks.add({
+        src: url,
+        label: 'Chapters',
+        kind: 'chapters',
+        default: true,
+      });
     }
 
     this.streamUrl = this.streams.find(stream => stream.quality === 'auto' || stream.quality === 'default')?.file || this.streams[0].file;
     this.currentQuality = this.streams.find(stream => stream.quality === 'auto' || stream.quality === 'default')?.quality || this.streams[0].quality;
     this.loadStream();
-    this.loadSubtitles();
     if ((this.streams[0].type === MediaDataType.HLS) && Hls.isSupported() || (this.$refs.mediaPlayer as HTMLVideoElement).canPlayType('application/vnd.apple.mpegurl')) {
       this.type = 'application/x-mpegURL';
       var hls = new Hls();
@@ -302,18 +346,26 @@ export default {
       (this.$refs.mediaPlayer as MediaPlayerElement).src = this.streamUrl;
     } else {
       this.type = 'video/mp4';
-    }
-    console.log(this.type);
+    }   
+
     const player = this.$refs.mediaPlayer as MediaPlayerElement;
-    player.addEventListener('timeupdate', this.updateTime);
-    player.addEventListener('play', () => this.isPlaying = true);
-    player.addEventListener('pause', () => this.isPlaying = false);
+    player.addEventListener('timeupdate', this.onTimeUpdate);
+    player.addEventListener('seeking', this.onTimeUpdate);
+    player.addEventListener('play', this.onPlay);
+    player.addEventListener('pause', this.onPause);
   },
   beforeUnmount() {
     const player = this.$refs.mediaPlayer as MediaPlayerElement;
     if (player) {
+      player.removeEventListener('timeupdate', this.onTimeUpdate);
+      player.removeEventListener('seeking', this.onTimeUpdate);
+      player.removeEventListener('play', this.onPlay);
+      player.removeEventListener('pause', this.onPause);
       player.destroy();
     }
+  },
+  unmounted() {
+    this.updateDiscordPresence('Leaving');
   }
 }
 </script>

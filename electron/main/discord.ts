@@ -1,28 +1,38 @@
-import * as RPC from 'discord-rpc'
+import * as RPC from "discord-rpc";
 
-const clientId = '1148271205569286154';
+const clientId = "1148271205569286154";
 
 export default class Discord {
-    defaultActivity: RPC.Presence = { 
-        startTimestamp: new Date(),
-    largeImageKey: 'icon',
+  defaultActivity: RPC.Presence = {
+    startTimestamp: new Date(),
+    largeImageKey: "icon",
     instance: true,
-    }
-    discord = new RPC.Client({ transport: 'ipc' })
-    /** @type {Discord['defaultStatus'] | undefined} */
-    allowDiscordDetails
-    /** @type {Discord['defaultStatus'] | undefined} */
-    cachedPresence
-    constructor() {
-        this.discord.on('ready', () => {
-            console.log('Discord client ready')
-            this.discord.setActivity(this.cachedPresence || this.defaultActivity)
-        }) 
-        this.login()
-    }
-    login() {
-        this.discord.login({ clientId }).catch(() => {
-            setTimeout(() => this.discord.login({ clientId }), 5000).unref()
-        })
-    }
+  };
+  discord = new RPC.Client({ transport: "ipc" });
+  /** @type {Discord['defaultStatus'] | undefined} */
+  allowDiscordDetails;
+  /** @type {Discord['defaultStatus'] | undefined} */
+  cachedPresence;
+  constructor() {
+    this.discord.on("ready", () => {
+      console.log("Discord client ready");
+      this.discord.setActivity(this.cachedPresence || this.defaultActivity);
+    });
+    this.login();
+  }
+
+  login() {
+    this.discord.login({ clientId }).catch(() => {
+      setTimeout(() => this.discord.login({ clientId }), 5000).unref();
+    });
+  }
+  
+  disable() {
+    this.discord.clearActivity();
+  }
+
+  setActivity(presence: RPC.Presence) {
+    this.cachedPresence = presence;
+    this.discord.setActivity(presence);
+  }
 }

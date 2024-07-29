@@ -4,14 +4,8 @@
       <SearchButton />
     </div>
     <div class="main-content">
-      <component
-        v-for="(item, index) in discover"
-        :key="index"
-        :is="getComponent(item.type)"
-        v-bind="item"
-        :data="item.data"
-        :use="use(item.type)"
-      />
+      <component v-for="(item, index) in discover" :key="index" :is="getComponent(item.type)" v-bind="item"
+        :data="item.data" :use="use(item.type)" />
     </div>
   </div>
 </template>
@@ -24,6 +18,8 @@ import Section from "./Section.vue";
 import SearchButton from "./SearchButton.vue";
 import { useStore } from "vuex";
 import store from "../store";
+import { type Presence } from 'discord-rpc';
+
 
 type HexColor = `#${string}`;
 
@@ -95,14 +91,14 @@ export default defineComponent({
       let injectJs = await window.ipcRenderer.invoke("load-script", code);
       while (injectJs.success === false) {
         console.log(injectJs.error);
-        if (injectJs.error === "ENOENT: no such file or directory") {
+        if (injectJs.error.includes("ENOENT: no such file or directory")) {
           console.error("No code.js file found in module directory");
           break;
         }
         injectJs = await window.ipcRenderer.invoke("load-script", code);
       }
     },
-    async executeJs(code : string) {
+    async executeJs(code: string) {
       let executedJs = await window.ipcRenderer.invoke("execute-script", code);
       if (executedJs.success) {
         return executedJs.result;
@@ -120,7 +116,7 @@ export default defineComponent({
           return Section;
       }
     },
-    use (type: DiscoverTypes) {
+    use(type: DiscoverTypes) {
       switch (type) {
         case DiscoverTypes.LIST:
           return "NumberedItem";
@@ -148,14 +144,30 @@ export default defineComponent({
         }
       }
     },
+    updateDiscordPresence() {
+      const presence: Presence = {
+        details: 'Browsing Discover Page',
+        state: 'Chouten',
+        startTimestamp: Date.now(),
+        largeImageKey: 'icon',
+        largeImageText: 'Chouten',
+        buttons: [
+          { label: 'Get Chouten', url: 'https://github.com/Bilnaa/chouten-electron' },
+          { label: 'Join Discord', url: 'https://discord.gg/j5ETh7uSy6' },
+        ],
+        instance: false,
+      };
+      window.ipcRenderer.invoke('set-discord-presence', presence);
+    },
   },
   mounted: async function () {
     console.log("Home mounted");
-    if(!store.state.activeModule){
+    if (!store.state.activeModule) {
       console.error("No active module selected");
       return;
     }
     await this.loadDiscover();
+    this.updateDiscordPresence();
   },
   watch: {
     'store.getters.activeModule': {
