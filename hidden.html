@@ -7,66 +7,53 @@
   <webview src="about:blank" style="width:100%; height:100%;"></webview>
 </body>
 <script>
-  // async request function where the headers and the body can be optionally passed
-  async function request(url, method, headers = {}, body = null) {
-    const response = await fetch(url, {
-      method,
-      body,
-      mode : 'no-cors',
-      headers: {
-        'User-Agent': '' ? headers['User-Agent'] : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
-        ...headers
-      }
-    });
-   
-    let htmlBody = await response.text();
-  
-   if (!response.ok) {
-     throw new Error(`HTTP error! status: ${url, response.status, response.statusText}`);
-   } else if (htmlBody.includes('WAF')) {
-      const webview = document.querySelector('webview');
-      webview.src = url;
-      let html = '';
-      webview.addEventListener('dom-ready', async () => {
-        const response = await webview.executeJavaScript(`
-          new XMLSerializer().serializeToString(document)
-        `);
-        html = response;
-      });
-      webview.addEventListener('did-fail-load', async () => {
-        const response = await webview.executeJavaScript(`
-          new XMLSerializer().serializeToString(document)
-        `);
-        html = response;
-      });
-      htmlBody = html;
+class Response {
+    constructor(statusCode, body, contentType, headers) {
+        this.statusCode = statusCode;
+        this.body = body;
+        this.contentType = contentType;
+        this.headers = headers || {};
     }
-    return {
-      statusCode: response.status,
-      body: htmlBody,
-      headers: response.headers,
-    }
-  }
 
-  async function callWebview(url) {
-    // cloudflare bypass with window electron
+    json() {
+        return JSON.parse(this.body);
+    }
+}
+</script>
+<script>
+  async function request(url, method, headers = {}, body = null) {
+    const fetchResp = await fetch(url, {
+        method,
+        headers,
+        body
+    });
+
+    const responseHeaders = {};
+    fetchResp.headers.forEach((value, key) => {
+        responseHeaders[key] = value;
+    });
+
+    return new Response(
+        fetchResp.status,
+        await fetchResp.text(),
+        fetchResp.headers.get("content-type") || '',
+        responseHeaders
+    );
+};
+
+async function callWebview(url) {
     const webview = document.querySelector('webview');
     webview.src = url;
-    let html = '';
-    webview.addEventListener('dom-ready', async () => {
-      const response = await webview.executeJavaScript(`
-        new XMLSerializer().serializeToString(document)
-      `);
-      html = response;
+    await new Promise(resolve => {
+        webview.addEventListener('did-stop-loading', resolve);
     });
-    webview.addEventListener('did-fail-load', async () => {
-      const response = await webview.executeJavaScript(`
-        new XMLSerializer().serializeToString(document)
-      `);
-      html = response;
-    });
-  }
-
-
+    const content = await webview.executeJavaScript('document.documentElement.outerHTML');
+    return new Response(
+        200,
+        content,
+        'text/html',
+        {}
+    );
+}
 </script>
 </html>

@@ -5,7 +5,6 @@ import path from 'node:path'
 import os from 'node:os'
 import fs from 'fs'
 import { setupIpcHandlers } from './ipcHandlers';
-import Discord from './discord'
 
 
 const require = createRequire(import.meta.url)
@@ -83,15 +82,15 @@ ipcMain.handle('load-script', async (event, scriptPath) => {
 
 ipcMain.handle('execute-script', async (event, scriptContent) => {
   if (hiddenWin) {
+    let result;
     try {
-      const result = await hiddenWin.webContents.executeJavaScript(`(async () => { ${scriptContent} })()`);
+      result = await hiddenWin.webContents.executeJavaScript(`(async () => { ${scriptContent} })()`);
       return { success: true, result };
     } catch (error) {
-      console.error('Error executing script:', error);
-      return { success: false, error: error };
+      throw new Error(error);
     }
   } else {
-    return { success: false, error: 'Hidden window not available' };
+    throw new Error('Hidden window not available');
   }
 });
 
@@ -193,7 +192,6 @@ app.whenReady().then(() => {
   createDirectories();
   createWindow();
   setupIpcHandlers();
-  new Discord();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })

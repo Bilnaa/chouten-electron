@@ -38,7 +38,7 @@
       </media-player>
     </div>
   </div>
-  <div v-else class="error-message">
+  <div v-else class="error-message" style="z-index: 999999;">
     <alert-circle-outline class="icon" />
     <p class="error-title">{{ errorMessage }}</p>
     <p class="error-details">{{ errorDetails }}</p>
@@ -102,6 +102,16 @@ type MediaItem = {
 type MediaPreview = {
   img: string;
   time: number;
+};
+
+export type SourceData = {
+  name: string;
+  url: string;
+};
+
+export type SourceList = {
+  title: string;
+  sources: SourceData[];
 };
 
 export default {
@@ -243,25 +253,24 @@ export default {
       }
     },
     async executeJs(code: string) {
+      let executedJs;
       try {
-        let executedJs = await window.ipcRenderer.invoke('execute-script', code);
-        if (executedJs.success) {
-          return executedJs
-        }
+        executedJs = await window.ipcRenderer.invoke('execute-script', code);
       } catch (error) {
-        console.error(error);
+        throw new Error((error as Error).message);
       }
+      return executedJs
     },
-    handleError(e: Error) {
+    handleError(e: unknown) {
       this.error = true;
-      this.errorDetails = e.message;
+      this.errorDetails = (e as Error).message.replace("Error invoking remote method 'execute-script':" , "");
     },
     updateDiscordPresence(state: string) {
       const { episodeTitle, title } = this;
       const player = this.$refs.mediaPlayer as MediaPlayerElement;
       
       const presence: Presence = {
-        details: episodeTitle,
+        details: episodeTitle ?? 'No episode title',
         state: `${state} ${title}`,
         largeImageKey: 'icon',
         largeImageText: 'Chouten',
@@ -306,23 +315,41 @@ export default {
   async mounted() {
     this.updateDiscordPresence('Waiting to play');
     await this.injectInstance();
-    const sourcesRes = await this.executeJs(`const instance = new source.default(); return instance.streams("${this.episodeId}")`);
-    if (sourcesRes.success === true) {
-      let res = sourcesRes.result;
-      if (res.streams.length === 0) {
-        this.handleError(new Error('No streams found, please check with the module developer if this behavior is expected'));
-        return;
-      }
-      this.streams = res.streams;
-      this.qualities = this.streams.filter(stream => stream.type === 0).map(stream => stream.quality);
-      this.subtitles = res.subtitles;
-      this.thumbnails = this.subtitles.find(sub => sub.language.toLowerCase() === 'thumbnails')?.url || '';
-      this.subtitles = this.subtitles.filter(sub => sub.language.toLowerCase() !== 'thumbnails');
-      this.skips = res.skips;
-      this.previews = res.previews;
-    } else {
-      this.handleError(new Error(sourcesRes.error));
+    console.log(`const instance = new source.default(); return instance.streams("${this.episodeId}")`)
+    let sourcesRes;
+    try {
+      sourcesRes = await this.executeJs(`const instance = new source.default(); return instance.sources("${this.episodeId}")`);
+    } catch (error) {
+      return;
     }
+  let error;
+  for(const result of sourcesRes.result as SourceList[]){
+      let title = result.title;
+      let sources = result.sources;
+      for(let x = 0; x < sources.length; x++){
+        let source = sources[x];
+        console.log(source.name);
+        let resStreams;
+        try {
+        console.log(`const instance = new source.default(); return instance.streams("${source.url}")`)
+        resStreams = await this.executeJs(`const instance = new source.default(); return instance.streams("${source.url}")`);
+        } catch (error) {
+          error = error;
+          continue;
+        }
+        this.streams.push(...resStreams.result.streams);
+        this.qualities = this.streams.filter(stream => stream.type === 0).map(stream => stream.quality);
+        this.subtitles = resStreams.result.subtitles;
+        this.thumbnails = this.subtitles.find(sub => sub.language.toLowerCase() === 'thumbnails')?.url || '';
+        this.subtitles = this.subtitles.filter(sub => sub.language.toLowerCase() !== 'thumbnails');
+        this.skips = resStreams.result.skips;
+      }
+    }
+    if(this.streams.length === 0){
+      this.handleError(error);
+      return;
+    }
+
     if (this.skips.length > 0) {
       const webvtt = this.convertToWebVTT(this.skips);
       const blob = new Blob([webvtt], { type: 'text/vtt' });
