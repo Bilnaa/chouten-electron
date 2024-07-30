@@ -30,7 +30,7 @@
 
       <div class="episodes-section">
         <div class="season-selector" @click="toggleSeasonModal" v-if="hasMultipleSeasons">
-          <h2>{{ currentSeason.name }}</h2>
+          <h2>{{(currentSeason as SeasonData).name }}</h2>
           <p>{{ currentEpisodes.length }} Episodes</p>
           <div class="chevron-right">›</div>
         </div>
