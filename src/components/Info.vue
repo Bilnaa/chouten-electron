@@ -54,16 +54,15 @@
 
         <transition-group class="episodes-list" name="episode-fade" tag="div">
           <router-link 
-            :to="'/streams?episodeId='+episode.url + '&episodeTitle='+`${episode.title}` + '&title=' +  media.titles.primary" 
+            :to="'/streams?episodeId='+episode.url + '&episodeTitle='+`${ episode.title == '' ? 'Episode ' + episode.number : episode.title}` + '&title=' +  media.titles.primary" 
             v-for="episode in paginatedEpisodes" 
             :key="episode.number" 
             class="episode"
           >
             <div class="episode-info">
-              <h3>{{ episode.title }}</h3>
+              <h3>{{ episode.title == '' ? 'Episode ' + episode.number : episode.title }}</h3>
               <p>Episode {{ episode.number }}</p>
             </div>
-            <span class="episode-duration">{{ episode.duration || 'N/A' }}</span>
           </router-link>
         </transition-group>
       </div>
