@@ -22,23 +22,23 @@
             </div>
         </div>
 
-        <div class="image-container" :class="[currentStyle.class]" @wheel="handleWheel" ref="imageContainer">
-            <template v-if="currentStyle.value === 'single'">
+        <div class="image-container" :class="[currentStyle?.class]" @wheel="handleWheel" ref="imageContainer">
+            <template v-if="currentStyle?.value === 'single'">
                 <img :src="visibleImages[0]" :alt="`Page ${currentPage + 1}`" :imageStyle="imageStyle" />
             </template>
-            <template v-else-if="currentStyle.value === 'double'">
+            <template v-else-if="currentStyle?.value === 'double'">
                 <img v-for="(image, index) in visibleImages" :key="index" :src="image"
                     :alt="`Page ${currentPage * 2 + index + 1}`" :imageStyle="imageStyle" />
             </template>
-            <template v-else-if="currentStyle.value === 'continuous' || currentStyle.value === 'webtoon'">
-                <div :class="currentStyle.value">
+            <template v-else-if="currentStyle?.value === 'continuous' || currentStyle?.value === 'webtoon'">
+                <div :class="currentStyle?.value">
                     <img v-for="(image, index) in images" :key="index" :src="image" :alt="`Page ${index + 1}`"
                         :imageStyle="imageStyle" />
                 </div>
             </template>
         </div>
 
-        <div class="navigation" v-if="currentStyle.value !== 'continuous' && currentStyle.value !== 'webtoon'">
+        <div class="navigation" v-if="currentStyle?.value !== 'continuous' && currentStyle?.value !== 'webtoon'">
             <button @click="previousPage" :disabled="currentPage === 0" class="icon-button">
                 <ArrowLeftIcon :size="24" />
             </button>
@@ -87,6 +87,7 @@ import CogIcon from 'vue-material-design-icons/Cog.vue';
 import FullscreenIcon from 'vue-material-design-icons/Fullscreen.vue';
 import ArrowLeftIcon from 'vue-material-design-icons/ArrowLeft.vue';
 import ArrowRightIcon from 'vue-material-design-icons/ArrowRight.vue';
+import { Presence } from 'discord-rpc';
 
 export default {
     components: {
@@ -126,16 +127,16 @@ export default {
         });
 
         const totalPages = computed(() => {
-            if (currentStyle.value.value === 'continuous' || currentStyle.value.value === 'webtoon') {
+            if (currentStyle?.value?.value === 'continuous' || currentStyle?.value?.value === 'webtoon') {
                 return images.value.length;
             }
-            return currentStyle.value.value === 'double' ? Math.ceil(images.value.length / 2) : images.value.length;
+            return currentStyle?.value?.value === 'double' ? Math.ceil(images.value.length / 2) : images.value.length;
         });
 
         const visibleImages = computed(() => {
-            if (currentStyle.value.value === 'single') {
+            if (currentStyle && currentStyle.value && currentStyle.value.value === 'single') {
                 return [images.value[currentPage.value]];
-            } else if (currentStyle.value.value === 'double') {
+            } else if (currentStyle?.value?.value === 'double') {
                 const startIndex = currentPage.value * 2;
                 return images.value.slice(startIndex, startIndex + 2);
             }
@@ -162,7 +163,7 @@ export default {
             }
         }
 
-        function handleKeyDown(event) {
+        function handleKeyDown(event : KeyboardEvent) {
             const isRightToLeft = readingDirection.value === 'rtl';
             switch (event.key) {
                 case 'ArrowRight':
@@ -172,15 +173,15 @@ export default {
                     isRightToLeft ? nextPage() : previousPage();
                     break;
                 case 'ArrowDown':
-                    if (currentStyle.value.value === 'continuous' || currentStyle.value.value === 'webtoon') {
-                        imageContainer.value.scrollTop += window.innerHeight / 2;
+                    if (currentStyle?.value?.value === 'continuous' || currentStyle?.value?.value === 'webtoon') {
+                        (imageContainer!.value! as HTMLElement).scrollTop += window.innerHeight / 2;
                     } else {
                         nextPage();
                     }
                     break;
                 case 'ArrowUp':
-                    if (currentStyle.value.value === 'continuous' || currentStyle.value.value === 'webtoon') {
-                        imageContainer.value.scrollTop -= window.innerHeight / 2;
+                    if (currentStyle?.value?.value === 'continuous' || currentStyle?.value?.value === 'webtoon') {
+                        (imageContainer!.value! as HTMLElement).scrollTop -= window.innerHeight / 2;
                     } else {
                         previousPage();
                     }
@@ -188,11 +189,11 @@ export default {
             }
         }
 
-        function handleWheel(event) {
+        function handleWheel(event : WheelEvent) {
             if ((event.ctrlKey || event.metaKey) && event.deltaY !== 0) {
                 event.preventDefault();
                 adjustZoom(event.deltaY > 0 ? -0.1 : 0.1);
-            } else if (currentStyle.value.value !== 'continuous' && currentStyle.value.value !== 'webtoon') {
+            } else if (currentStyle?.value?.value !== 'continuous' && currentStyle?.value?.value !== 'webtoon') {
                 event.preventDefault();
                 const scrollThreshold = 100; // Adjust this value to change scroll sensitivity
                 scrollAccumulator.value += event.deltaY;
@@ -207,7 +208,7 @@ export default {
             }
         }
 
-        function adjustZoom(delta) {
+        function adjustZoom(delta : number) {
             zoomLevel.value = Math.max(0.5, Math.min(3, zoomLevel.value + delta));
         }
 
@@ -221,7 +222,7 @@ export default {
             }
         }
 
-        function goToPage(index) {
+        function goToPage(index : number) {
             currentPage.value = index;
         }
 
@@ -253,7 +254,7 @@ export default {
             return executedJs
         }
 
-        async function fetchPages(episodeId) {
+        async function fetchPages(episodeId : string) {
             let pages = await executeJs(`const instance = new source.default(); return instance.pages("${episodeId}")`);
             if (pages.success) {
                 return pages.result;
@@ -294,7 +295,7 @@ export default {
                 isFullscreen.value = !!document.fullscreenElement;
             });
             if (imageContainer.value) {
-                imageContainer.value.classList.toggle('rtl', readingDirection.value === 'rtl');
+                (imageContainer.value as HTMLElement).classList.toggle('rtl', readingDirection.value === 'rtl');
             }
             updateDiscordPresence('Reading');
         });
@@ -308,7 +309,7 @@ export default {
                 currentPage.value = 0;
                 nextTick(() => {
                     if (imageContainer.value) {
-                        imageContainer.value.scrollTop = 0;
+                        (imageContainer.value as HTMLElement).scrollTop = 0;
                     }
                 });
             }
@@ -316,7 +317,14 @@ export default {
 
         watch(readingDirection, (newDirection) => {
             if (imageContainer.value) {
-                imageContainer.value.classList.toggle('rtl', newDirection === 'rtl');
+                (imageContainer.value as HTMLElement).classList.toggle('rtl', newDirection === 'rtl');
+            }
+        });
+
+        onUnmounted(() => {
+            updateDiscordPresence('Leaving');
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
             }
         });
 
@@ -483,7 +491,7 @@ export default {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: #1a1a1a;
+    background-color: #0C0C0C;
     z-index: 9999;
 }
 
