@@ -284,38 +284,6 @@ export function setupIpcHandlers() {
         return { success: false, error: 'Icon not found' };
       });
 
-      ipcMain.handle('fetch-stream', async (event, url) => {
-        return new Promise((resolve, reject) => {
-          https.get(url, (response) => {
-            let data = [];
-            response.on('data', (chunk) => {
-              data.push(chunk);
-            });
-            response.on('end', () => {
-              resolve(Buffer.concat(data));
-            });
-          }).on('error', (err) => {
-            reject(err);
-          });
-        });
-      });
-      
-      ipcMain.handle('fetch-subtitles', async (event, url) => {
-        return new Promise((resolve, reject) => {
-          https.get(url, (response) => {
-            let data = '';
-            response.on('data', (chunk) => {
-              data += chunk;
-            });
-            response.on('end', () => {
-              resolve(data);
-            });
-          }).on('error', (err) => {
-            reject(err);
-          });
-        });
-      });
-
       ipcMain.handle('set-discord-presence', async (event, presence) => {
         discord.setActivity(presence);
       });
