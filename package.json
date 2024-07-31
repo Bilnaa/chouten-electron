@@ -22,7 +22,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build && electron-builder",
-    "publish": "vue-tsc --noEmit && vite build && electron-builder -p onTag",
+    "publish": "vue-tsc --noEmit && vite build && electron-builder -p always",
     "preview": "vite preview"
   },
   "devDependencies": {
