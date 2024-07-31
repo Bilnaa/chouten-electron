@@ -33,7 +33,7 @@
     background-color: #0c0c0c;
     padding: 20px;
     border-radius: 10px;
-    min-width: 50%;
+    width: 55%;
     max-height: 80%;
     overflow-y: auto;
   }
