@@ -65,7 +65,7 @@ import {
   MediaPlayer, isHLSProvider, type MediaCanPlayEvent, type MediaProviderChangeEvent, type MediaControlsChangeEvent,
 } from 'vidstack';
 import { type Presence } from 'discord-rpc';
-import { ref, VideoHTMLAttributes } from 'vue';
+import { ref } from 'vue';
 import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
 
 const mediaPlayer = ref<MediaPlayerElement | null>(null);

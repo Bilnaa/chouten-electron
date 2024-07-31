@@ -7,19 +7,20 @@
       <div class="content">
         <img :src="media.poster" alt="Cover" class="cover-image" />
         <div class="title-area">
-          <p class="secondary-title">{{ media.titles.secondary}}</p>
+          <p class="secondary-title">{{ media.titles.secondary }}</p>
           <h1 class="primary-title">{{ media.titles.primary }}</h1>
           <p class="status">{{ getStatus(media.status) }}</p>
         </div>
-        <div class="rating">{{ media.rating.toFixed(1) }}</div>
+        <div class="rating" v-if="media.rating !== null">{{ media.rating.toFixed(1) }}</div>
       </div>
     </div>
 
     <div class="main-content">
       <div class="metadata">
         <div class="tags">
-          <span class="tag">{{media.titles.primary}}</span>
-          <span class="tag"> {{ currentEpisodes.length + ' ' + (media.mediaType === 0 ? 'Episodes' : 'Chapters') }}</span>
+          <span class="tag">{{ media.titles.primary }}</span>
+          <span class="tag"> {{ currentEpisodes.length + ' ' + (media.mediaType === 0 ? 'Episodes' : 'Chapters')
+            }}</span>
           <span class="tag">{{ media.yearReleased }}</span>
         </div>
         <div class="synopsis">
@@ -28,20 +29,16 @@
         </div>
       </div>
 
-      <div class="episodes-section">
+      <div class="episodes-section" v-if="categories.length > 0">
         <div class="season-selector" @click="toggleSeasonModal" v-if="hasMultipleSeasons">
-          <h2>{{(currentSeason as SeasonData).name }}</h2>
+          <h2>{{ (currentSeason as SeasonData).name }}</h2>
           <p>{{ currentEpisodes.length }} Episodes</p>
           <div class="chevron-right">›</div>
         </div>
 
         <div class="category-selector">
-          <button 
-            v-for="category in categories" 
-            :key="category.title"
-            @click="selectCategory(category.title)"
-            :class="{ active: selectedCategory === category.title }"
-          >
+          <button v-for="category in categories" :key="category.title" @click="selectCategory(category.title)"
+            :class="{ active: selectedCategory === category.title }">
             {{ category.title }}
           </button>
         </div>
@@ -53,18 +50,29 @@
         </div>
 
         <transition-group class="episodes-list" name="episode-fade" tag="div">
-          <router-link 
-            :to="'/streams?episodeId='+episode.url + '&episodeTitle='+`${ episode.title == '' ? 'Episode ' + episode.number : episode.title}` + '&title=' +  media.titles.primary" 
-            v-for="episode in paginatedEpisodes" 
-            :key="episode.number" 
-            class="episode"
-          >
+          <router-link v-if="!isChaptersModule"
+            :to="'/streams?episodeId=' + episode.url + '&episodeTitle=' + `${episode.title == '' ? 'Episode ' + episode.number : episode.title}` + '&title=' + media.titles.primary"
+            v-for="episode in paginatedEpisodes" :key="episode.number" class="episode">
             <div class="episode-info">
               <h3>{{ episode.title == '' ? 'Episode ' + episode.number : episode.title }}</h3>
               <p>Episode {{ episode.number }}</p>
             </div>
           </router-link>
+          <router-link v-if="isChaptersModule"
+            :to="'/reader?episodeId=' + episode.url + '&episodeTitle=' + `${episode.title == '' ? 'Episode ' + episode.number : episode.title}` + '&title=' + media.titles.primary"
+            v-for="episode in paginatedEpisodes" :key="episode.number" class="episode">
+            <div class="episode-info">
+              <h3>{{ episode.title == '' ? 'Chapter' + episode.number : episode.title }}</h3>
+              <p>Chapter {{ episode.number }}</p>
+            </div>
+          </router-link>
         </transition-group>
+      </div>
+      <div class="episodes-section" v-else>
+        <div class="no-episodes-message">
+          <h3>No episodes found</h3>
+          <p>There are no episodes available for this media</p>
+        </div>
       </div>
     </div>
 
@@ -73,10 +81,8 @@
         <transition name="modal-scale">
           <div v-if="showSeasonModal" class="season-modal-content">
             <transition-group name="list-complete" tag="div">
-              <h2 v-for="season in media.seasons" 
-                  :key="season.name" 
-                  @click="selectSeason(season)"
-                  :class="{ 'selected': season.selected }">
+              <h2 v-for="season in media.seasons" :key="season.name" @click="selectSeason(season)"
+                :class="{ 'selected': season.selected }">
                 {{ season.name }}
               </h2>
             </transition-group>
@@ -172,6 +178,7 @@ export default {
       currentSeasonUrl: '',
       currentPage: 0,  // Current page of episodes
       episodesPerPage: 100,  // Number of episodes per page
+      isChaptersModule: false,
     }
   },
   props: {
@@ -200,19 +207,19 @@ export default {
   methods: {
     selectCategory(category = '') {
       this.selectedCategory = category;
-      this.currentPage = 0;  
+      this.currentPage = 0;
       this.saveCurrentPage();
     },
     toggleSeasonModal() {
       this.showSeasonModal = !this.showSeasonModal;
     },
-    async selectSeason(season : SeasonData) {
+    async selectSeason(season: SeasonData) {
       this.media.seasons.forEach(s => s.selected = (s.name === season.name));
       this.currentSeasonUrl = season.url;
       await this.fetchEpisodes(season.url);
       this.toggleSeasonModal();
     },
-    getStatus(status : Status) {
+    getStatus(status: Status) {
       const statuses = ['Completed', 'Current', 'Hiatus', 'Not Released', 'Unknown'];
       return statuses[status] || 'Unknown';
     },
@@ -229,13 +236,24 @@ export default {
         injectJs = await window.ipcRenderer.invoke('load-script', code);
       }
     },
+    async moduleType() {
+      let instance = { success: false, result: '' };
+      try {
+        instance = await window.ipcRenderer.invoke('execute-script', 'const instance = new source.default();return instance.pages.toString()');
+      } catch (error) {
+        this.isChaptersModule = false;
+      }
+      if (instance.success && instance.result.includes('pages')) {
+        this.isChaptersModule = true;
+      }
+    },
     async fetchData(url: string) {
       try {
         await this.injectInstance();
         const infoRes = await window.ipcRenderer.invoke('execute-script', `const instance = new source.default(); return instance.info("${url}")`);
         this.media = infoRes.result;
         this.media.description = this.media.description.replace(/<[^>]*>?/gm, '');
-        if(this.media.seasons.length > 0) {
+        if (this.media.seasons.length > 0) {
           this.currentSeasonUrl = this.media.seasons.find(season => season.selected)?.url ?? '';
           this.hasMultipleSeasons = this.media.seasons.length > 1;
         } else {
@@ -248,15 +266,16 @@ export default {
         this.loading = false;
       }
     },
-    async fetchEpisodes(url : string) {
+    async fetchEpisodes(url: string) {
       console.log('Fetching episodes for:', url);
       try {
         this.loading = true;
         const mediaRes = await window.ipcRenderer.invoke('execute-script', `const instance = new source.default(); return instance.media("${url}")`);
         this.categories = mediaRes.result;
-        this.selectedCategory = this.categories[0].title;
-        this.restoreCurrentPage();
-
+        if (this.categories.length > 0) {
+          this.selectedCategory = this.categories[0].title;
+          this.restoreCurrentPage();
+        }
       } catch (error) {
         console.error('Error fetching episodes:', error);
       } finally {
@@ -267,13 +286,13 @@ export default {
       const currentPages = JSON.parse(localStorage.getItem('currentPages') as string) || {};
       let url = window.location.href;
       let page = this.currentPage;
-      currentPages.push({url, page});
+      currentPages.push({ url, page });
       localStorage.setItem('currentPages', JSON.stringify(currentPages));
     },
     restoreCurrentPage() {
       const currentPages = JSON.parse(localStorage.getItem('currentPages') as string) || {};
       let url = window.location.href;
-      let page = currentPages.find((page: { page : number, url: string; }) => page.url === url);
+      let page = currentPages.find((page: { page: number, url: string; }) => page.url === url);
       if (page) {
         this.currentPage = page.page;
       }
@@ -293,6 +312,7 @@ export default {
   },
   beforeMount() {
     this.fetchData(this.url);
+    this.moduleType();
     const interval = setInterval(() => {
       if (!this.loading) {
         const presence = {
@@ -309,17 +329,17 @@ export default {
           instance: false,
         };
         window.ipcRenderer.invoke('set-discord-presence', presence);
-        clearInterval(interval); 
-      } 
+        clearInterval(interval);
+      }
     }, 1000);
   },
-  mounted () {
+  mounted() {
     window.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && this.showSeasonModal) {
         this.toggleSeasonModal();
       }
     });
-    
+
   }
 }
 </script>
@@ -327,6 +347,23 @@ export default {
 
 
 <style scoped>
+.disclaimer, .no-episodes-message {
+  background-color: #252525;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+.disclaimer h3, .no-episodes-message h3 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+.disclaimer p, .no-episodes-message p {
+  margin-bottom: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
 
 
 .episodes-list::-webkit-scrollbar {
@@ -498,7 +535,8 @@ export default {
 
 .episodes-list {
   max-height: 46vh;
-  overflow-y: auto; /* Enable vertical scrolling */
+  overflow-y: auto;
+  /* Enable vertical scrolling */
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -546,8 +584,13 @@ export default {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .season-modal {
@@ -601,16 +644,24 @@ export default {
 }
 
 /* Transitions */
-.modal-fade-enter-active, .modal-fade-leave-active,
-.modal-scale-enter-active, .modal-scale-leave-active,
-.list-complete-item, .episode-fade-enter-active, .episode-fade-leave-active {
+.modal-fade-enter-active,
+.modal-fade-leave-active,
+.modal-scale-enter-active,
+.modal-scale-leave-active,
+.list-complete-item,
+.episode-fade-enter-active,
+.episode-fade-leave-active {
   transition: all 0.3s ease;
 }
 
-.modal-fade-enter-from, .modal-fade-leave-to,
-.modal-scale-enter-from, .modal-scale-leave-to,
-.list-complete-enter-from, .list-complete-leave-to,
-.episode-fade-enter-from, .episode-fade-leave-to {
+.modal-fade-enter-from,
+.modal-fade-leave-to,
+.modal-scale-enter-from,
+.modal-scale-leave-to,
+.list-complete-enter-from,
+.list-complete-leave-to,
+.episode-fade-enter-from,
+.episode-fade-leave-to {
   opacity: 0;
   transform: scale(0.9);
 }
@@ -636,5 +687,4 @@ export default {
   background-color: #2a2a2a;
   cursor: not-allowed;
 }
-
 </style>

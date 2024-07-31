@@ -132,6 +132,7 @@ async function createWindow() {
   win.on('closed', () => {
     win = null
     hiddenWin?.close()
+    hiddenWin = null
     process.exit(0)
   })
 
