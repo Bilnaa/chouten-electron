@@ -1,50 +1,41 @@
-name: Publish
+name: Build
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "**.spec.js"
+      - ".idea"
+      - ".vscode"
+      - ".dockerignore"
+      - "Dockerfile"
+      - ".gitignore"
+      - ".github/**"
+      - "!.github/workflows/build.yml"
 
 jobs:
-  check_commit_message:
-    runs-on: ubuntu-latest
-    outputs:
-      should_run: ${{ steps.check_commit.outputs.should_run }}
-      version: ${{ steps.check_commit.outputs.version }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 2
-      - name: Check commit message
-        id: check_commit
-        run: |
-          commit_message=$(git log -1 --pretty=%B)
-          if [[ $commit_message =~ v[0-9]+(\.[0-9]+)*$ ]]; then
-            echo "should_run=true" >> $GITHUB_OUTPUT
-            version=$(echo $commit_message | grep -oE 'v[0-9]+(\.[0-9]+)*$')
-            echo "version=$version" >> $GITHUB_OUTPUT
-          else
-            echo "should_run=false" >> $GITHUB_OUTPUT
-          fi
-
   build:
-    needs: check_commit_message
-    if: needs.check_commit_message.outputs.should_run == 'true'
     runs-on: ${{ matrix.os }}
+
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
+
       - name: Install Dependencies
         run: npm install
+
       - name: Build Release Files
         run: npm run publish
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

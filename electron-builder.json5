@@ -1,59 +1,75 @@
 // @see https://www.electron.build/configuration/configuration
 {
-  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "com.nabil.chouten",
-  "asar": true,
-  "productName": "chouten",
-  "directories": {
-    "output": "release/${version}"
+  $schema: "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  appId: "com.nabil.chouten",
+  asar: true,
+  productName: "chouten",
+  directories: {
+    output: "release/${version}",
   },
-  "files": [
-    "dist",
-    "dist-electron"
+  publish: [
+    {
+      provider: "github",
+      owner: "Bilnaa",
+      repo: "chouten-electron",
+    },
   ],
-  "mac": {
-    "target": [
-      "dmg"
-    ],
-    "fileAssociations": [
+  files: ["dist", "dist-electron"],
+  mac: {
+    target: ["dmg"],
+    "category": "public.app-category.video",
+    fileAssociations: [
       {
-        "ext": "module",
-        "name": "Chouten Module",
-        "role": "Editor"
-      }
+        ext: "module",
+        name: "Chouten Module",
+        role: "Editor",
+      },
     ],
-    "icon": "icons/icon.icns",
-    "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
+    icon: "icons/icon.icns",
+    artifactName: "${productName}-Mac-${version}-Installer.${ext}",
   },
-  "win": {
+  win: {
     "target": [
-      {
-        "target": "nsis",
-        "arch": [
-          "x64"
-        ]
-      }
+        "nsis",
+        "portable"
     ],
-    "fileAssociations" : [
+    fileAssociations: [
       {
-        "ext" : "module",
-        "name" : "Chouten File",
-        "description" : "Chouten File",
-      }
+        ext: "module",
+        name: "Chouten File",
+        description: "Chouten File",
+      },
     ],
-    "icon": "icons/icon.ico",
-    "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
+    icon: "icons/icon.ico",
+    artifactName: "${productName}-Windows-${version}-Setup.${ext}",
   },
-  "nsis": {
-    "oneClick": false,
-    "perMachine": false,
-    "allowToChangeInstallationDirectory": true,
-    "deleteAppDataOnUninstall": true
+  nsis: {
+    oneClick: false,
+    perMachine: false,
+    allowToChangeInstallationDirectory: true,
+    deleteAppDataOnUninstall: true,
   },
-  "linux": {
+  linux: {
     "target": [
-      "AppImage"
-    ],
-    "artifactName": "${productName}-Linux-${version}.${ext}"
-  }
+        {
+          "arch": "x64",
+          "target": "AppImage"
+        },
+        {
+          "arch": "x64",
+          "target": "deb"
+        }
+      ]
+    },
+    "description": "Chouten is a media app that allows you to consume content from various sources in one place.",
+      "desktop": {
+        "Name": "Chouten",
+        "Comment": "Chouten is a media app that allows you to consume content from various sources in one place.",
+        "Keywords": "media;video;audio;player;reader;",
+        "Type": "Application",
+        "MimeType": "x-scheme-handler/chouten;"
+      },
+    "category": "AudioVideo;Video;Reader;Player;",
+    artifactName: "${productName}-Linux-${version}.${ext}",
+  },
 }
