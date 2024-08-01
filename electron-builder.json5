@@ -50,26 +50,25 @@
     deleteAppDataOnUninstall: true,
   },
   linux: {
-    "target": [
+      artifactName: "${os}-${name}-${version}.${ext}",
+      category: "AudioVideo;Video",
+      description: "Chouten is a media app that allows you to consume content from various sources in one place.",
+      desktop: {
+        Name: "Chouten",
+        Comment: "Chouten is a media app that allows you to consume content from various sources in one place.",
+        Keywords: "media;video;audio;player;reader;",
+        Type: "Application",
+        MimeType: "x-scheme-handler/chouten;"
+      },
+      target: [
         {
-          "arch": "x64",
-          "target": "AppImage"
+          arch: "x64",
+          target: "AppImage"
         },
         {
-          "arch": "x64",
-          "target": "deb"
+          arch: "x64",
+          target: "deb"
         }
       ]
     },
-    "description": "Chouten is a media app that allows you to consume content from various sources in one place.",
-      "desktop": {
-        "Name": "Chouten",
-        "Comment": "Chouten is a media app that allows you to consume content from various sources in one place.",
-        "Keywords": "media;video;audio;player;reader;",
-        "Type": "Application",
-        "MimeType": "x-scheme-handler/chouten;"
-      },
-    "category": "AudioVideo;Video;Reader;Player;",
-    artifactName: "${productName}-Linux-${version}.${ext}",
-  },
 }
