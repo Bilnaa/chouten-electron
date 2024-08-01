@@ -12,6 +12,7 @@
       provider: "github",
       owner: "Bilnaa",
       repo: "chouten-electron",
+      releaseType: "release"
     },
   ],
   files: ["dist", "dist-electron"],
