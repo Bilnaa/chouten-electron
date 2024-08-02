@@ -18,7 +18,7 @@
   files: ["dist", "dist-electron"],
   mac: {
     target: ["dmg"],
-    "category": "public.app-category.video",
+    category: "public.app-category.video",
     fileAssociations: [
       {
         ext: "module",
@@ -30,7 +30,7 @@
     artifactName: "${productName}-Mac-${version}-Installer.${ext}",
   },
   win: {
-    "target": [
+    target: [
         "nsis",
         "portable"
     ],
