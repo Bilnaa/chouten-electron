@@ -22,18 +22,18 @@
             </div>
         </div>
 
-        <div class="image-container" :class="[currentStyle?.class]" @wheel="handleWheel" ref="imageContainer">
+        <div class="image-container" :class="[currentStyle?.class]" @wheel="handleWheel" ref="imageContainer" @click="nextPageorPreviousPage">
             <template v-if="currentStyle?.value === 'single'">
-                <img :src="visibleImages[0]" :alt="`Page ${currentPage + 1}`" :imageStyle="imageStyle" />
+                <img :src="visibleImages[0]" :alt="`Page ${currentPage + 1}`" :style="imageStyle" />
             </template>
             <template v-else-if="currentStyle?.value === 'double'">
                 <img v-for="(image, index) in visibleImages" :key="index" :src="image"
-                    :alt="`Page ${currentPage * 2 + index + 1}`" :imageStyle="imageStyle" />
+                    :alt="`Page ${currentPage * 2 + index + 1}`" :style="imageStyle" />
             </template>
             <template v-else-if="currentStyle?.value === 'continuous' || currentStyle?.value === 'webtoon'">
                 <div :class="currentStyle?.value">
                     <img v-for="(image, index) in images" :key="index" :src="image" :alt="`Page ${index + 1}`"
-                        :imageStyle="imageStyle" />
+                        :style="imageStyle" />
                 </div>
             </template>
         </div>
@@ -50,7 +50,7 @@
             </button>
         </div>
 
-        <div v-if="showSettings" class="reader-settings">
+        <div v-if="showSettings" class="reader-settings" @mouseleave="showSettings = false">
             <h3>Reader Settings</h3>
             <label for="reading-style">Reading Style:</label>
             <select v-model="selectedStyle" id="reading-style">
@@ -59,17 +59,14 @@
                 </option>
             </select>
 
-            
-
             <label for="reading-direction">Reading Direction:</label>
             <span class="hint">
-                Changes the way you navigate pages with arrow keys 
+                Changes the way you navigate pages with arrow keys, mouse wheel and touch gestures.
             </span>
             <select v-model="readingDirection" id="reading-direction">
                 <option value="ltr">Left to Right</option>
                 <option value="rtl">Right to Left</option>
             </select>
-            
             
             <label for="zoom-level">Zoom Level:</label>
             <input type="range" v-model="zoomLevel" min="0.5" max="3" step="0.1" id="zoom-level">
@@ -144,11 +141,11 @@ export default {
         });
 
         const imageStyle = computed(() => {
-            return {
-                transform: `scale(${zoomLevel.value})`,
-                width: fitToWidth.value ? '100%' : 'auto',
-                height: fitToWidth.value ? 'auto' : '100%',
-            };
+            return ({
+                "transform": `scale(${zoomLevel.value})`,
+                "width": fitToWidth.value ? '100%' : 'auto',
+                "height": fitToWidth.value ? 'auto' : '100%',
+            })
         });
 
         function nextPage() {
@@ -283,6 +280,22 @@ export default {
             window.ipcRenderer.invoke('set-discord-presence', presence);
         }
 
+        function nextPageorPreviousPage(event : MouseEvent) {
+            if(readingDirection.value === 'rtl') {
+                if(event.clientX < window.innerWidth / 2) {
+                    nextPage();
+                } else {
+                    previousPage();
+                }
+            } else {
+                if(event.clientX < window.innerWidth / 2) {
+                    previousPage();
+                } else {
+                    nextPage();
+                }
+            }
+        }
+
         onBeforeMount(async () => {
             await injectInstance();
             let pages = await fetchPages(episodeId);
@@ -315,6 +328,12 @@ export default {
             }
         });
 
+        watch(fitToWidth, (fit) => {
+            if (fit) {
+                zoomLevel.value = 1;
+            }
+        });
+
         watch(readingDirection, (newDirection) => {
             if (imageContainer.value) {
                 (imageContainer.value as HTMLElement).classList.toggle('rtl', newDirection === 'rtl');
@@ -332,6 +351,7 @@ export default {
             selectedStyle,
             readingDirection,
             currentPage,
+            nextPageorPreviousPage,
             zoomLevel,
             isFullscreen,
             showSettings,
@@ -410,6 +430,7 @@ export default {
     flex-grow: 1;
     overflow-y: auto;
     overflow-x: hidden;
+    user-select: none;
     padding: 1rem;
     height: calc(100vh - 120px);
     scroll-behavior: smooth;
