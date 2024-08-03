@@ -44,6 +44,10 @@
     icon: "icons/icon.ico",
     artifactName: "${productName}-Windows-${version}-Setup.${ext}",
   },
+  protocols: {
+    name: "chouten",
+    schemes: ["chouten://","chouten://add-module?moduleUrl=","chouten://add-repo?repoUrl="],
+  },
   nsis: {
     oneClick: false,
     perMachine: false,

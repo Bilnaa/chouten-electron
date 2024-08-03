@@ -164,10 +164,10 @@ function createHiddenWindow() {
     show: false, 
     icon: path.join(process.env.VITE_PUBLIC, 'chouten.png'),
     webPreferences: {
-      nodeIntegration: true,
       contextIsolation: true,
       webviewTag: true,
       webSecurity: false,
+      backgroundThrottling: false,
       preload
     }
   });
@@ -196,12 +196,16 @@ app.whenReady().then(() => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+  app.setAsDefaultProtocolClient('chouten')
+})
+
+app.on('open-url', (event, url) => {
+  event.preventDefault()
+  if (win) win.focus()
 })
 
 app.on('window-all-closed', () => {
-  win = null
-  hiddenWin = null
-   app.quit()
+  if (process.platform !== 'darwin') app.quit()
 })
 
 app.on('second-instance', () => {
