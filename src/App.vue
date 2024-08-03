@@ -101,17 +101,10 @@ onMounted(() => {
   });
   }
 
-  window.addEventListener('error', (event) => {
-      showToast('Error', event.message, 'Error', 5000);
-  });
-  window.addEventListener('unhandledrejection', (event) => {
-      showToast('Error', event.reason, 'Error', 5000);
-  });
-
   const originalError = console.error;
   console.error = function (...args: any[]) {
     originalError.apply(console, args);
-    showToast('Error', args.join(' '), 'Error', 5000);
+    showToast('Error', args.join(' ').replace("Error: Error invoking remote method 'execute-script': Error: Error:",'Module error:'), 'Error', 5000);
   };
   console.log(selectedModule.value);
 }); 
