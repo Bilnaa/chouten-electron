@@ -515,6 +515,7 @@ export default {
   display: flex;
   margin-bottom: 20px;
   background-color: #2a2a2a;
+  min-height: 40px;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -534,9 +535,8 @@ export default {
 }
 
 .episodes-list {
-  max-height: 46vh;
+  max-height: 50vh;
   overflow-y: auto;
-  /* Enable vertical scrolling */
   display: flex;
   flex-direction: column;
   gap: 10px;
