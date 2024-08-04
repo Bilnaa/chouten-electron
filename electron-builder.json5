@@ -31,8 +31,7 @@
   },
   win: {
     target: [
-        "nsis",
-        "portable"
+        "nsis"
     ],
     fileAssociations: [
       {
