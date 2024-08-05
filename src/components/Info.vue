@@ -323,7 +323,7 @@ export default {
           smallImageKey: 'icon',
           smallImageText: 'Chouten',
           buttons: [
-            { label: 'Get Chouten', url: 'https://github.com/Bilnaa/chouten-electron' },
+            { label: 'Get Chouten', url: 'https://github.com/Bilnaa/chouten-electron'},
             { label: 'Join Discord', url: 'https://discord.gg/j5ETh7uSy6' },
           ],
           instance: false,

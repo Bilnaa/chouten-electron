@@ -1,18 +1,19 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 
-import Home from "./components/Home.vue";
+import Home from "./components/Discover.vue";
 import ComingSoon from "./components/ComingSoon.vue";
 import Repo from "./components/Repo.vue";
 import Info from "./components/Info.vue";
 import VideoPlayer from "./components/player/VideoPlayer.vue";
 import Reader from "./components/imageReader.vue";
+import Collections from "./components/Collections.vue";
 
 export default createRouter({
   history: createWebHashHistory(),
   routes: [
     {
       path: "/",
-      component: ComingSoon,
+      component: Collections,
     },
     {
       name: "Discover",

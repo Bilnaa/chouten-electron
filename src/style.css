@@ -1,14 +1,13 @@
-// all the fonts for poppins are downloaded in the folder /fonts import them in the css file
 @font-face {
   font-family: 'Poppins';
   font-style: normal;
-  src : url('../fonts/Poppins-Regular.ttf');
+  src : url('/fonts/Poppins-Regular.ttf');
 }
 
 @font-face {
   font-family: 'Poppins';
   font-style: bold;
-  src : url('../fonts/Poppins-SemiBold.ttf');
+  src : url('/fonts/Poppins-SemiBold.ttf');
 }
 
 :root {

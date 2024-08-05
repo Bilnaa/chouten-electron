@@ -63,8 +63,13 @@ export default {
     }
   },
   mounted() {
+    
     this.component = this.components[this.use],
     this.componentClass = this.use === 'NumberedItem' ? 'section-content-numbered' : 'section-content'
+
+    this.$nextTick(() => {
+      this.$el.classList.add('fade-in');
+    });
   }
 }
 </script>
