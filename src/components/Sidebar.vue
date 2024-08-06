@@ -1,10 +1,18 @@
 <template>
   <div class="sidebar" :style="{backgroundColor : isLinux ? '#171717': ''}">
-    <div class="logo-container">
-      <div class="logo-placeholder">
+    <div class="logo-container" @click="isOpened=!isOpened">
+      <div class="logo-placeholder" v-if="!isLogged">
         <span>LOGO</span>
       </div>
+      <div class="logo-placeholder" v-else>
+        <img :src="discordAvatar" alt="avatar" width="40" height="40" />
+      </div>
     </div>
+
+    <Modal v-if="isOpened" :show="showModal" @close="closeModal">
+      <h1>Sign in</h1>
+      <p>Still WIP</p>
+    </Modal>
     
     <div class="main-content">
       <nav class="main-nav">
@@ -46,7 +54,8 @@ import HomeIcon from 'vue-material-design-icons/Home.vue'
 import CompassIcon from 'vue-material-design-icons/Compass.vue'
 import PackageVariantClosedIcon from 'vue-material-design-icons/PackageVariantClosed.vue'
 import CogIcon from 'vue-material-design-icons/Cog.vue'
-import Archive from 'vue-material-design-icons/Archive.vue' // Ensure this import is correct
+import Archive from 'vue-material-design-icons/Archive.vue'
+import Modal from './Modal.vue'
 
 export default {
   name: 'Sidebar',
@@ -55,13 +64,60 @@ export default {
     CompassIcon,
     PackageVariantClosedIcon,
     CogIcon,
-    Archive 
+    Archive,
+    Modal
   },
   data() {
     return {
       isLinux: navigator.userAgent.includes('Linux'),
+      isLogged: false,
+      discordUsername: '',
+      discordAvatar: '',
+      userCheckInterval: null,
+      lastUserData: null,
+      isOpened: false
     }
   },
+  methods: {
+    loadDiscordImage(id, avatar) {
+      return `https://cdn.discordapp.com/avatars/${id}/${avatar}.png`
+    },
+    showModal() {
+      this.isOpened = true;
+    },
+    closeModal() {
+      this.isOpened = false;
+    },
+    updateUserData() {
+      const userData = localStorage.getItem('user');
+      // Check if user data has changed
+      if (userData !== this.lastUserData) {
+        this.lastUserData = userData;
+        
+        if (userData) {
+          this.isLogged = true;
+          const parsedUser = JSON.parse(userData.replace(/%22/g, '"'));
+          this.discordUsername = parsedUser.username;
+          this.discordAvatar = this.loadDiscordImage(parsedUser.id, parsedUser.avatar);
+        } else {
+          this.isLogged = false;
+          this.discordUsername = '';
+          this.discordAvatar = '';
+        }
+      }
+    }
+  },
+  mounted() {
+    this.updateUserData();
+    // Check for changes every second
+    this.userCheckInterval = setInterval(this.updateUserData, 1000);
+  },
+  beforeDestroy() {
+    // Clear the interval when the component is destroyed
+    if (this.userCheckInterval) {
+      clearInterval(this.userCheckInterval);
+    }
+  }
 }
 </script>
 
@@ -80,6 +136,7 @@ export default {
 
 .logo-container {
   margin-bottom: 40px;
+  cursor: pointer;
 }
 
 .logo-placeholder {
@@ -93,6 +150,16 @@ export default {
   font-size: 10px;
   color: #fff;
   font-weight: bold;
+}
+
+.logo-placeholder img {
+  border-radius: 50%;
+}
+
+.logo-placeholder .username {
+  font-size: 12px;
+  color: #fff;
+  margin-top: 5px;
 }
 
 .main-content {
