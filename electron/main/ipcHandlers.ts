@@ -1,9 +1,8 @@
-import { ipcMain, app, BrowserWindow } from 'electron';
+import { ipcMain, app} from 'electron';
 import path from 'node:path';
 import fs from 'fs';
 import AdmZip from 'adm-zip';
 import axios from 'axios';
-import https from 'https';
 import Discord from './discord'
 
 
