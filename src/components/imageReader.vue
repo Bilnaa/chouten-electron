@@ -71,8 +71,7 @@
             <label for="zoom-level">Zoom Level:</label>
             <input type="range" v-model="zoomLevel" min="0.5" max="3" step="0.1" id="zoom-level">
 
-            <label for="fit-to-width">Fit to Width:</label>
-            <input type="checkbox" v-model="fitToWidth" id="fit-to-width">
+            <button id="fit-to-width" @click="fitToWidth = !fitToWidth">Fit to Width</button>
         </div>
     </div>
 </template>
@@ -536,6 +535,16 @@ export default {
 .reader-settings label {
     display: block;
     margin-bottom: 0.5rem;
+}
+
+.reader-settings button {
+    background: none;
+    border: 1px solid #555;
+    color: white;
+    padding: 0.5rem;
+    margin-top: 1rem;
+    cursor: pointer;
+    width: 100%;
 }
 
 .reader-settings select,
