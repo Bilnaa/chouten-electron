@@ -41,7 +41,7 @@ export default {
   setup(props) {
     const showToast = inject('showToast') as (title: string, message: string, icon?: string, duration?: number) => void;
 
-    let truncatedDescription = (props.description ?? '').length > 100 ? (props.description ?? '').slice(0, 150) + '...' : (props.description ?? '');
+    let truncatedDescription = (props.description ?? '').length > 100 ? (props.description ?? '').slice(0, 120) + '...' : (props.description ?? '');
     truncatedDescription = truncatedDescription.replace(/<[^>]*>?/gm, '');
 
     const truncatedTitles = {
