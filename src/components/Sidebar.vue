@@ -10,8 +10,14 @@
     </div>
 
     <Modal v-if="isOpened" :show="showModal" @close="closeModal">
-      <h1>Sign in</h1>
-      <p>Still WIP</p>
+      <div v-if="!isLogged">
+        <h1>Sign in</h1>
+        <button @click="login" class="discord-btn">Login with Discord</button>
+      </div>
+      <div v-else>
+        <h4>Logged in as {{ discordUsername }}</h4>
+        <button @click="logout" class="logout-btn">Logout</button>
+      </div>
     </Modal>
     
     <div class="main-content">
@@ -45,9 +51,7 @@
       </router-link>
     </div>
   </div>
-
 </template>
-
 
 <script>
 import HomeIcon from 'vue-material-design-icons/Home.vue'
@@ -56,6 +60,7 @@ import PackageVariantClosedIcon from 'vue-material-design-icons/PackageVariantCl
 import CogIcon from 'vue-material-design-icons/Cog.vue'
 import Archive from 'vue-material-design-icons/Archive.vue'
 import Modal from './Modal.vue'
+import { createClient } from '@supabase/supabase-js'
 
 export default {
   name: 'Sidebar',
@@ -75,63 +80,75 @@ export default {
       discordAvatar: '',
       userCheckInterval: null,
       lastUserData: null,
-      isOpened: false
+      loginUrl : 'https://ydiykaztjeqavsucbpko.supabase.co/auth/v1/authorize?provider=discord',
+      isOpened: false,
+      supabase: createClient('https://ydiykaztjeqavsucbpko.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkaXlrYXp0amVxYXZzdWNicGtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjMwMzk1ODcsImV4cCI6MjAzODYxNTU4N30.aVMFp5TEH0zxyup4zdsQh5dLZ2liCC6vBJVyTutZ2DY',{
+        persistSession : true
+      }),
     }
   },
   methods: {
-    loadDiscordImage(id, avatar) {
-      return `https://cdn.discordapp.com/avatars/${id}/${avatar}.png`
-    },
     showModal() {
       this.isOpened = true;
     },
     closeModal() {
       this.isOpened = false;
     },
-    updateUserData() {
-      const userData = localStorage.getItem('user');
-      // Check if user data has changed
-      if (userData !== this.lastUserData) {
-        this.lastUserData = userData;
-        
-        if (userData) {
-          this.isLogged = true;
-          const parsedUser = JSON.parse(userData.replace(/%22/g, '"'));
-          this.discordUsername = parsedUser.username;
-          this.discordAvatar = this.loadDiscordImage(parsedUser.id, parsedUser.avatar);
+    async updateUserData() {
+      let token = localStorage.getItem('supabase.auth.token');
+      if (token) {
+        this.isLogged = true;
+        token = JSON.parse(token);
+        const { data, error } = await this.supabase.auth.getUser(token.access_token);
+        if (error) {
+          console.error(error);
         } else {
-          this.isLogged = false;
-          this.discordUsername = '';
-          this.discordAvatar = '';
+          this.discordUsername = data.user.user_metadata.full_name;
+          this.discordAvatar = data.user.user_metadata.avatar_url;
         }
+      } else {
+        this.isLogged = false;
       }
-    }
+    },
+    async logout() {
+      localStorage.removeItem('supabase.auth.token');
+      this.isLogged = false;
+    },
+    async login() {
+        window.ipcRenderer.invoke('open-win', this.loginUrl);
+        
+        const checkAuth = setInterval(() => {
+          const token = localStorage.getItem('supabase.auth.token');
+          if (token) {
+            clearInterval(checkAuth);
+            this.isOpened = false;
+            this.updateUserData();
+          }
+        }, 1000);
+
+        setTimeout(() => {
+          clearInterval(checkAuth);
+          console.log('Login timeout: window may have been closed');
+        }, 300000);
+}
   },
-  mounted() {
+  async mounted() {
     this.updateUserData();
-    // Check for changes every second
-    this.userCheckInterval = setInterval(this.updateUserData, 1000);
   },
-  beforeDestroy() {
-    // Clear the interval when the component is destroyed
-    if (this.userCheckInterval) {
-      clearInterval(this.userCheckInterval);
-    }
-  }
 }
 </script>
 
 <style scoped>
 .sidebar {
   width: 120px;
-  height: 100vh; /* Full viewport height */
+  height: 100vh;
   display: flex;
   position: absolute;
   flex-direction: column;
-  justify-content: space-between; /* Space between top and bottom sections */
+  justify-content: space-between;
   align-items: center;
   padding-top: 50px;
-  box-sizing: border-box; /* Ensure padding is included in width/height calculations */
+  box-sizing: border-box;
 }
 
 .logo-container {
@@ -205,14 +222,14 @@ export default {
 .main-nav a.router-link-active {
   color: #fff;
   background-color: rgba(255, 255, 255, 0.1);
-  filter: drop-shadow(0 0 16px rgba(100, 88, 237, 1)); /* Stronger glow */
+  filter: drop-shadow(0 0 16px rgba(100, 88, 237, 1));
 }
 
 .bottom-icons {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 20px; /* Ensure space at the bottom */
+  margin-bottom: 20px;
 }
 
 .select-module-btn,
@@ -224,7 +241,7 @@ export default {
   padding: 8px;
   border-radius: 50%;
   transition: all 0.3s ease;
-  margin-bottom: 10px; /* Space between buttons */
+  margin-bottom: 10px;
 }
 
 .select-module-btn:hover,
@@ -236,6 +253,29 @@ export default {
 .select-module-btn:focus,
 .settings-btn:focus {
   outline: none;
-  filter: drop-shadow(0 0 16px rgba(100, 88, 237, 1)); /* Stronger glow */
+  filter: drop-shadow(0 0 16px rgba(100, 88, 237, 1));
+}
+
+.discord-btn, .logout-btn {
+  background-color: #7289da;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.discord-btn:hover {
+  background-color: #5e77d4;
+}
+
+.logout-btn {
+  background-color: #f04747;
+}
+
+.logout-btn:hover {
+  background-color: #d84040;
 }
 </style>

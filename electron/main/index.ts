@@ -1,11 +1,11 @@
-import { app, BrowserWindow, shell, ipcMain,protocol } from 'electron'
+import { app, BrowserWindow, shell, ipcMain,protocol,dialog } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import os from 'node:os'
 import fs from 'fs'
 import { setupIpcHandlers } from './ipcHandlers';
-
+import FastifyServer from './api';
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -188,6 +188,9 @@ function createHiddenWindow() {
     console.log('Hidden window closed');
   });
 }
+protocol.registerSchemesAsPrivileged([{ scheme: 'chouten', privileges: { standard: true, secure: true } }])
+
+const gotTheLock = app.requestSingleInstanceLock()
 
 app.whenReady().then(() => {
   createDirectories();
@@ -197,6 +200,8 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
   app.setAsDefaultProtocolClient('chouten')
+
+
 })
 
 app.on('open-url', (event, url) => {
@@ -207,33 +212,84 @@ app.on('open-url', (event, url) => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
-
-app.on('second-instance', () => {
-  if (win) {
-    if (win.isMinimized()) win.restore()
-    win.focus()
-  }
-})
+if (!gotTheLock) {
+  app.quit()
+} else {
+  app.on('second-instance', (event, commandLine, workingDirectory) => {
+    if (win) {
+      if (win.isMinimized()) win.restore()
+      win.focus()
+    }
+  })
+}
 
 ipcMain.handle('open-win', (_, arg) => {
   const childWindow = new BrowserWindow({
     webPreferences: {
       preload,
-      nodeIntegration: true,
+      nodeIntegration: false,
       contextIsolation: true,
     },
     parent: win,
+    height: win.getBounds().height - 100,
+    width: win.getBounds().width - 100,
     modal: true,
     show: false
   })
 
+  if(arg.includes('supabase')) {
+     let fastifyServer = new FastifyServer();
+     fastifyServer.start();
+     childWindow.on('close', () => {
+        fastifyServer.stop();
+      });
+  }
+
+  childWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.key === 'Escape') {
+      childWindow.close()
+    }
+    }
+  )
+
   childWindow.once('ready-to-show', () => {
+    childWindow.webContents.executeJavaScript(`
+      const overlay = document.createElement('div');
+      overlay.style.position = 'absolute';
+      overlay.style.top = 0;
+      overlay.style.left = 0;
+      overlay.style.width = '100%';
+      overlay.style.zIndex = '9999';
+      overlay.innerHTML = '<div style="background-color: rgb(255 0 0 / 50%); color: white; font-size: 1.5em; padding: 10px; text-align: center;">Press the "Escape" key if you want to close this window</div>';
+      document.body.appendChild(overlay);
+    `);
     childWindow.show()
   })
+  childWindow.loadURL(arg)
+  childWindow.webContents.on('will-redirect', (event, url) => {
+    if (url.startsWith('http://localhost:8000/auth')) {
+      event.preventDefault()
+      const accessToken = url.split('#')[1]
+      let access_token = accessToken.split('&')[0].split('=')[1]
+      let expires_at = accessToken.split('&')[1].split('=')[1]
+      let expires_in = accessToken.split('&')[2].split('=')[1]
+      let provider_refresh_token = accessToken.split('&')[3].split('=')[1]
+      let provider_token = accessToken.split('&')[4].split('=')[1]
+      let refresh_token = accessToken.split('&')[5].split('=')[1]
+      let token_type = accessToken.split('&')[6].split('=')[1]
+      let data = {
+        access_token,
+        expires_at,
+        expires_in,
+        provider_refresh_token,
+        provider_token,
+        refresh_token,
+        token_type
+      }
+      win?.webContents.executeJavaScript(`localStorage.setItem('supabase.auth.token', '${JSON.stringify(data)}')`)
+      childWindow.close()
+    }
+  })
 
-  if (VITE_DEV_SERVER_URL) {
-    childWindow.loadURL(`${VITE_DEV_SERVER_URL}#${arg}`)
-  } else {
-    childWindow.loadFile(indexHtml, { hash: arg })
-  }
+
 })
