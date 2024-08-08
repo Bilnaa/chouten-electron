@@ -30,7 +30,7 @@
       }
     },
     methods: {
-      selectColor(color) {
+      selectColor(color : string) {
         this.$emit('input', color)
         if(localStorage.getItem('accentColor') === null) {
           localStorage.setItem('accentColor', color)
