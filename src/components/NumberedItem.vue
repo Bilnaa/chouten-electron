@@ -22,7 +22,7 @@ export default {
    titles: Object,
    indicator: String,
    current : {
-      type: String || Number,
+      type:  Number,
       default: '??'
     },
    total: Number
