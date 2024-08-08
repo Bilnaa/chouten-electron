@@ -11,11 +11,8 @@
 }
 
 :root {
-  --background-color: #1a1a1a;
-  --secondary-background: #d9d5d5;
-  --text-color: #ffffff;
-  --accent-color: #8a2be2; /* Purple */
-  --border-color: #3a3a3a;
+  --accent-color: rgba(100, 88, 237, 1);
+  --accent-color-light: rgba(100, 88, 237, 0.1);
 }
 
 a {

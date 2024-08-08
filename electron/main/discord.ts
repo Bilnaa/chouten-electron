@@ -8,6 +8,7 @@ export default class Discord {
     largeImageKey: "icon",
     instance: true,
   };
+  disabled = false;
   discord = new RPC.Client({ transport: "ipc" });
   /** @type {Discord['defaultStatus'] | undefined} */
   allowDiscordDetails;
@@ -25,13 +26,20 @@ export default class Discord {
     this.discord.login({ clientId }).catch(() => {
       setTimeout(() => this.discord.login({ clientId }), 5000).unref();
     });
+    this.disabled = false;
   }
   
   disable() {
     this.discord.clearActivity();
+    this.disabled = true;
+  }
+
+  isEnabled() {
+    return !this.disabled;
   }
 
   setActivity(presence: RPC.Presence) {
+    if (this.disabled) return;
     this.cachedPresence = presence;
     this.discord.setActivity(presence);
   }

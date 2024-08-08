@@ -51,9 +51,9 @@
       <button @click="$emit('open-module-selector')" class="select-module-btn">
         <Archive :size="24" />
       </button>
-      <router-link to="/settings" class="settings-btn">
+      <button @click="$emit('open-settings')" class="settings-btn">
         <CogIcon :size="24" />
-      </router-link>
+      </button>
     </div>
   </div>
 </template>
@@ -118,6 +118,7 @@ export default {
         } catch (refreshError) {
           console.error('Error refreshing session:', refreshError);
           this.isLogged = false;
+          localStorage.removeItem('supabase.auth.token');
         }
       }
     },
@@ -237,7 +238,7 @@ export default {
 .main-nav a.router-link-active {
   color: #fff;
   background-color: rgba(255, 255, 255, 0.1);
-  filter: drop-shadow(0 0 16px rgba(100, 88, 237, 1));
+  filter: drop-shadow(0 0 16px var(--accent-color));
 }
 
 .bottom-icons {

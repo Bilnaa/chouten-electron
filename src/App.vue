@@ -7,11 +7,13 @@ import Modal from './components/Modal.vue';
 import { Repo, Module } from './store/index';
 import ToastManager from './components/ToastManager.vue';
 import SplashScreen from './components/SplashScreen.vue'
+import Settings from './components/Settings.vue';
 import { useRouter } from 'vue-router';
 
 
 const store = useStore();
 const showModal = ref(false);
+const modal = ref('');
 
 const selectedModule = computed(() => store.state.activeModule);
 
@@ -39,6 +41,13 @@ async function openModal() {
     showToast('No Modules/Reposisotries', 'There are no modules or repositories to select from. Please import a module first.', 'Error', 5000);
     return;
   }
+  modal.value = 'modules';
+  showModal.value = true;
+}
+
+function openSettings() {
+  modal.value = 'settings';
+  console.log('Settings opened');
   showModal.value = true;
 }
 
@@ -74,6 +83,10 @@ onBeforeMount(() => {
 });
 
 onMounted(() => {
+  if(localStorage.getItem('accentColor') != undefined) {
+    console.log('here')
+    document.documentElement.style.setProperty('--accent-color', localStorage.getItem('accentColor') as string);
+  }
   if (selectedModule.value) {
     showToast('Welcome back!', 'Welcome back to Chouten.', 'System', 3000);
   } else {
@@ -109,18 +122,21 @@ onMounted(() => {
   console.log(selectedModule.value);
 }); 
 
+
+
 </script>
 
 <template>
   <SplashScreen v-if="showSplash" :fadeOut="fadeOutSplash" />
   <div v-if="!showSplash">
     <div class="title-bar"></div>
-    <Sidebar @open-module-selector="openModal" />
+    <Sidebar @open-module-selector="openModal" @open-settings="openSettings" />
     <div class="container">
       <router-view />
     </div>
     <Modal :show="showModal" @close="closeModal">
-      <ModuleSelector @module-selected="handleModuleSelection" />
+      <ModuleSelector v-if="modal=='modules'" @module-selected="handleModuleSelection" />
+      <Settings v-else-if="modal=='settings'"/>
     </Modal>
     <ToastManager ref="toastManager" />
   </div>

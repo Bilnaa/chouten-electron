@@ -459,7 +459,7 @@ export default {
 
 .status {
   display: inline-block;
-  color: #6458ED;
+  color: var(--accent-color);
   padding: 5px 10px;
   background-color: #1E1E1E;
   font-size: 14px;
@@ -554,7 +554,7 @@ export default {
 }
 
 .category-selector button.active {
-  background-color: #6458ED;
+  background-color: var(--accent-color);
 }
 
 .episodes-list {
@@ -655,7 +655,7 @@ export default {
 }
 
 .season-modal-content h2.selected {
-  color: #6458ED;
+  color: var(--accent-color);
 }
 
 .close-button {

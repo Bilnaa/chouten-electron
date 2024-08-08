@@ -10,6 +10,18 @@ const ModulesPath = path.join(app.getPath('userData'), 'Modules');
 
 export function setupIpcHandlers() {
     let discord = new Discord();
+    ipcMain.handle('get-discord-status', async (event) => {
+        return discord.isEnabled();
+      });
+
+      ipcMain.handle('enable-discord', async (event) => {
+        discord.login();
+      });
+
+      ipcMain.handle('disable-discord', async (event) => {
+        discord.disable();
+      });
+      
     ipcMain.handle('install-repo', async (event, repoData: string) => {
         try {
           const repo = JSON.parse(repoData);
