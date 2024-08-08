@@ -21,7 +21,10 @@ export default {
    poster: String,
    titles: Object,
    indicator: String,
-   current: Number,
+   current : {
+      type: String || Number,
+      default: '??'
+    },
    total: Number
  },
  setup(props) {
