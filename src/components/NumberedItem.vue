@@ -6,7 +6,7 @@
      </div>
      <div class="text-content">
        <span class="title">{{ titles.primary }}</span>
-       <span class="count">{{ current }}/{{ total }}</span> 
+       <span class="count">{{ current !== '' ? current + '/' : '??/'}}{{ total ? total : '??' }}</span>
      </div>
    </div>
    <span class="number">{{ indicator }}</span>

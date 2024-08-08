@@ -6,7 +6,7 @@
     </div>
     <div class="text-content">
       <h3 class="title">{{ titles.primary }}</h3>
-      <span class="index">{{ current ? current + '/' : '??/'}}{{ total ? total : '??' }}</span>
+      <span class="index">{{ current !== '' ? current + '/' : '??/'}}{{ total ? total : '??' }}</span>
     </div>
   </router-link>
 </template>
