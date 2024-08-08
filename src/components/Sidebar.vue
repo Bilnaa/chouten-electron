@@ -12,7 +12,12 @@
     <Modal v-if="isOpened" :show="showModal" @close="closeModal">
       <div v-if="!isLogged">
         <h1>Sign in</h1>
-        <button @click="login" class="discord-btn">Login with Discord</button>
+        <div class="login-options">
+          <div class="login-option" @click="login">
+            <img src="/icon_clyde_blurple_RGB.svg" alt="Discord">
+            <span>Login with Discord</span>
+          </div>
+        </div>
       </div>
       <div v-else>
         <h4>Logged in as {{ discordUsername }}</h4>
@@ -96,14 +101,11 @@ export default {
     },
     async updateUserData() {
       const token = JSON.parse(localStorage.getItem('supabase.auth.token'));
-
       if (!token) {
         this.isLogged = false;
         return;
       }
-
       this.isLogged = true;
-
       try {
         const { data: userData } = await this.supabase.auth.getUser(token.access_token);
         this.setUserMetadata(userData.user);
@@ -119,7 +121,6 @@ export default {
         }
       }
     },
-
     setUserMetadata(user) {
       this.discordUsername = user.user_metadata.full_name;
       this.discordAvatar = user.user_metadata.avatar_url;
@@ -292,5 +293,98 @@ export default {
 
 .logout-btn:hover {
   background-color: #d84040;
+}
+
+/* New Modal styles */
+.modal {
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: #36393f;
+  margin: auto;
+  padding: 20px;
+  border-radius: 5px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.modal h1 {
+  color: #fff;
+  font-size: 24px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.modal h4 {
+  color: #fff;
+  font-size: 18px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.modal .discord-btn,
+.modal .logout-btn {
+  display: block;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.modal .close-btn {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.modal .close-btn:hover,
+.modal .close-btn:focus {
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Styles for future login options */
+.login-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.login-option {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background-color: #2f3136;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.login-option:hover {
+  background-color: #40444b;
+}
+
+.login-option img {
+  width: 24px;
+  height: 24px;
+  margin-right: 10px;
+}
+
+.login-option span {
+  color: #fff;
+  font-size: 16px;
 }
 </style>
