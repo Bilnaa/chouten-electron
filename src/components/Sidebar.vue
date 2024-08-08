@@ -1,6 +1,6 @@
 <template>
-  <div class="sidebar" :style="{backgroundColor : isLinux ? '#171717': ''}">
-    <div class="logo-container" @click="isOpened=!isOpened">
+  <div class="sidebar" :style="{ backgroundColor: isLinux ? '#171717' : '' }">
+    <div class="logo-container" @click="isOpened = !isOpened">
       <div class="logo-placeholder" v-if="!isLogged">
         <span>LOGO</span>
       </div>
@@ -19,7 +19,7 @@
         <button @click="logout" class="logout-btn">Logout</button>
       </div>
     </Modal>
-    
+
     <div class="main-content">
       <nav class="main-nav">
         <ul>
@@ -80,10 +80,10 @@ export default {
       discordAvatar: '',
       userCheckInterval: null,
       lastUserData: null,
-      loginUrl : 'https://ydiykaztjeqavsucbpko.supabase.co/auth/v1/authorize?provider=discord',
+      loginUrl: 'https://ydiykaztjeqavsucbpko.supabase.co/auth/v1/authorize?provider=discord',
       isOpened: false,
-      supabase: createClient('https://ydiykaztjeqavsucbpko.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkaXlrYXp0amVxYXZzdWNicGtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjMwMzk1ODcsImV4cCI6MjAzODYxNTU4N30.aVMFp5TEH0zxyup4zdsQh5dLZ2liCC6vBJVyTutZ2DY',{
-        persistSession : true
+      supabase: createClient('https://ydiykaztjeqavsucbpko.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkaXlrYXp0amVxYXZzdWNicGtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjMwMzk1ODcsImV4cCI6MjAzODYxNTU4N30.aVMFp5TEH0zxyup4zdsQh5dLZ2liCC6vBJVyTutZ2DY', {
+        persistSession: true
       }),
     }
   },
@@ -95,42 +95,56 @@ export default {
       this.isOpened = false;
     },
     async updateUserData() {
-      let token = localStorage.getItem('supabase.auth.token');
-      if (token) {
-        this.isLogged = true;
-        token = JSON.parse(token);
-        const { data, error } = await this.supabase.auth.getUser(token.access_token);
-        if (error) {
-          console.error(error);
-        } else {
-          this.discordUsername = data.user.user_metadata.full_name;
-          this.discordAvatar = data.user.user_metadata.avatar_url;
-        }
-      } else {
+      const token = JSON.parse(localStorage.getItem('supabase.auth.token'));
+
+      if (!token) {
         this.isLogged = false;
+        return;
       }
+
+      this.isLogged = true;
+
+      try {
+        const { data: userData } = await this.supabase.auth.getUser(token.access_token);
+        this.setUserMetadata(userData.user);
+      } catch (error) {
+        console.error('Error getting user:', error);
+        try {
+          const { data: refreshedData } = await this.supabase.auth.refreshSession(token.refresh_token);
+          localStorage.setItem('supabase.auth.token', JSON.stringify(refreshedData));
+          this.setUserMetadata(refreshedData.user);
+        } catch (refreshError) {
+          console.error('Error refreshing session:', refreshError);
+          this.isLogged = false;
+        }
+      }
+    },
+
+    setUserMetadata(user) {
+      this.discordUsername = user.user_metadata.full_name;
+      this.discordAvatar = user.user_metadata.avatar_url;
     },
     async logout() {
       localStorage.removeItem('supabase.auth.token');
       this.isLogged = false;
     },
     async login() {
-        window.ipcRenderer.invoke('open-win', this.loginUrl);
-        
-        const checkAuth = setInterval(() => {
-          const token = localStorage.getItem('supabase.auth.token');
-          if (token) {
-            clearInterval(checkAuth);
-            this.isOpened = false;
-            this.updateUserData();
-          }
-        }, 1000);
+      window.ipcRenderer.invoke('open-win', this.loginUrl);
 
-        setTimeout(() => {
+      const checkAuth = setInterval(() => {
+        const token = localStorage.getItem('supabase.auth.token');
+        if (token) {
           clearInterval(checkAuth);
-          console.log('Login timeout: window may have been closed');
-        }, 300000);
-}
+          this.isOpened = false;
+          this.updateUserData();
+        }
+      }, 1000);
+
+      setTimeout(() => {
+        clearInterval(checkAuth);
+        console.log('Login timeout: window may have been closed');
+      }, 300000);
+    }
   },
   async mounted() {
     this.updateUserData();
@@ -184,8 +198,8 @@ export default {
   flex-direction: column;
   align-items: center;
   position: relative;
-  top: 10px; 
-  flex-grow: 1; 
+  top: 10px;
+  flex-grow: 1;
   justify-content: center;
 }
 
@@ -256,7 +270,8 @@ export default {
   filter: drop-shadow(0 0 16px rgba(100, 88, 237, 1));
 }
 
-.discord-btn, .logout-btn {
+.discord-btn,
+.logout-btn {
   background-color: #7289da;
   color: white;
   border: none;
