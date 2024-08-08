@@ -129,23 +129,13 @@ async function createWindow() {
     win.loadFile(indexHtml)
   }
 
-  win.on('closed', () => {
-    win = null
-    hiddenWin?.close()
-    hiddenWin = null
-    process.exit(0)
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') app.quit()
   })
 
-  win.webContents.on('devtools-opened', () => {
-   if (process.platform === 'darwin') {
-    win.setVibrancy(null)
-   }
-  });
-  win.webContents.on('devtools-closed', () => {
-    if (process.platform === 'darwin') {
-      win.setVibrancy('under-window')
-    }
-  });
+  win.webContents.on('devtools-opened', () => process.platform === 'darwin' && win.setVibrancy(null))
+  win.webContents.on('devtools-closed', () => process.platform === 'darwin' && win.setVibrancy('under-window'))
+
 
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', new Date().toLocaleString())
@@ -237,55 +227,34 @@ ipcMain.handle('open-win', (_, arg) => {
     show: false
   })
 
-  if(arg.includes('supabase')) {
-     let fastifyServer = new FastifyServer();
-     fastifyServer.start();
-     childWindow.on('close', () => {
-        fastifyServer.stop();
-      });
+  if (arg.includes('supabase')) {
+    const fastifyServer = new FastifyServer()
+    fastifyServer.start()
+    childWindow.on('close', () => fastifyServer.stop())
   }
 
-  childWindow.webContents.on('before-input-event', (event, input) => {
-    if (input.key === 'Escape') {
-      childWindow.close()
-    }
-    }
-  )
+  childWindow.webContents.on('before-input-event', (_, input) => {
+    if (input.key === 'Escape') childWindow.close()
+  })
+
 
   childWindow.once('ready-to-show', () => {
     childWindow.webContents.executeJavaScript(`
       const overlay = document.createElement('div');
-      overlay.style.position = 'absolute';
-      overlay.style.top = 0;
-      overlay.style.left = 0;
-      overlay.style.width = '100%';
-      overlay.style.zIndex = '9999';
+      overlay.style = 'position: absolute; top: 0; left: 0; width: 100%; z-index: 9999;';
       overlay.innerHTML = '<div style="background-color: rgb(255 0 0 / 50%); color: white; font-size: 1.5em; padding: 10px; text-align: center;">Press the "Escape" key if you want to close this window</div>';
       document.body.appendChild(overlay);
-    `);
+    `)
     childWindow.show()
   })
   childWindow.loadURL(arg)
   childWindow.webContents.on('will-redirect', (event, url) => {
     if (url.startsWith('http://localhost:8000/auth')) {
       event.preventDefault()
-      const accessToken = url.split('#')[1]
-      let access_token = accessToken.split('&')[0].split('=')[1]
-      let expires_at = accessToken.split('&')[1].split('=')[1]
-      let expires_in = accessToken.split('&')[2].split('=')[1]
-      let provider_refresh_token = accessToken.split('&')[3].split('=')[1]
-      let provider_token = accessToken.split('&')[4].split('=')[1]
-      let refresh_token = accessToken.split('&')[5].split('=')[1]
-      let token_type = accessToken.split('&')[6].split('=')[1]
-      let data = {
-        access_token,
-        expires_at,
-        expires_in,
-        provider_refresh_token,
-        provider_token,
-        refresh_token,
-        token_type
-      }
+      const [, accessToken] = url.split('#')
+      const data = Object.fromEntries(
+        accessToken.split('&').map(pair => pair.split('='))
+      )
       win?.webContents.executeJavaScript(`localStorage.setItem('supabase.auth.token', '${JSON.stringify(data)}')`)
       childWindow.close()
     }
