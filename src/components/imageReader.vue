@@ -501,7 +501,7 @@ export default {
 
 .progress-bar {
     height: 100%;
-    background-color: rgba(100, 88, 237, 1);
+    background-color: var(--accent-color);
     transition: width 0.3s ease;
 }
 
