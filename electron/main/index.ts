@@ -111,7 +111,6 @@ async function createWindow() {
       symbolColor: '#eee',
       height: 40
     },
-    backgroundMaterial: 'acrylic',
     vibrancy: 'fullscreen-ui',
     visualEffectState: 'followWindow',
     webPreferences: {

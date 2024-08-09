@@ -36,6 +36,7 @@
     bottom: 0;
     z-index: 9999;
     transition: opacity 0.5s ease-out;
+    border-radius: 20px;
   }
   
   .splash-screen.fade-out {

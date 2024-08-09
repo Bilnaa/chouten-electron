@@ -79,7 +79,7 @@ export default {
   },
   data() {
     return {
-      isLinux: navigator.userAgent.includes('Linux'),
+      isLinux: navigator.userAgent.includes('Linux') || navigator.userAgent.includes('Windows') ,
       isLogged: false,
       discordUsername: '',
       discordAvatar: '',
