@@ -164,6 +164,13 @@ async function createWindow() {
   })
 
   win.webContents.on('did-finish-load', createHiddenWindow)
+
+  win.on('closed', () => {
+    win = null
+    hiddenWin?.close()
+    app.quit()
+  }
+  )
 }
 
 function createHiddenWindow() {
