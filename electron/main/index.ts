@@ -94,6 +94,26 @@ ipcMain.handle('execute-script', async (event, scriptContent) => {
   }
 });
 
+ipcMain.on('minimize-window', () => {
+  win.minimize();
+});
+
+ipcMain.on('maximize-window', () => {
+  win.maximize();
+});
+
+ipcMain.on('restore-window', () => {
+  win.restore();
+});
+
+ipcMain.on('close-window', () => {
+  win.close();
+});
+
+ipcMain.handle('is-maximized', () => {
+  return win.isMaximized();
+});
+
 
 async function createWindow() {
   win = new BrowserWindow({
@@ -107,10 +127,10 @@ async function createWindow() {
     transparent : process.platform === 'win32' || process.platform === 'darwin',
     titleBarStyle: 'hidden',
     titleBarOverlay: {
-      color: '#171717',
-      symbolColor: '#eee',
-      height: 40
-    },
+       color: '#171717',
+       symbolColor: '#eee',
+       height: 40
+     },
     vibrancy: 'fullscreen-ui',
     visualEffectState: 'followWindow',
     webPreferences: {
@@ -190,7 +210,7 @@ app.whenReady().then(() => {
   })
   app.setAsDefaultProtocolClient('chouten')
 
-
+  
 })
 
 app.on('open-url', (event, url) => {
