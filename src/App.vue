@@ -82,14 +82,25 @@ const handleModuleSelection = ({ repo }: { repo: Repo }, module: Module) => {
 
 // Window control functions
 const minimizeWindow = () => ipcRenderer.send('minimize-window');
-const maximizeWindow = () => {
-  ipcRenderer.send('maximize-window');
-  isMaximized.value = true;
+const maximizeWindow = async () => {
+  await ipcRenderer.invoke('is-maximized').then((maximized: boolean) => {
+      isMaximized.value = maximized;
+  });
+
+  if (isMaximized.value) {
+    restoreWindow();
+  } else {
+    ipcRenderer.send('maximize-window');
+  }
+  await ipcRenderer.invoke('is-maximized').then((maximized: boolean) => {
+      isMaximized.value = maximized;
+  });
 };
 const restoreWindow = () => {
   ipcRenderer.send('restore-window');
   isMaximized.value = false;
 };
+
 const closeWindow = () => ipcRenderer.send('close-window');
 
 // Lifecycle hooks
@@ -109,6 +120,14 @@ onMounted(() => {
     document.documentElement.style.setProperty('--accent-color', accentColor);
   }
 
+  watch(isMaximized, (newMaximized) => {
+  if (newMaximized) {
+    document.getElementById('app')?.style.setProperty('border-radius', '0px');
+  } else {
+    document.getElementById('app')?.style.setProperty('border-radius', '20px');
+  }
+  });
+
   // Show initial toast
   setTimeout(() => {
     const toastMessage = selectedModule.value 
@@ -126,6 +145,13 @@ onMounted(() => {
       }
     });
   }
+
+  // check every sec if it's maximized
+  setInterval(async () => {
+    await ipcRenderer.invoke('is-maximized').then((maximized: boolean) => {
+      isMaximized.value = maximized;
+    });
+  }, 1000);
 
   // Override console.error for custom error handling
   const originalError = console.error;
@@ -159,7 +185,7 @@ if (localStorage.getItem('currentPages') === null) {
         <button @click="minimizeWindow" class="title-bar-button">
           <MinimizeIcon :size="16" />
         </button>
-        <button @click="isMaximized ? restoreWindow : maximizeWindow" class="title-bar-button">
+        <button @click="maximizeWindow" class="title-bar-button">
           <MaximizeIcon v-if="!isMaximized" :size="16" />
           <RestoreIcon v-else :size="16" />
         </button>

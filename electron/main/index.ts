@@ -103,7 +103,7 @@ ipcMain.on('maximize-window', () => {
 });
 
 ipcMain.on('restore-window', () => {
-  win.restore();
+  win.unmaximize()
 });
 
 ipcMain.on('close-window', () => {
@@ -125,10 +125,8 @@ async function createWindow() {
     minWidth: 800,
     frame: false,
     transparent : process.platform === 'win32' || process.platform === 'darwin',
-    titleBarStyle: 'hidden',
+    titleBarStyle: process.platform === 'darwin'? 'hidden' : null,
     titleBarOverlay: {
-       color: '#171717',
-       symbolColor: '#eee',
        height: 40
      },
     vibrancy: 'fullscreen-ui',
