@@ -226,24 +226,28 @@ export function setupIpcHandlers() {
       
       ipcMain.handle('get-module-path', async (event, moduleId: string) => {
         try {
-          const ModulesFolder= fs.readdirSync(ModulesPath);
-          if(ModulesFolder.filter( 
-            (file) => file.startsWith('.') === false
-          ).includes(moduleId)){
-            return { success: true, modulePath: path.join(ModulesPath, moduleId) };
-          }
-          const reposFolder = fs.readdirSync(path.join(app.getPath('userData'), 'Repos')).filter((file) => file.startsWith('.') === false);
-          for(const repo of reposFolder){
-            // get inside the Modules folder of the repo
-            const repoPath = path.join(app.getPath('userData'), 'Repos', repo, 'Modules');
-            if(fs.existsSync(repoPath)){
-              const modules = fs.readdirSync(repoPath).filter((file) => file.startsWith('.') === false);
-              if(modules.includes(moduleId)){
-                return { success: true, modulePath: path.join(repoPath, moduleId) };
+          const reposPath = path.join(app.getPath('userData'), 'Repos');
+          // go through each repo folder and check if the module exists that isn't an archive file
+          const repos = fs.readdirSync(reposPath)
+            .filter((file) => file.startsWith('.') === false && file.endsWith('.zip') === false);
+          for (const repoId of repos) {
+            // go through their Modules folder and check if the module exists by checking the folder name
+            const repoPath = path.join(reposPath, repoId, 'Modules');
+            const modules = fs.readdirSync(repoPath)
+              .filter((file) => file.startsWith('.') === false);
+            for (const module of modules) {
+              if (module === moduleId) {
+                return { success: true, modulePath: path.join(repoPath, module) };
               }
-              break;
             }
-            return { success: false, error: 'Module not found' };
+          }
+          const ModulesPath = path.join(app.getPath('userData'), 'Modules');
+          const modules = fs.readdirSync(ModulesPath)
+            .filter((file) => file.startsWith('.') === false && file.endsWith('.zip') === false);
+          for (const module of modules) {
+            if (module === moduleId) {
+              return { success: true, modulePath: path.join(ModulesPath, module) };
+            }
           }
           return { success: false, error: 'Module not found' };
         } catch (error) {
