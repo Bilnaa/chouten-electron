@@ -1,6 +1,6 @@
 <template>
     <transition name="modal">
-      <div v-if="show" class="modal-overlay" @click="$emit('close')">
+      <div v-if="show" class="modal-overlay" :style="isMaximized ? 'border-radius : 0px' : 'border-radius : 20px' " @click="$emit('close')">
         <div class="modal-content" @click.stop>
           <slot></slot>
         </div>
@@ -11,7 +11,21 @@
   <script>
   export default {
     name: 'Modal',
-    props: ['show']
+    props: ['show'],
+    data() {
+      return {
+        isMaximized: localStorage.getItem('isMaximized') === 'true',
+      }
+    },
+    mounted() {
+      setInterval(() => {
+        if (localStorage.getItem('isMaximized') === 'true') {
+          this.isMaximized = true;
+        } else {
+          this.isMaximized = false;
+        }
+      }, 1000);
+    },
   }
   </script>
   

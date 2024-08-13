@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain,protocol,dialog } from 'electron'
+import { app, BrowserWindow, shell, ipcMain,protocol} from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
@@ -124,7 +124,7 @@ async function createWindow() {
     minHeight: 600,
     minWidth: 800,
     frame: false,
-    transparent : process.platform === 'win32' || process.platform === 'darwin',
+    transparent: process.platform === 'darwin',
     titleBarStyle: process.platform === 'darwin'? 'hidden' : null,
     titleBarOverlay: {
        height: 40
@@ -140,6 +140,23 @@ async function createWindow() {
     },
   })
 
+   win.on('maximize', () => {
+      console.log('Window is maximized');
+      win.webContents.executeJavaScript(
+        `
+        localStorage.setItem('isMaximized', true);
+        `
+      )
+  });
+
+  win.on('unmaximize', () => {
+      console.log('Window is not maximized');
+      win.webContents.executeJavaScript(
+        `
+        localStorage.setItem('isMaximized', false);
+        `
+      )
+  });
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
   } else {
@@ -156,6 +173,7 @@ async function createWindow() {
 
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', new Date().toLocaleString())
+    win.webContents.executeJavaScript(`localStorage.setItem('isMaximized', ${win.isMaximized()})`)
   })
 
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -171,11 +189,12 @@ async function createWindow() {
     app.quit()
   }
   )
+  
 }
 
 function createHiddenWindow() {
   hiddenWin = new BrowserWindow({
-    show: false, 
+    show: false,
     icon: path.join(process.env.VITE_PUBLIC, 'chouten.png'),
     webPreferences: {
       contextIsolation: true,
@@ -239,6 +258,7 @@ if (!gotTheLock) {
 
 ipcMain.handle('open-win', (_, arg) => {
   const childWindow = new BrowserWindow({
+    frame: false,
     webPreferences: {
       preload,
       nodeIntegration: false,

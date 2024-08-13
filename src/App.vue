@@ -124,7 +124,7 @@ onMounted(() => {
   if (newMaximized) {
     document.getElementById('app')?.style.setProperty('border-radius', '0px');
   } else {
-    document.getElementById('app')?.style.setProperty('border-radius', '20px');
+    document.getElementById('app')?.style.setProperty('border-radius', '10px');
   }
   });
 
@@ -259,6 +259,7 @@ body {
   color: white;
   height: 100vh;
   overflow: hidden;
+  border-radius: 10px;
 }
 
 .container {

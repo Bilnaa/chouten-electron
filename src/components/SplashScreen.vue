@@ -27,7 +27,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    font-family: Arial, sans-serif;
+    font-family: Poppins, sans-serif;
     animation: fadeIn 1s ease-out;
     position: fixed;
     top: 0;
@@ -36,7 +36,7 @@
     bottom: 0;
     z-index: 9999;
     transition: opacity 0.5s ease-out;
-    border-radius: 20px;
+    border-radius: 10px;
   }
   
   .splash-screen.fade-out {
