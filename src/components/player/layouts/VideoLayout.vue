@@ -65,8 +65,8 @@ const { thumbnails } = defineProps<{
   display: flex;
   align-items: center;
   width: 100%;
-  border-radius: 20px;
 }
+
 .controls-group {
   padding-inline: 8px;
 }
