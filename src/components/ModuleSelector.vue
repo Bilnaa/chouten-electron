@@ -2,7 +2,6 @@
   <div class="module-selector">
     <div class="repo-container" ref="repoContainer" @scroll="handleScroll">
       <div class="repo-slider" :style="{ width: `${(repos.length + 1) * 100}%` }">
-        <!-- Repo Modules -->
         <div
           v-for="(repo, repoIndex) in repos"
           :key="repo.id"
@@ -43,7 +42,6 @@
           </div>
         </div>
 
-        <!-- Orphan Modules -->
         <div class="repo-section orphan-section" :style="{ width: `${100 / (repos.length + 1)}%` }" v-if="orphanModules.length > 0">
           <h4>Orphan Modules</h4>
           <div class="modules-grid">
@@ -90,9 +88,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, inject } from 'vue';
+import { defineComponent, ref, computed, onMounted, inject, watch } from 'vue';
 import { useStore } from 'vuex';
 import store, { Repo, Module } from '../store/index';
+
 export default defineComponent({
   setup() {
     const store = useStore();
@@ -105,7 +104,7 @@ export default defineComponent({
     const modules = ref<Module[]>([]);
 
     const orphanModules = computed(() => {
-      return modules.value
+      return modules.value.filter(m => !repos.value.some(r => r.modules.includes(m)));
     });
 
     const loadModules = async () => {
@@ -151,13 +150,31 @@ export default defineComponent({
       repoContainer.value.scrollTo({ left: index * containerWidth, behavior: 'smooth' });
     };
 
-
     const isModuleSelected = (module: Module) => {
       return activeModule.value && activeModule.value.id === module.id;
     };
 
-    onMounted(loadRepos);
-    onMounted(loadModules);
+    const findModuleRepoIndex = (module: Module): number => {
+      const repoIndex = repos.value.findIndex(repo => 
+        repo.modules.some(m => m.id === module.id)
+      );
+      return repoIndex !== -1 ? repoIndex : repos.value.length;
+    };
+
+    const scrollToActiveModule = () => {
+      if (activeModule.value) {
+        const index = findModuleRepoIndex(activeModule.value);
+        scrollToRepo(index);
+      }
+    };
+
+    onMounted(async () => {
+      await loadRepos();
+      await loadModules();
+      scrollToActiveModule();
+    });
+
+    watch(activeModule, scrollToActiveModule);
 
     return {
       repos,
@@ -172,8 +189,8 @@ export default defineComponent({
       placeholder,
     };
   },
-  methods : {
-      selectModule(module: Module) {
+  methods: {
+    selectModule(module: Module) {
       store.dispatch('setActiveModule', module);
     }
   }
@@ -188,12 +205,12 @@ export default defineComponent({
 .repo-container {
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .repo-container::-webkit-scrollbar {
-  display: none; /* WebKit */
+  display: none;
 }
 
 .repo-slider {
