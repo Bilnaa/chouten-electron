@@ -1,18 +1,20 @@
 <template>
   <div class="fullscreen-container" v-if="!error">
     <div class="video-player-container">
-      <media-player ref="mediaPlayer" viewType="video" streamType="on-demand" logLevel="warn" :crossOrigin="true" style="border-radius: 20px;"
-        :playsInline="true" @provider-change="onProviderChange" :type="type" canAirPlay canChromecast
-        @controls-change="onControlsChange" storage="local" load="eager" @canPlay="onCanPlay" captions="default-showing">
+      <media-player ref="mediaPlayer" viewType="video" streamType="on-demand" logLevel="warn" :crossOrigin="true"
+        style="border-radius: 20px;" :playsInline="true" @provider-change="onProviderChange" :type="type" canAirPlay
+        canChromecast @controls-change="onControlsChange" storage="local" load="eager" @canPlay="onCanPlay"
+        captions="default-showing">
         <media-provider>
           <div class="top-bar" :style="{ visibility: showInterface ? 'visible' : 'hidden' }">
-            <button class="back" @click="$router.back()">
+            <button class="back" @click="goBack">
               <media-icon type="arrow-left" />
             </button>
             <button class="quality">
               <media-icon type="menu-vertical" />
               <div class="quality-dropdown">
-                <button v-if="qualities.length !== 0" v-for="quality in qualities" @click="changeQuality(quality)">{{ quality }}</button>
+                <button v-if="qualities.length !== 0" v-for="quality in qualities" @click="changeQuality(quality)">{{
+                  quality }}</button>
               </div>
             </button>
           </div>
@@ -34,7 +36,7 @@
         <div class="vds-buffering-indicator">
           <media-spinner class="vds-buffering-spinner"></media-spinner>
         </div>
-        <VideoLayout :thumbnails="thumbnails" />
+        <VideoLayout :thumbnails="thumbnails" :episodes="episodes" />
       </media-player>
     </div>
   </div>
@@ -42,7 +44,7 @@
     <alert-circle-outline class="icon" />
     <p class="error-title">{{ errorMessage }}</p>
     <p class="error-details">{{ errorDetails }}</p>
-    <button class="back-button" @click="$router.back()">Go Back</button>
+    <button class="back-button" @click="goBack">Go Back</button>
   </div>
 </template>
 
@@ -58,7 +60,6 @@ import './buttons.css';
 import Hls from 'hls.js';
 import { useStore } from 'vuex';
 import type { MediaPlayerElement } from 'vidstack/elements';
-import type { TextTrackInit } from 'vidstack';
 import VideoLayout from './layouts/VideoLayout.vue';
 
 import {
@@ -144,20 +145,32 @@ export default {
     VideoLayout,
     AlertCircleOutline
   },
-  props: ["episodeId", "episodeTitle", "title"],
+  props: ["episodeId", "episodeTitle", "title", "episodes"],
   computed: {
     progress() {
       return this.duration ? (this.currentTime / this.duration) * 100 : 0;
     }
   },
   methods: {
+    goBack() {
+      this.$router.push({ name: 'infos', query: { url: localStorage.lastInfo } });
+    },
     onControlsChange(event: MediaControlsChangeEvent) {
       console.log(event);
       this.showInterface = event.detail;
     },
-    loadStream() {
+    async loadStream() {
       if (this.streamUrl.length > 0) {
-        (this.$refs.mediaPlayer as MediaPlayerElement).src = this.streams.find(stream => stream.file === this.streamUrl)?.file || '';
+        await new Promise<void>((resolve, reject) => {
+          const player = this.$refs.mediaPlayer as MediaPlayerElement;
+          player.addEventListener('loadedmetadata', () => {
+        resolve();
+          });
+          player.addEventListener('error', (error) => {
+        reject(error);
+          });
+          player.src = this.streams.find(stream => stream.file === this.streamUrl)?.file || '';
+        });
       }
     },
     onProviderChange(event: MediaProviderChangeEvent) {
@@ -219,20 +232,20 @@ export default {
       player.currentTime = (parseFloat(percent) / 100) * this.duration;
     },
     padZero(value: number): string {
-            return value.toString().padStart(2, "0");
-        },
+      return value.toString().padStart(2, "0");
+    },
     formatTime(time: number | string): string {
-            const seconds = Number(time);
-            const hours = Math.floor(seconds / 3600);
-            const minutes = Math.floor((seconds % 3600) / 60);
-            const remainingSeconds = seconds % 60;
+      const seconds = Number(time);
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const remainingSeconds = seconds % 60;
 
-            const formattedHours = this.padZero(Math.floor(hours));
-            const formattedMinutes = this.padZero(Math.floor(minutes));
-            const formattedSeconds = this.padZero(Math.floor(remainingSeconds));
+      const formattedHours = this.padZero(Math.floor(hours));
+      const formattedMinutes = this.padZero(Math.floor(minutes));
+      const formattedSeconds = this.padZero(Math.floor(remainingSeconds));
 
-            return `${formattedHours}:${formattedMinutes}:${formattedSeconds}.000`;
-        },
+      return `${formattedHours}:${formattedMinutes}:${formattedSeconds}.000`;
+    },
     updateTime() {
       const player = this.$refs.mediaPlayer as MediaPlayerElement
       console.log(player.currentTime, player.duration);
@@ -263,12 +276,12 @@ export default {
     },
     handleError(e: unknown) {
       this.error = true;
-      this.errorDetails = (e as Error).message.replace("Error invoking remote method 'execute-script':" , "");
+      this.errorDetails = (e as Error).message.replace("Error invoking remote method 'execute-script':", "");
     },
     updateDiscordPresence(state: string) {
       const { episodeTitle, title } = this;
       const player = this.$refs.mediaPlayer as MediaPlayerElement;
-      
+
       const presence: Presence = {
         details: episodeTitle ?? 'No episode title',
         state: `${state} ${title}`,
@@ -298,88 +311,94 @@ export default {
       this.updateDiscordPresence('Watching');
     },
     convertToWebVTT(data: { start: number; end: number; title: string }[]): string {
-        let webVTT = "WEBVTT\n\n";
-    
-        for (let i = 0; i < data.length; i++) {
-            const entry = data[i];
-            const start = this.formatTime(entry?.start ?? 0);
-            const end = this.formatTime(entry?.end ?? 0);
-    
-            webVTT += `${start} --> ${end}\n`;
-            webVTT += `${entry?.title ?? ""}\n`;
-            webVTT += "\n";
+      let webVTT = "WEBVTT\n\n";
+
+      for (let i = 0; i < data.length; i++) {
+        const entry = data[i];
+        const start = this.formatTime(entry?.start ?? 0);
+        const end = this.formatTime(entry?.end ?? 0);
+
+        webVTT += `${start} --> ${end}\n`;
+        webVTT += `${entry?.title ?? ""}\n`;
+        webVTT += "\n";
+      }
+      return webVTT;
+    },
+    async loadVideoPage() {
+      this.updateDiscordPresence('Waiting to play');
+      console.log(`const instance = new source.default(); return instance.streams("${this.episodeId}")`)
+      let sourcesRes;
+      try {
+        sourcesRes = await this.executeJs(`const instance = new source.default(); return instance.sources("${this.episodeId}")`);
+      } catch (error) {
+        return;
+      }
+      let error;
+      for (const result of sourcesRes.result as SourceList[]) {
+        let title = result.title;
+        let sources = result.sources;
+        for (let x = 0; x < sources.length; x++) {
+          let source = sources[x];
+          console.log(source.name);
+          let resStreams;
+          try {
+            console.log(`const instance = new source.default(); return instance.streams("${source.url}")`)
+            resStreams = await this.executeJs(`const instance = new source.default(); return instance.streams("${source.url}")`);
+          } catch (error) {
+            error = error;
+            continue;
+          }
+          this.streams.push(...resStreams.result.streams);
+          this.qualities = this.streams.filter(stream => stream.type === 0).map(stream => stream.quality);
+          this.subtitles = resStreams.result.subtitles;
+          this.thumbnails = this.subtitles.find(sub => sub.language.toLowerCase() === 'thumbnails')?.url || '';
+          this.subtitles = this.subtitles.filter(sub => sub.language.toLowerCase() !== 'thumbnails');
+          this.skips = resStreams.result.skips;
         }
-        return webVTT;
+      }
+      if (this.streams.length === 0) {
+        this.handleError(error);
+        return;
+      }
+
+      if (this.skips.length > 0) {
+        const webvtt = this.convertToWebVTT(this.skips);
+        const blob = new Blob([webvtt], { type: 'text/vtt' });
+        const url = URL.createObjectURL(blob);
+        (this.$refs.mediaPlayer as MediaPlayerElement).textTracks.add({
+          src: url,
+          label: 'Chapters',
+          kind: 'chapters',
+          default: true,
+        });
+      }
+
+      this.streamUrl = this.streams.find(stream => stream.quality === 'auto' || stream.quality === 'default')?.file || this.streams[0].file;
+      this.currentQuality = this.streams.find(stream => stream.quality === 'auto' || stream.quality === 'default')?.quality || this.streams[0].quality;
+      this.loadStream();
+      if ((this.streams[0].type === MediaDataType.HLS) && Hls.isSupported()) {
+        this.type = 'application/x-mpegURL';
+        var hls = new Hls();
+        hls.loadSource(this.streamUrl);
+        hls.attachMedia(this.$refs.mediaPlayer as HTMLVideoElement);
+        (this.$refs.mediaPlayer as MediaPlayerElement).src = this.streamUrl;
+      } else {
+        this.type = 'video/mp4';
+      }
+
+      const player = this.$refs.mediaPlayer as MediaPlayerElement;
+      player.addEventListener('timeupdate', this.onTimeUpdate);
+      player.addEventListener('seeking', this.onTimeUpdate);
+      player.addEventListener('play', this.onPlay);
+      player.addEventListener('pause', this.onPause);
+
     }
   },
+  setup(props, ctx) {
+      console.log('props', props);
+  },
   async mounted() {
-    this.updateDiscordPresence('Waiting to play');
-    await this.injectInstance();
-    console.log(`const instance = new source.default(); return instance.streams("${this.episodeId}")`)
-    let sourcesRes;
-    try {
-      sourcesRes = await this.executeJs(`const instance = new source.default(); return instance.sources("${this.episodeId}")`);
-    } catch (error) {
-      return;
-    }
-  let error;
-  for(const result of sourcesRes.result as SourceList[]){
-      let title = result.title;
-      let sources = result.sources;
-      for(let x = 0; x < sources.length; x++){
-        let source = sources[x];
-        console.log(source.name);
-        let resStreams;
-        try {
-        console.log(`const instance = new source.default(); return instance.streams("${source.url}")`)
-        resStreams = await this.executeJs(`const instance = new source.default(); return instance.streams("${source.url}")`);
-        } catch (error) {
-          error = error;
-          continue;
-        }
-        this.streams.push(...resStreams.result.streams);
-        this.qualities = this.streams.filter(stream => stream.type === 0).map(stream => stream.quality);
-        this.subtitles = resStreams.result.subtitles;
-        this.thumbnails = this.subtitles.find(sub => sub.language.toLowerCase() === 'thumbnails')?.url || '';
-        this.subtitles = this.subtitles.filter(sub => sub.language.toLowerCase() !== 'thumbnails');
-        this.skips = resStreams.result.skips;
-      }
-    }
-    if(this.streams.length === 0){
-      this.handleError(error);
-      return;
-    }
-
-    if (this.skips.length > 0) {
-      const webvtt = this.convertToWebVTT(this.skips);
-      const blob = new Blob([webvtt], { type: 'text/vtt' });
-      const url = URL.createObjectURL(blob);
-      (this.$refs.mediaPlayer as MediaPlayerElement).textTracks.add({
-        src: url,
-        label: 'Chapters',
-        kind: 'chapters',
-        default: true,
-      });
-    }
-
-    this.streamUrl = this.streams.find(stream => stream.quality === 'auto' || stream.quality === 'default')?.file || this.streams[0].file;
-    this.currentQuality = this.streams.find(stream => stream.quality === 'auto' || stream.quality === 'default')?.quality || this.streams[0].quality;
-    this.loadStream();
-    if ((this.streams[0].type === MediaDataType.HLS) && Hls.isSupported()) {
-      this.type = 'application/x-mpegURL';
-      var hls = new Hls();
-      hls.loadSource(this.streamUrl);
-      hls.attachMedia(this.$refs.mediaPlayer as HTMLVideoElement);
-      (this.$refs.mediaPlayer as MediaPlayerElement).src = this.streamUrl;
-    } else {
-      this.type = 'video/mp4';
-    }   
-
-    const player = this.$refs.mediaPlayer as MediaPlayerElement;
-    player.addEventListener('timeupdate', this.onTimeUpdate);
-    player.addEventListener('seeking', this.onTimeUpdate);
-    player.addEventListener('play', this.onPlay);
-    player.addEventListener('pause', this.onPause);
+    await this.loadVideoPage();
   },
   beforeUnmount() {
     const player = this.$refs.mediaPlayer as MediaPlayerElement;
@@ -393,6 +412,33 @@ export default {
   },
   unmounted() {
     this.updateDiscordPresence('Leaving');
+  },
+  watch: {
+    '$route.query.episodeId': async function () {
+      // Reset the player
+      const player = this.$refs.mediaPlayer as MediaPlayerElement;
+      player.currentTime = 0;
+      player.pause();
+      player.src = '';
+      // player.textTracks.forEach(track => {
+      //   track.mode = 'disabled';
+      // });
+      this.streams = [];
+      this.subtitles = [];
+      this.skips = [];
+      this.previews = [];
+      this.thumbnails = '';
+      this.qualities = [];
+      this.streamUrl = '';
+      this.currentQuality = '';
+      this.showSettings = false;
+      this.error = false;
+      this.errorMessage = 'An error occured';
+      this.errorDetails = '';
+      await this.loadVideoPage();
+      await this.loadStream();
+
+    }
   }
 }
 </script>
@@ -451,7 +497,7 @@ export default {
   /* Ensure it's on top of everything */
   background-color: black;
   /* To cover any potential gaps */
-  border-radius: 20px;
+  border-radius: 10px;
 }
 
 .video-player-container {

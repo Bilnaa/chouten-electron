@@ -13,9 +13,11 @@ import Captions from '../Captions.vue';
 import Gestures from '../Gestures.vue';
 import Seek10Button from '../buttons/Seek10Button.vue';
 import SeekMinus10Button from '../buttons/Seek-10Button.vue';
+import NextEpisodeButton from '../buttons/NextEpisodeButton.vue';
 
-const { thumbnails } = defineProps<{
+const { thumbnails, episodes } = defineProps<{
   thumbnails?: string;
+  episodes: string;
 }>();
 </script>
 
@@ -36,6 +38,7 @@ const { thumbnails } = defineProps<{
       <TimeGroup />
       <ChapterTitle />
       <div class="vds-controls-spacer" />
+      <NextEpisodeButton :episodes="episodes" tooltip-placement="top" />
       <CaptionButton tooltip-placement="top" />
       <SettingsMenu placement="top end" tooltip-placement="top" />
       <PIPButton tooltip-placement="top" />

@@ -8,7 +8,7 @@ import VideoPlayer from "./components/player/VideoPlayer.vue";
 import Reader from "./components/imageReader.vue";
 import Collections from "./components/Collections.vue";
 
-export default createRouter({
+const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     {
@@ -29,17 +29,20 @@ export default createRouter({
       component: ComingSoon,
     },
     {
+      name: "infos",
       path: "/infos",
       component: Info,
       props: (route) => ({ url: route.query.url }),
     },
     {
+      name: "streams",
       path: "/streams",
       component: VideoPlayer,
       props: (route) => ({
         episodeId: route.query.episodeId,
         episodeTitle: route.query.episodeTitle,
         title: route.query.title,
+        episodes : route.query.episodes 
       }),
     },
     { path: "/reader", component: Reader,
@@ -50,3 +53,14 @@ export default createRouter({
     }),},
   ],
 });
+
+// router.beforeEach((to, from, next) => {
+//   // if it goes to streams I want a complete reload but just once
+//   if (to.name === "streams") {
+//     location.reload();
+//     return;
+//   }
+//   next();
+// });
+
+export default router;

@@ -3,7 +3,7 @@
     <div class="header">
       <div class="buttons">
         <div class="back">
-          <button @click="$router.go(-1)">
+          <button @click="$router.push('discover')">
             <ArrowLeftIcon />
           </button>
         </div>
@@ -66,7 +66,7 @@
 
         <transition-group class="episodes-list" name="episode-fade" tag="div">
           <router-link v-if="!isChaptersModule"
-            :to="'/streams?episodeId=' + episode.url + '&episodeTitle=' + `${episode.title == '' ? 'Episode ' + episode.number : episode.title}` + '&title=' + media.titles.primary"
+            :to="'/streams?episodeId=' + episode.url + '&episodeTitle=' + `${episode.title == '' ? 'Episode ' + episode.number : episode.title}` + '&title=' + media.titles.primary + '&episodes=' + JSON.stringify(episodes)"
             v-for="episode in paginatedEpisodes" :key="episode.number" class="episode">
               <img class="thumbnail" v-if="episode.thumbnail" :src="episode.thumbnail" alt="Thumbnail" />
               <div class="episode-info">
@@ -197,6 +197,7 @@ export default {
       currentPage: 0,  // Current page of episodes
       episodesPerPage: 100,  // Number of episodes per page
       isChaptersModule: false,
+      episodes : [] as MediaInfo[],
     }
   },
   props: {
@@ -300,6 +301,7 @@ export default {
           this.restoreCurrentPage();
         }
         console.log(this.categories);
+        this.episodes = this.categories[0].pagination[0].items;
       } catch (error) {
         console.error('Error fetching episodes:', error);
       } finally {
@@ -363,12 +365,12 @@ export default {
     }, 1000);
   },
   mounted() {
+    localStorage.lastInfo = this.url;
     window.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && this.showSeasonModal) {
         this.toggleSeasonModal();
       }
     });
-
   }
 }
 </script>
