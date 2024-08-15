@@ -365,7 +365,7 @@ export default {
     this.streamUrl = this.streams.find(stream => stream.quality === 'auto' || stream.quality === 'default')?.file || this.streams[0].file;
     this.currentQuality = this.streams.find(stream => stream.quality === 'auto' || stream.quality === 'default')?.quality || this.streams[0].quality;
     this.loadStream();
-    if ((this.streams[0].type === MediaDataType.HLS) && Hls.isSupported() || (this.$refs.mediaPlayer as HTMLVideoElement).canPlayType('application/vnd.apple.mpegurl')) {
+    if ((this.streams[0].type === MediaDataType.HLS) && Hls.isSupported()) {
       this.type = 'application/x-mpegURL';
       var hls = new Hls();
       hls.loadSource(this.streamUrl);
