@@ -311,6 +311,11 @@ export default {
       let url = window.location.href;
       let page = this.currentPage;
       currentPages.push({ url, page });
+      // check if the page already exists in the array and update it
+      let index = currentPages.findIndex((page: { url: string; }) => page.url === url);
+      if (index !== -1) {
+        currentPages[index].page = page;
+      }
       localStorage.setItem('currentPages', JSON.stringify(currentPages));
     },
     restoreCurrentPage() {
