@@ -36,6 +36,13 @@
         <div class="vds-buffering-indicator">
           <media-spinner class="vds-buffering-spinner"></media-spinner>
         </div>
+        <SkipButton
+              v-for="(skip, index) in skips"
+              :key="index"
+              :skipData="skip"
+              :currentTime="currentTime"
+              @skip="skipTo"
+          />
         <VideoLayout :thumbnails="thumbnails" :episodes="episodes" />
       </media-player>
     </div>
@@ -57,6 +64,7 @@ import 'vidstack/player/styles/default/theme.css';
 import 'vidstack/player/styles/default/layouts/audio.css';
 import 'vidstack/player/styles/default/layouts/video.css';
 import './buttons.css';
+import SkipButton from './buttons/SkipButton.vue';
 import Hls from 'hls.js';
 import { useStore } from 'vuex';
 import type { MediaPlayerElement } from 'vidstack/elements';
@@ -143,7 +151,8 @@ export default {
   },
   components: {
     VideoLayout,
-    AlertCircleOutline
+    AlertCircleOutline,
+    SkipButton
   },
   props: ["episodeId", "episodeTitle", "title", "episodes"],
   computed: {
@@ -152,6 +161,17 @@ export default {
     }
   },
   methods: {
+    skipTo(time: number) {
+    const player = this.$refs.mediaPlayer as HTMLVideoElement;
+    player.currentTime = time;
+  },
+  updateCurrentTime() {
+    const player = this.$refs.mediaPlayer as MediaPlayerElement;
+    if (player) {
+      this.currentTime = player.currentTime;
+      requestAnimationFrame(this.updateCurrentTime);
+    }
+  },
     goBack() {
       this.$router.push({ name: 'infos', query: { url: localStorage.lastInfo } });
     },
@@ -194,10 +214,6 @@ export default {
       this.streamUrl = this.streams.find(stream => stream.quality === HLSQuality)?.file || '';
       this.loadStream();
       player.currentTime = currentTime;
-    },
-    skipOpening() {
-      const player = this.$refs.mediaPlayer as HTMLVideoElement;
-      player.currentTime = this.skips[0].start;
     },
     togglePlay() {
       const player = this.$refs.mediaPlayer as HTMLVideoElement;
@@ -309,6 +325,7 @@ export default {
     },
     onTimeUpdate() {
       this.updateDiscordPresence('Watching');
+      this.updateCurrentTime();
     },
     convertToWebVTT(data: { start: number; end: number; title: string }[]): string {
       let webVTT = "WEBVTT\n\n";
@@ -399,8 +416,11 @@ export default {
   },
   async mounted() {
     await this.loadVideoPage();
+    this.updateCurrentTime();
+
   },
-  beforeUnmount() {
+  unmounted() {
+    this.updateDiscordPresence('Leaving');
     const player = this.$refs.mediaPlayer as MediaPlayerElement;
     if (player) {
       player.removeEventListener('timeupdate', this.onTimeUpdate);
@@ -409,9 +429,6 @@ export default {
       player.removeEventListener('pause', this.onPause);
       player.destroy();
     }
-  },
-  unmounted() {
-    this.updateDiscordPresence('Leaving');
   },
   watch: {
     '$route.query.episodeId': async function () {
@@ -437,7 +454,6 @@ export default {
       this.errorDetails = '';
       await this.loadVideoPage();
       await this.loadStream();
-
     }
   }
 }
