@@ -119,6 +119,7 @@ onMounted(() => {
   if (accentColor) {
     document.documentElement.style.setProperty('--accent-color', accentColor);
   }
+  router.push({ name: 'Discover' });
 
   watch(isMaximized, (newMaximized) => {
   if (newMaximized) {

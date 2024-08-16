@@ -28,11 +28,11 @@
     <div class="main-content">
       <nav class="main-nav">
         <ul>
-          <li>
+          <!-- <li>
             <router-link to="/" exact>
               <HomeIcon :size="24" />
             </router-link>
-          </li>
+          </li> -->
           <li>
             <router-link to="/discover">
               <CompassIcon :size="24" />
