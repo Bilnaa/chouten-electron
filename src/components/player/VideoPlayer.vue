@@ -446,7 +446,11 @@ export default {
 <style scoped>
 [data-media-player]:not([data-view-type='audio']) [data-media-provider],
 [data-media-player][data-fullscreen] [data-media-provider] {
-  height: 100vh !important;
+  height: 100% !important;
+}
+
+[data-media-player] {
+  height: 100%;
 }
 
 .title-bar {
