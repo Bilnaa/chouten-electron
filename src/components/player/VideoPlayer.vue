@@ -2,7 +2,7 @@
   <div class="fullscreen-container" v-if="!error">
     <div class="video-player-container">
       <media-player ref="mediaPlayer" viewType="video" streamType="on-demand" logLevel="warn" :crossOrigin="true"
-        style="border-radius: 20px;" :playsInline="true" @provider-change="onProviderChange" :type="type" canAirPlay
+        style="border-radius: 10px;" :playsInline="true" @provider-change="onProviderChange" :type="type" canAirPlay
         canChromecast @controls-change="onControlsChange" storage="local" load="eager" @canPlay="onCanPlay"
         captions="default-showing">
         <media-provider>
