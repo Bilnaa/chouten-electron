@@ -81,6 +81,7 @@
     font-size: 14px;
     font-weight: 600;
     z-index: 2;
+    max-width: 85px;
   }
   
   .progress-bar {
