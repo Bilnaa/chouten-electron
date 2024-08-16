@@ -29,8 +29,7 @@
           <media-poster :src="posterUrl" default="" class="vds-poster" />
           <source :src="streamUrl" />
           <track v-for="(subtitle, index) in subtitles" :key="index" :src="subtitle.url" :srclang="subtitle.language"
-            :label="subtitle.language" :kind="subtitle.type === SubtitleType.VTT ? 'subtitles' : 'chapters'"
-            :default="index === 0" />
+            :label="subtitle.language" :kind="'subtities'" :default="index === 0" />
         </media-provider>
 
         <div class="vds-buffering-indicator">
@@ -68,6 +67,7 @@ import SkipButton from './buttons/SkipButton.vue';
 import Hls from 'hls.js';
 import { useStore } from 'vuex';
 import type { MediaPlayerElement } from 'vidstack/elements';
+import type { TextTrack } from 'vidstack';
 import VideoLayout from './layouts/VideoLayout.vue';
 
 import {
@@ -417,7 +417,6 @@ export default {
   async mounted() {
     await this.loadVideoPage();
     this.updateCurrentTime();
-
   },
   unmounted() {
     this.updateDiscordPresence('Leaving');
@@ -437,9 +436,12 @@ export default {
       player.currentTime = 0;
       player.pause();
       player.src = '';
-      // player.textTracks.forEach(track => {
-      //   track.mode = 'disabled';
-      // });
+      // delete all the tracks
+      const tracks = player.textTracks;
+      for (let i = tracks.length - 1; i >= 0; i--) {
+        tracks[i]!.mode = 'hidden';
+        player.textTracks.remove(tracks[i] as TextTrack);
+      }
       this.streams = [];
       this.subtitles = [];
       this.skips = [];
