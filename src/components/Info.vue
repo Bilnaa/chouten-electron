@@ -7,7 +7,7 @@
             <ArrowLeftIcon />
           </button>
         </div>
-        <div class="bookmark">
+        <div class="bookmark" @click="showToast('Not Implemented', 'This feature is not implemented yet', 'Info', 3000)">
           <!-- <button @click="toggleBookmark">
             <span v-if="isBookmarked">Remove Bookmark</span>
             <span v-else>Add Bookmark</span>
@@ -117,6 +117,8 @@
 
 
 <script lang="ts">
+import {inject} from 'vue';
+
 import { useStore } from 'vuex';
 import ArrowLeftIcon from 'vue-material-design-icons/ArrowLeft.vue';
 import BookmarkIcon from 'vue-material-design-icons/Bookmark.vue';
@@ -181,8 +183,10 @@ export type MediaInfo = {
 export default {
   setup() {
     const store = useStore();
+    const showToast = inject('showToast') as (title: string, message: string, icon?: string, duration?: number) => void;
     return {
       store,
+      showToast,
     };
   },
   data() {
@@ -232,7 +236,7 @@ export default {
       this.selectedCategory = category;
       this.currentPage = 0;
       this.saveCurrentPage();
-    },
+    }, 
     toggleSeasonModal() {
       this.showSeasonModal = !this.showSeasonModal;
     },
