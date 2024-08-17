@@ -80,6 +80,7 @@ ipcMain.handle('load-script', async (event, scriptPath) => {
   }
 });
 
+
 ipcMain.handle('execute-script', async (event, scriptContent) => {
   if (hiddenWin) {
     let result;
@@ -114,6 +115,13 @@ ipcMain.handle('is-maximized', () => {
   return win.isMaximized();
 });
 
+ipcMain.handle('show-hidden-window', function () {
+  hiddenWin.show();
+});
+
+ipcMain.handle('hide-hidden-window', function () {
+  hiddenWin.hide();
+});
 
 async function createWindow() {
   win = new BrowserWindow({
@@ -204,6 +212,8 @@ function createHiddenWindow() {
       preload
     }
   });
+
+
   if (VITE_DEV_SERVER_URL) {
     hiddenWin.loadURL(`${VITE_DEV_SERVER_URL}/hidden.html`)
       .catch(err => console.error('Error loading hidden window from URL:', err));
@@ -233,7 +243,16 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
   app.setAsDefaultProtocolClient('chouten')
-
+  // if localStorage.devModeEnabled is true, open hidden window
+  if (win) {
+    win.webContents.on('did-finish-load', () => {
+      win.webContents.executeJavaScript(`
+        if (localStorage.devModeEnabled === 'true') {
+          window.ipcRenderer.invoke('show-hidden-window');
+        }
+      `);
+    });
+  }
   
 })
 

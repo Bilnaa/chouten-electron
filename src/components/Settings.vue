@@ -10,7 +10,7 @@
         </div>
         <div class="setting">
           <label for="dev-mode">Developer Mode</label>
-          <ToggleSwitch :value="devModeEnabled" id="dev-mode" @click="devModeEnabled = !devModeEnabled" />
+          <ToggleSwitch :value="devModeEnabled" id="dev-mode" @click="setDevMode" />
         </div>
         <div class="setting">
           <label for="accent-color">Accent Color</label>
@@ -37,7 +37,7 @@ export default {
   },
   data() {
     return {
-      devModeEnabled: false,
+      devModeEnabled: localStorage.getItem('devModeEnabled') === 'undefined' ? false : localStorage.getItem('devModeEnabled') === 'true',
       accentColor: '#6200ee',
     }
   },
@@ -53,6 +53,17 @@ export default {
         devModeEnabled: this.devModeEnabled,
         accentColor: this.accentColor
       })
+    },
+    setDevMode() {
+      console.log('Setting dev mode', !this.devModeEnabled);
+      localStorage.setItem('devModeEnabled', (!this.devModeEnabled).toString());
+      this.devModeEnabled = !this.devModeEnabled;
+      if(this.devModeEnabled) {
+        window.ipcRenderer.invoke('show-hidden-window');
+      } else {
+        window.ipcRenderer.invoke('hide-hidden-window');
+      }
+      location.reload();
     }
   },
   mounted() {

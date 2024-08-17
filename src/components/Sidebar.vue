@@ -28,11 +28,11 @@
     <div class="main-content">
       <nav class="main-nav">
         <ul>
-          <!-- <li>
+          <li v-if="devMode">
             <router-link to="/" exact>
               <HomeIcon :size="24" />
             </router-link>
-          </li> -->
+          </li>
           <li>
             <router-link to="/discover">
               <CompassIcon :size="24" />
@@ -90,6 +90,7 @@ export default {
       supabase: createClient('https://ydiykaztjeqavsucbpko.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkaXlrYXp0amVxYXZzdWNicGtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjMwMzk1ODcsImV4cCI6MjAzODYxNTU4N30.aVMFp5TEH0zxyup4zdsQh5dLZ2liCC6vBJVyTutZ2DY', {
         persistSession: true
       }),
+      devMode: localStorage.getItem('devModeEnabled') === 'true'
     }
   },
   methods: {
