@@ -4,6 +4,7 @@ import type { MenuPlacement, TooltipPlacement } from 'vidstack';
 import CaptionSubmenu from './CaptionSubmenu.vue';
 import QualitySubmenu from './QualitySubmenu.vue'
 import SpeedSubmenu from './SpeedSubmenu.vue';
+import AutoPlaySubmenu from './AutoPlaySubmenu.vue';
 
 import Menu from './Menu.vue';
 
@@ -22,6 +23,7 @@ const { placement, tooltipPlacement } = defineProps<{
       <CaptionSubmenu />
       <QualitySubmenu />
       <SpeedSubmenu />
+      <AutoPlaySubmenu />
     </template>
     <template #tooltip-content>
       <span>Settings</span>

@@ -417,6 +417,13 @@ export default {
   async mounted() {
     await this.loadVideoPage();
     this.updateCurrentTime();
+    if(localStorage.autoplay === undefined || localStorage.autoplay === 'true') {
+      localStorage.autoplay = 'true';
+      const player = this.$refs.mediaPlayer as MediaPlayerElement;
+      player.autoPlay = true;
+    } else {
+      localStorage.autoplay = 'false';
+    }
   },
   unmounted() {
     this.updateDiscordPresence('Leaving');
@@ -456,6 +463,14 @@ export default {
       this.errorDetails = '';
       await this.loadVideoPage();
       await this.loadStream();
+      if(localStorage.autoplay === 'true') {
+        const player = this.$refs.mediaPlayer as MediaPlayerElement;
+        player.autoPlay = true;
+      } else {
+        const player = this.$refs.mediaPlayer as MediaPlayerElement;
+        player.autoPlay = false;
+        player.pause();
+      }
     }
   }
 }
