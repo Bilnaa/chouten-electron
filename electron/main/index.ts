@@ -218,7 +218,6 @@ function createHiddenWindow() {
   });
   hiddenWin.setClosable(false);
   hiddenWin.setSkipTaskbar(true);
-  // open dev tools for hidden window
 
   if (VITE_DEV_SERVER_URL) {
     hiddenWin.loadURL(`${VITE_DEV_SERVER_URL}/hidden.html`)
@@ -251,7 +250,6 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
   app.setAsDefaultProtocolClient('chouten')
-  // if localStorage.devModeEnabled is true, open hidden window
   if (win) {
     win.webContents.on('did-finish-load', () => {
       win.webContents.executeJavaScript(`
