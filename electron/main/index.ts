@@ -117,10 +117,15 @@ ipcMain.handle('is-maximized', () => {
 
 ipcMain.handle('show-hidden-window', function () {
   hiddenWin.show();
+  hiddenWin.webContents.openDevTools();
 });
 
 ipcMain.handle('hide-hidden-window', function () {
   hiddenWin.hide();
+  // check if dev tools is open and close it
+  if (hiddenWin.webContents.isDevToolsOpened()) {
+    hiddenWin.webContents.closeDevTools();
+  }
 });
 
 async function createWindow() {
@@ -213,7 +218,7 @@ function createHiddenWindow() {
   });
   hiddenWin.setClosable(false);
   hiddenWin.setSkipTaskbar(true);
-  
+  // open dev tools for hidden window
 
   if (VITE_DEV_SERVER_URL) {
     hiddenWin.loadURL(`${VITE_DEV_SERVER_URL}/hidden.html`)
@@ -225,6 +230,7 @@ function createHiddenWindow() {
 
   hiddenWin.webContents.on('did-finish-load', () => {
     console.log('Hidden window finished loading');
+
   });
 
   hiddenWin.on('closed', () => {
