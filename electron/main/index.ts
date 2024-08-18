@@ -189,7 +189,6 @@ async function createWindow() {
     return { action: 'deny' }
   })
 
-  win.webContents.on('did-finish-load', createHiddenWindow)
 
   win.on('closed', () => {
     win = null
@@ -212,7 +211,9 @@ function createHiddenWindow() {
       preload
     }
   });
-
+  hiddenWin.setClosable(false);
+  hiddenWin.setSkipTaskbar(true);
+  
 
   if (VITE_DEV_SERVER_URL) {
     hiddenWin.loadURL(`${VITE_DEV_SERVER_URL}/hidden.html`)
@@ -238,6 +239,7 @@ const gotTheLock = app.requestSingleInstanceLock()
 app.whenReady().then(() => {
   createDirectories();
   createWindow();
+  createHiddenWindow();
   setupIpcHandlers();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
