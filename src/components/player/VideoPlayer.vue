@@ -204,7 +204,15 @@ export default {
     onCanPlay(event: MediaCanPlayEvent) {
       if (event.detail) {
         const player = this.$refs.mediaPlayer as HTMLVideoElement;
-        player.play();
+        if (localStorage.autoplay === 'true') {
+          player.play();
+        } else if (localStorage.autoplay === undefined
+        ) {
+          player.play();
+        } 
+        else {
+          player.pause();
+        }
       }
     },
     changeQuality(HLSQuality: string) {
@@ -393,6 +401,8 @@ export default {
       this.streamUrl = this.streams.find(stream => stream.quality === 'auto' || stream.quality === 'default')?.file || this.streams[0].file;
       this.currentQuality = this.streams.find(stream => stream.quality === 'auto' || stream.quality === 'default')?.quality || this.streams[0].quality;
       this.loadStream();
+      const player = (this.$refs.mediaPlayer as MediaPlayerElement)
+      player.currentTime = 0;
       if ((this.streams[0].type === MediaDataType.HLS) && Hls.isSupported()) {
         this.type = 'application/x-mpegURL';
         var hls = new Hls();
@@ -402,8 +412,6 @@ export default {
       } else {
         this.type = 'video/mp4';
       }
-
-      const player = this.$refs.mediaPlayer as MediaPlayerElement;
       player.addEventListener('timeupdate', this.onTimeUpdate);
       player.addEventListener('seeking', this.onTimeUpdate);
       player.addEventListener('play', this.onPlay);
@@ -417,13 +425,7 @@ export default {
   async mounted() {
     await this.loadVideoPage();
     this.updateCurrentTime();
-    if(localStorage.autoplay === undefined || localStorage.autoplay === 'true') {
-      localStorage.autoplay = 'true';
-      const player = this.$refs.mediaPlayer as MediaPlayerElement;
-      player.autoPlay = true;
-    } else {
-      localStorage.autoplay = 'false';
-    }
+    
   },
   unmounted() {
     this.updateDiscordPresence('Leaving');
@@ -462,10 +464,10 @@ export default {
       this.errorMessage = 'An error occured';
       this.errorDetails = '';
       await this.loadVideoPage();
-      await this.loadStream();
       if(localStorage.autoplay === 'true') {
         const player = this.$refs.mediaPlayer as MediaPlayerElement;
         player.autoPlay = true;
+        player.play();
       } else {
         const player = this.$refs.mediaPlayer as MediaPlayerElement;
         player.autoPlay = false;
