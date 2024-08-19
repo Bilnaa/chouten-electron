@@ -67,6 +67,12 @@ export default class Discord {
     await this.writeConfig({ discord: false });
   }
 
+  async enable(): Promise<void> {
+    this.disabled = false;
+    await this.writeConfig({ discord: true });
+    this.login();
+  }
+
   async isEnabled(): Promise<boolean> {
     const config = await this.readConfig();
     return config.discord;

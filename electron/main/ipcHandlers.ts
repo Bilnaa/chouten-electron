@@ -15,7 +15,7 @@ export function setupIpcHandlers() {
       });
 
       ipcMain.handle('enable-discord', async (event) => {
-        discord.login();
+        discord.enable()
       });
 
       ipcMain.handle('disable-discord', async (event) => {
