@@ -175,7 +175,7 @@ class ChoutenApp {
     this.mainWindow.on('closed', () => {
       console.log('Window is closing');
       this.hiddenWindow?.close();
-      app.quit();
+      process.exit(0);
     });
 
     this.mainWindow.webContents.on('devtools-opened', () => 
