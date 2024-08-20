@@ -110,8 +110,8 @@ export default {
         const availableStyles = [
             { value: 'single', label: 'Single Page', class: 'single-page' },
             { value: 'double', label: 'Double Page', class: 'double-page' },
-            { value: 'continuous', label: 'Continuous Scroll', class: 'continuous-scroll' },
-            { value: 'webtoon', label: 'Webtoon', class: 'webtoon-scroll' },
+            // { value: 'continuous', label: 'Continuous Scroll', class: 'continuous-scroll' },
+            // { value: 'webtoon', label: 'Webtoon', class: 'webtoon-scroll' },
         ];
 
         const progress = computed(() => {
