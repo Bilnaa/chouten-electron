@@ -1,7 +1,7 @@
 <template>
     <div class="card-grid-container">
       <div class="card-grid">
-        <CardSkeleton v-for="i in 5" :key="i" />
+        <CardSkeleton v-for="i in 20" :key="i" />
       </div>
     </div>
   </template>
