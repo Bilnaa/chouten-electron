@@ -4,8 +4,20 @@
       <SearchButton />
     </div>
     <div class="main-content">
-      <component v-for="(item, index) in discover" :key="index" :is="getComponent(item.type)" v-bind="item"
-        :data="item.data" :use="use(item.type)" />
+      <template v-if="isLoading">
+        <CardGridSkeleton v-for="i in 1" :key="'card-grid-skeleton-' + i" />
+        <SectionSkeleton v-for="i in 3" :key="'section-skeleton-' + i" />
+      </template>
+      <template v-else>
+        <component 
+          v-for="(item, index) in discover" 
+          :key="index" 
+          :is="getComponent(item.type)" 
+          v-bind="item" 
+          :data="item.data" 
+          :use="use(item.type)" 
+        />
+      </template>
     </div>
   </div>
 </template>
@@ -16,10 +28,11 @@ import Sidebar from "./Sidebar.vue";
 import CardGrid from "./CardGrid.vue";
 import Section from "./Section.vue";
 import SearchButton from "./SearchButton.vue";
+import CardGridSkeleton from "./CardGridSkeleton.vue";
+import SectionSkeleton from "./SectionSkeleton.vue";
 import { useStore } from "vuex";
 import store from "../store";
 import { type Presence } from 'discord-rpc';
-
 
 type HexColor = `#${string}`;
 
@@ -27,10 +40,12 @@ type Titles = {
   primary: string;
   secondary?: string;
 };
+
 type Label = {
   text: string;
   color: HexColor;
 };
+
 enum DiscoverTypes {
   CAROUSEL,
   LIST,
@@ -62,6 +77,8 @@ export default defineComponent({
     CardGrid,
     Section,
     SearchButton,
+    CardGridSkeleton,
+    SectionSkeleton,
   },
   setup() {
     const store = useStore();
@@ -73,6 +90,7 @@ export default defineComponent({
     return {
       discover: [] as DiscoverListings[],
       module: {},
+      isLoading: true,
     };
   },
   methods: {
@@ -128,6 +146,7 @@ export default defineComponent({
       }
     },
     async loadDiscover() {
+      this.isLoading = true;
       await this.injectInstance();
       let getDiscover = await window.ipcRenderer.invoke(
         "execute-script",
@@ -143,6 +162,7 @@ export default defineComponent({
           this.module = getModuleInfo.result;
         }
       }
+      this.isLoading = false;
     },
     updateDiscordPresence() {
       const presence: Presence = {
