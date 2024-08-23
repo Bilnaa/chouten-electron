@@ -16,7 +16,7 @@ on:
       - "!.github/workflows/build.yml"
 
 jobs:
-  release:
+  build:
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -24,39 +24,18 @@ jobs:
         os: [macos-latest, ubuntu-latest, windows-latest]
 
     steps:
-      - name: Check out Git repository
+      - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Install Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Install Dependencies
         run: npm install
 
-      - name: Build and Release Electron app
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run build
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.os }}-artifacts
-          path: release/**/*
-
-  publish:
-    needs: release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            **/*
+      - name: Build Release Files
+        run: npm run publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
