@@ -12,13 +12,19 @@
       provider: "github",
       owner: "Bilnaa",
       repo: "chouten-electron",
-      releaseType: "release"
     },
   ],
   files: ["dist", "dist-electron"],
   mac: {
-    target: ["dmg"],
+    target: [
+      {
+        arch: "universal",
+        target: "default",
+      },
+    ],
     category: "public.app-category.video",
+    hardenedRuntime: true,
+    notarize: false,
     fileAssociations: [
       {
         ext: "module",
@@ -30,9 +36,7 @@
     artifactName: "${productName}-Mac-${version}-Installer.${ext}",
   },
   win: {
-    target: [
-        "nsis",
-    ],
+    target: ["nsis", "portable"],
     fileAssociations: [
       {
         ext: "module",
@@ -45,7 +49,11 @@
   },
   protocols: {
     name: "chouten",
-    schemes: ["chouten://","chouten://add-module?moduleUrl=","chouten://add-repo?repoUrl="],
+    schemes: [
+      "chouten://",
+      "chouten://add-module?moduleUrl=",
+      "chouten://add-repo?repoUrl=",
+    ],
   },
   nsis: {
     oneClick: false,
@@ -54,25 +62,25 @@
     deleteAppDataOnUninstall: true,
   },
   linux: {
-      artifactName: "${os}-${name}-${version}.${ext}",
-      category: "AudioVideo;Video",
-      description: "Chouten is a media app that allows you to consume content from various sources in one place.",
-      desktop: {
-        Name: "Chouten",
-        Comment: "Chouten is a media app that allows you to consume content from various sources in one place.",
-        Keywords: "media;video;audio;player;reader;",
-        Type: "Application",
-        MimeType: "x-scheme-handler/chouten;"
-      },
-      target: [
-        {
-          arch: "x64",
-          target: "AppImage"
-        },
-        {
-          arch: "x64",
-          target: "deb"
-        }
-      ]
+    artifactName: "${os}-${name}-${version}.${ext}",
+    category: "AudioVideo;Video",
+    description: "Chouten is a media app that allows you to consume content from various sources in one place.",
+    desktop: {
+      Name: "Chouten",
+      Comment: "Chouten is a media app that allows you to consume content from various sources in one place.",
+      Keywords: "media;video;audio;player;reader;",
+      Type: "Application",
+      MimeType: "x-scheme-handler/chouten;",
     },
+    target: [
+      {
+        arch: "x64",
+        target: "AppImage",
+      },
+      {
+        arch: "x64",
+        target: "deb",
+      },
+    ],
+  },
 }
