@@ -1,87 +1,87 @@
 // @see https://www.electron.build/configuration/configuration
 {
-  $schema: "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  appId: "com.nabil.chouten",
-  asar: true,
-  productName: "chouten",
-  directories: {
-    output: "release/${version}",
+  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  "appId": "com.nabil.chouten",
+  "asar": true,
+  "productName": "chouten",
+  "directories": {
+    "output": "release/${version}"
   },
-  publish: [
+  "publish": [
     {
-      provider: "github",
-      owner: "Bilnaa",
-      repo: "chouten-electron",
-      releaseType: "release"
-    },
+      "provider": "github",
+      "owner": "Bilnaa",
+      "repo": "chouten-electron",
+      "releaseType": "release"
+    }
   ],
-  files: ["dist", "dist-electron"],
-  mac: {
-    target: [
+  "files": ["dist", "dist-electron"],
+  "mac": {
+    "target": [
       {
-        arch: "universal",
-        target: "default",
-      },
+        "arch": "universal",
+        "target": "default"
+      }
     ],
-    category: "public.app-category.video",
-    hardenedRuntime: true,
-    notarize: false,
-    fileAssociations: [
+    "category": "public.app-category.video",
+    "hardenedRuntime": true,
+    "notarize": false,
+    "fileAssociations": [
       {
-        ext: "module",
-        name: "Chouten Module",
-        role: "Editor",
-      },
+        "ext": "module",
+        "name": "Chouten Module",
+        "role": "Editor"
+      }
     ],
-    icon: "icons/icon.icns",
-    artifactName: "${productName}-Mac-${version}-Installer.${ext}",
+    "icon": "icons/icon.icns",
+    "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
   },
-  win: {
-    target: ["nsis", "portable"],
-    fileAssociations: [
+  "win": {
+    "target": ["nsis", "portable"],
+    "fileAssociations": [
       {
-        ext: "module",
-        name: "Chouten File",
-        description: "Chouten File",
-      },
+        "ext": "module",
+        "name": "Chouten File",
+        "description": "Chouten File"
+      }
     ],
-    icon: "icons/icon.ico",
-    artifactName: "${productName}-Windows-${version}-Setup.${ext}",
+    "icon": "icons/icon.ico",
+    "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
   },
-  protocols: {
-    name: "chouten",
-    schemes: [
+  "protocols": {
+    "name": "chouten",
+    "schemes": [
       "chouten://",
       "chouten://add-module?moduleUrl=",
-      "chouten://add-repo?repoUrl=",
-    ],
+      "chouten://add-repo?repoUrl="
+    ]
   },
-  nsis: {
-    oneClick: false,
-    perMachine: false,
-    allowToChangeInstallationDirectory: true,
-    deleteAppDataOnUninstall: true,
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "deleteAppDataOnUninstall": true
   },
-  linux: {
-    artifactName: "${os}-${name}-${version}.${ext}",
-    category: "AudioVideo;Video",
-    description: "Chouten is a media app that allows you to consume content from various sources in one place.",
-    desktop: {
-      Name: "Chouten",
-      Comment: "Chouten is a media app that allows you to consume content from various sources in one place.",
-      Keywords: "media;video;audio;player;reader;",
-      Type: "Application",
-      MimeType: "x-scheme-handler/chouten;",
+  "linux": {
+    "artifactName": "${os}-${name}-${version}.${ext}",
+    "category": "AudioVideo;Video",
+    "description": "Chouten is a media app that allows you to consume content from various sources in one place.",
+    "desktop": {
+      "Name": "Chouten",
+      "Comment": "Chouten is a media app that allows you to consume content from various sources in one place.",
+      "Keywords": "media;video;audio;player;reader;",
+      "Type": "Application",
+      "MimeType": "x-scheme-handler/chouten;"
     },
-    target: [
+    "target": [
       {
-        arch: "x64",
-        target: "AppImage",
+        "arch": "x64",
+        "target": "AppImage"
       },
       {
-        arch: "x64",
-        target: "deb",
-      },
-    ],
-  },
+        "arch": "x64",
+        "target": "deb"
+      }
+    ]
+  }
 }
