@@ -22,7 +22,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build && electron-builder",
+    "build": "vue-tsc --noEmit && vite build && electron-builder -p never",
     "publish": "vue-tsc --noEmit && vite build && electron-builder -p onTagOrDraft",
     "preview": "vite preview"
   },
