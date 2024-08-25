@@ -51,11 +51,11 @@
               Install at your own risk.
             </p>
           </div>
-          <div v-if="!newRepo.url" class="no-url-message">
+          <div v-if="!showMetadataModal" class="no-url-message">
             <h3>No repo url.</h3>
             <p>Please enter a repo url in the textbox at the top to install a repo and its modules.</p>
           </div>
-          <div v-if="newRepo.url && !installError" class="repo-preview">
+          <div v-if="installError.length === 0 && showMetadataModal" class="repo-preview">
             <div class="repo-header">
               <img :src="newRepo.url + '/icon.png'" alt="Repo icon" class="repo-icon">
               <div class="repo-title">
@@ -66,7 +66,8 @@
             <p class="install-alongside">Install alongside</p>
             <div v-for="module in newRepo.modules" :key="module.id" class="module-item">
               <div class="module-info">
-                <img :src="module.iconPath" alt="Module icon" class="module-icon">
+                <img :src="module.iconPath.startsWith('http') ? module.iconPath : newRepo.url + '/' + module.iconPath"
+                 alt="Module icon" class="module-icon">
                 <div class="module-details">
                   <h4>{{ module.name }}</h4>
                   <p>{{ module.author }} · v{{ module.version }}</p>
@@ -166,7 +167,8 @@ export default defineComponent({
     const showAddRepoModal = ref(false);
     const showRemoveModal = ref(false);
     const showModulesModal = ref(false);
-    const newRepo = ref({ id: '',url: '', title: '', description: '', author : '', icon : '',modules: [] as Module[] });
+    const showMetadataModal = ref(false);
+    const newRepo = ref({ id: '',url: '', title: '', iconPath : '', description: '', author : '', icon : '',modules: [] as Module[] });
     const repoToRemove = ref<Repo | null>(null);
     const selectedRepo = ref<Repo | null>(null);
     const urlError = ref('');
@@ -223,30 +225,35 @@ export default defineComponent({
 
     const openAddRepoModal = () => {
       showAddRepoModal.value = true;
-      newRepo.value = { id: '',url: '', title: '', description: '', author : '', icon : '',modules: []}
+      newRepo.value = { id: '',url: '', iconPath : '',title: '', description: '', author : '', icon : '',modules: []}
       urlError.value = '';
+      showMetadataModal.value = false;
       installError.value = '';
     };
 
     const closeAddRepoModal = () => {
       showAddRepoModal.value = false;
-      newRepo.value = { id : '', url: '', title: '', description: '', author : '', icon : '',modules: [] }
+      newRepo.value = { id : '', url: '',iconPath : '', title: '', description: '', author : '', icon : '',modules: [] }
       urlError.value = '';
       installError.value = '';
+      showMetadataModal.value = false;
       isLoading.value = false;
     };
 
     const validateUrl = () => {
-      const urlPattern = /^(https?:\/\/)?([^\s\/$.?#].[^\s]*)$/;
-      if (!newRepo.value.url) {
-        urlError.value = '';
-      } else if (!urlPattern.test(newRepo.value.url)) {
-        urlError.value = 'Please enter a valid URL';
-      } else {
-        urlError.value = '';
-        fetchRepoData();
-      }
-    };
+    const urlPattern = /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+([\/\w\.-]*)*\/?$/;
+    if (!newRepo.value.url) {
+      urlError.value = '';
+    } else if (!urlPattern.test(newRepo.value.url)) {
+      urlError.value = 'Please enter a valid URL';
+      return;
+    } else {
+      urlError.value = '';
+      installError.value = '';
+      showMetadataModal.value = true;
+      fetchRepoData();
+    }
+  };
 
     const fetchRepoData = async () => {
       if (urlError.value || !newRepo.value.url) return;
@@ -280,7 +287,8 @@ export default defineComponent({
 
         const selectedModules = newRepo.value.modules.filter(module => module.selected);
         for (const module of selectedModules) {
-          const moduleResult = await window.ipcRenderer.invoke('install-module', newRepo.value.id, module.id);
+          console.log('Installing module:', module, newRepo.value);
+          const moduleResult = await window.ipcRenderer.invoke('install-module', JSON.stringify(newRepo.value), module.id);
           if (!moduleResult.success) throw new Error(moduleResult.error);
         }
 
@@ -356,7 +364,7 @@ export default defineComponent({
           store.dispatch('setActiveModule', null);
         }
         try {
-          const result = await window.ipcRenderer.invoke('remove-module', selectedRepo.value.title, module.id);
+          const result = await window.ipcRenderer.invoke('remove-module', selectedRepo.value.id, module.id);
           if (result.success) {
             await loadRepos();
             (target as HTMLElement).parentNode?.parentElement?.parentElement?.remove();
@@ -398,6 +406,7 @@ export default defineComponent({
       openAddRepoModal,
       closeAddRepoModal,
       validateUrl,
+      showMetadataModal,
       installRepo,
       confirmRemoveRepo,
       handleRemoveRepo,

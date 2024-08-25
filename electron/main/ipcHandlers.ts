@@ -4,7 +4,30 @@ import fs from 'fs';
 import AdmZip from 'adm-zip';
 import axios from 'axios';
 import Discord from './discord'
+import mime from 'mime-types';
 
+import { glob } from 'glob';
+
+export interface Module {
+  name: string;
+  author: string;
+  version: string;
+  iconPath: string;
+  filePath: string;
+  subtypes: string[];
+  id: string;
+  selected?: boolean;
+  installed?: boolean;
+}
+export interface Repo {
+  id: string;
+  title: string;
+  author: string;
+  description: string;
+  url: string;
+  iconPath: string;
+  modules: Module[];
+}
 
 const ModulesPath = path.join(app.getPath('userData'), 'Modules');
 
@@ -25,15 +48,18 @@ export function setupIpcHandlers() {
     ipcMain.handle('install-repo', async (event, repoData: string) => {
         try {
           const repo = JSON.parse(repoData);
+          console.log(repo);
           const repoPath = path.join(app.getPath('userData'), 'Repos', repo.id);
-          
           if (!fs.existsSync(repoPath)) {
             fs.mkdirSync(repoPath, { recursive: true });
           }
-          
           const metadataPath = path.join(repoPath, 'metadata.json');
           fs.writeFileSync(metadataPath, JSON.stringify(repo));
-      
+          const iconPath = repo.iconPath;
+          const iconData = await axios.get(iconPath.startsWith('https://') ? iconPath : repo.url + iconPath
+            , { responseType: 'arraybuffer' });
+          const extension = iconPath.split('.').pop();
+          fs.writeFileSync(path.join(repoPath, `icon.${extension}`), Buffer.from(iconData.data));
           return { success: true };
         } catch (error) {
           console.error('Error installing repo:', error);
@@ -41,9 +67,10 @@ export function setupIpcHandlers() {
         }
       });
       
-      ipcMain.handle('install-module', async (event, repoId: string, moduleId: string) => {
+      ipcMain.handle('install-module', async (event, repoObject: string, moduleId: string) => {
         try {
-          const repoPath = path.join(app.getPath('userData'), 'Repos', repoId);
+          const parsedRepoObject = JSON.parse(repoObject) as Repo;
+          const repoPath = path.join(app.getPath('userData'), 'Repos', parsedRepoObject.id);
           const metadataPath = path.join(repoPath, 'metadata.json');
           
           if (!fs.existsSync(metadataPath)) {
@@ -56,14 +83,17 @@ export function setupIpcHandlers() {
           if (!module) {
             throw new Error('Module not found in repo metadata');
           }
-      
-          const moduleData = await axios.get(module.filePath, { responseType: 'arraybuffer' });
+
+        
+
+          const moduleData = await axios.get(module.filePath.startsWith('https://') ? module.filePath : repoData.url + module.filePath
+            , { responseType: 'arraybuffer' });
           const tempModulePath = path.join(repoPath, `${module.name}.module`);
       
           fs.writeFileSync(tempModulePath, Buffer.from(moduleData.data));
       
           const zip = new AdmZip(tempModulePath);
-          const extractPath = path.join(repoPath, module.id);
+          const extractPath = path.join(repoPath + '/Modules', module.id);
       
           // Create the extraction directory if it doesn't exist
           if (!fs.existsSync(extractPath)) {
@@ -177,29 +207,42 @@ export function setupIpcHandlers() {
       });
       
       ipcMain.handle('get-repo-list', async (event) => {
-       try {
+        try {
           const reposPath = path.join(app.getPath('userData'), 'Repos');
           const repos = fs.readdirSync(reposPath)
             .filter((file) => file.startsWith('.') === false);
           const repoList = [];
+      
           for (const repoId of repos) {
             const repoPath = path.join(reposPath, repoId);
             const metadataPath = path.join(repoPath, 'metadata.json');
             if (fs.existsSync(metadataPath)) {
               const repoData = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
-              repoData.icon = 'data:image/png;base64,' + fs.readFileSync(path.join(repoPath, 'icon.png')).toString('base64');
+              
+              // Handle repo icon
+              const iconPath = path.join(repoPath, 'icon.*');
+              const iconFiles = glob.sync(iconPath);
+              if (iconFiles.length > 0) {
+                const iconFile = iconFiles[0];
+                const mimeType = mime.lookup(iconFile) || 'application/octet-stream';
+                repoData.icon = `data:${mimeType};base64,${fs.readFileSync(iconFile).toString('base64')}`;
+              }
+      
               const modules = fs.readdirSync(repoPath)
                 .filter((file) => file.startsWith('.') === false);
+              
               for (const module of repoData.modules) {
-                const modulePath = path.join(repoPath+'/Modules/', module.id);
+                const modulePath = path.join(repoPath, 'Modules', module.id);
                 if (modules.includes(module.id) || fs.existsSync(modulePath)) {
                   module.installed = true;
                   const moduleFiles = fs.readdirSync(modulePath);
-                  for (const file of moduleFiles) {
-                    if (file.startsWith('icon')) {
-                      module.iconPath = 'data:image/png;base64,' + fs.readFileSync(path.join(modulePath, file)).toString('base64');
-                      break;
-                    }
+                  
+                  // Handle module icon
+                  const moduleIconFiles = moduleFiles.filter(file => file.startsWith('icon'));
+                  if (moduleIconFiles.length > 0) {
+                    const iconFile = path.join(modulePath, moduleIconFiles[0]);
+                    const mimeType = mime.lookup(iconFile) || 'application/octet-stream';
+                    module.iconPath = `data:${mimeType};base64,${fs.readFileSync(iconFile).toString('base64')}`;
                   }
                 }
               }
@@ -207,12 +250,10 @@ export function setupIpcHandlers() {
             }
           }
           return { success: true, repoList };
-       } catch (error) {
-         console.error('Error getting repo list:', error);
-         return { success: false, error: (error as Error).message };
-       }
-
-       
+        } catch (error) {
+          console.error('Error getting repo list:', error);
+          return { success: false, error: error.message };
+        }
       });
         
       
