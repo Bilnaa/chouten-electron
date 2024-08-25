@@ -78,6 +78,11 @@ export default defineConfig(({ command }) => {
       }
     })(),
     clearScreen: false,
+    define: {
+      'process.env': {
+        APP_VERSION : JSON.stringify(require('./package.json').version),
+      }
+    },
     build: {
       rollupOptions: {
         input: {

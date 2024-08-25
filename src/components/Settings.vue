@@ -17,7 +17,9 @@
           <ColorPicker :value="accentColor" id="accent-color" @input="accentColor = $event" />
         </div>
       </div>
-      <div class="settings-footer"></div>
+      <div class="settings-footer">
+        <span>{{ version }}</span>
+      </div>
     </div>
   </template>
   
@@ -39,6 +41,7 @@ export default {
     return {
       devModeEnabled: localStorage.getItem('devModeEnabled') === 'undefined' ? false : localStorage.getItem('devModeEnabled') === 'true',
       accentColor: '#6200ee',
+      version: 'v' + process.env.APP_VERSION.replaceAll('"', '')
     }
   },
   methods: {
