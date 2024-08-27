@@ -218,12 +218,11 @@ export function setupIpcHandlers() {
             const metadataPath = path.join(repoPath, 'metadata.json');
             if (fs.existsSync(metadataPath)) {
               const repoData = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+              const iconPath = fs.readdirSync(repoPath)
+                .filter((file) => file.startsWith('icon'));
               
-              // Handle repo icon
-              const iconPath = path.join(repoPath, 'icon.*');
-              const iconFiles = glob.sync(iconPath);
-              if (iconFiles.length > 0) {
-                const iconFile = iconFiles[0];
+              if (iconPath.length > 0) {
+                const iconFile = path.join(repoPath, iconPath[0]);
                 const mimeType = mime.lookup(iconFile) || 'application/octet-stream';
                 repoData.icon = `data:${mimeType};base64,${fs.readFileSync(iconFile).toString('base64')}`;
               }
