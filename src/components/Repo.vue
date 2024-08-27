@@ -130,7 +130,7 @@
               <p>{{ module.author }} · v{{ module.version }}</p>
             </div>
             <div class="module-actions">
-              <button class="modal-refresh-button" @click="selectedRepo && refreshModule(selectedRepo.id, module.id)">
+              <!-- <button class="modal-refresh-button" @click="selectedRepo && refreshModule(selectedRepo.id, module.id)">
                 <RefreshIcon />
               </button>
               <button 
@@ -139,7 +139,7 @@
                 :disabled="!isUpdateAvailable(module)"
               >
                 {{ isUpdateAvailable(module) ? 'Update' : 'Up to date' }}
-              </button>
+              </button> -->
               <button class="modal-remove-button" @click="removeModule(module, $event?.target)">
                 <DeleteIcon />
               </button>
@@ -698,6 +698,10 @@ export default defineComponent({
 
 .module-info {
   flex-grow: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
 }
 
 .module-info h3 {
@@ -782,10 +786,6 @@ export default defineComponent({
   margin-bottom: 10px;
 }
 
-.module-info {
-  display: flex;
-  align-items: center;
-}
 
 .module-icon {
   width: 40px;
