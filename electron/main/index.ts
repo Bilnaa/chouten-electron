@@ -6,6 +6,14 @@ import os from 'node:os';
 import fs from 'fs';
 import { setupIpcHandlers } from './ipcHandlers';
 import FastifyServer from './api';
+// import electronUpdater, { type AppUpdater } from 'electron-updater';
+import log from 'electron-log';
+
+console.log = log.info;
+console.error = log.error;
+console.warn = log.warn;
+console.info = log.info;
+console.debug = log.debug;
 
 class ChoutenApp {
   private mainWindow: BrowserWindow | null = null;
@@ -54,10 +62,13 @@ class ChoutenApp {
   }
 
   private setupEventListeners(): void {
+    log.info('App starting...');
+    this.setupProtocol();
     app.whenReady().then(() => {
+      log.info('App is ready');
       this.createMainWindow();
       this.createHiddenWindow();
-      this.setupProtocol();
+      // this.AppUpdater();
     });
 
     app.on('window-all-closed', () => {
@@ -80,6 +91,21 @@ class ChoutenApp {
       }
     });
   }
+
+//  private getAutoUpdater(): AppUpdater {
+//     // Using destructuring to access autoUpdater due to the CommonJS module of 'electron-updater'.
+//     // It is a workaround for ESM compatibility issues, see https://github.com/electron-userland/electron-builder/issues/7976.
+//     const { autoUpdater } = electronUpdater;
+//     return autoUpdater;
+//  }
+
+//  private AppUpdater(): void {
+//     const autoUpdater = this.getAutoUpdater()
+//     log.transports.file.level = "debug"
+//     autoUpdater.logger = log
+//     let hasUpdate = autoUpdater.checkForUpdatesAndNotify()
+//     log.info('hasUpdate', hasUpdate)
+//  }
 
   private createDirectories(): void {
     let appDataPath: string;
