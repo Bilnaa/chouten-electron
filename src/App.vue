@@ -115,6 +115,8 @@ onBeforeMount(() => {
 
 onMounted(() => {
   // Set accent color
+  // add showToast to window
+  (window as any).showToast = showToast;
   const accentColor = localStorage.getItem('accentColor');
   if (accentColor) {
     document.documentElement.style.setProperty('--accent-color', accentColor);

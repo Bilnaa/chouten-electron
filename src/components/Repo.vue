@@ -57,7 +57,7 @@
           </div>
           <div v-if="installError.length === 0 && showMetadataModal" class="repo-preview">
             <div class="repo-header">
-              <img :src="newRepo.url + '/icon.png'" alt="Repo icon" class="repo-icon">
+              <img :src="newRepo.iconPath.startsWith('http') ? newRepo.iconPath : newRepo.url + '/' + newRepo.iconPath" alt="Repo icon" class="repo-icon">
               <div class="repo-title">
                 <h3>{{ newRepo.author }}</h3>
                 <h2>{{ newRepo.title }}</h2>
@@ -65,7 +65,7 @@
             </div>
             <p class="install-alongside">Install alongside</p>
             <div v-for="module in newRepo.modules" :key="module.id" class="module-item">
-              <div class="module-info">
+              <div class="module-info-modal">
                 <img :src="module.iconPath.startsWith('http') ? module.iconPath : newRepo.url + '/' + module.iconPath"
                  alt="Module icon" class="module-icon">
                 <div class="module-details">
@@ -265,7 +265,7 @@ export default defineComponent({
         const repoUrl = new URL(newRepo.value.url);
         const metadataUrl = `${repoUrl.origin}/${repoUrl.pathname.split('/').pop()}/metadata.json`;
         
-        const response = await fetch(metadataUrl);
+        const response = await fetch(metadataUrl, {cache: 'no-store'}); 
         newRepo.value = await response.json();
         newRepo.value.modules = newRepo.value.modules.map(module => ({ ...module, selected: false }));
       } catch (error) {
@@ -702,6 +702,11 @@ export default defineComponent({
     align-items: flex-start;
     justify-content: flex-start;
     flex-direction: column;
+}
+.module-info-modal {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: row !important;
 }
 
 .module-info h3 {

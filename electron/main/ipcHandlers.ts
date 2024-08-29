@@ -56,7 +56,7 @@ export function setupIpcHandlers() {
           const metadataPath = path.join(repoPath, 'metadata.json');
           fs.writeFileSync(metadataPath, JSON.stringify(repo));
           const iconPath = repo.iconPath;
-          const iconData = await axios.get(iconPath.startsWith('https://') ? iconPath : repo.url + iconPath
+          const iconData = await axios.get(iconPath.startsWith('https://') ? iconPath : repo.url + iconPath.slice(1)
             , { responseType: 'arraybuffer' });
           const extension = iconPath.split('.').pop();
           fs.writeFileSync(path.join(repoPath, `icon.${extension}`), Buffer.from(iconData.data));
@@ -86,7 +86,7 @@ export function setupIpcHandlers() {
 
         
 
-          const moduleData = await axios.get(module.filePath.startsWith('https://') ? module.filePath : repoData.url + module.filePath
+          const moduleData = await axios.get(module.filePath.startsWith('https://') ? module.filePath : repoData.url + module.filePath.slice(1)
             , { responseType: 'arraybuffer' });
           const tempModulePath = path.join(repoPath, `${module.name}.module`);
       
