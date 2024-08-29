@@ -15,7 +15,10 @@
       "releaseType": "release"
     }
   ],
-  "files": ["dist", "dist-electron"],
+  "files": [
+    "dist",
+    "dist-electron"
+  ],
   "mac": {
     "target": [
       {
@@ -37,7 +40,11 @@
     "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
   },
   "win": {
-    "target": ["nsis"],
+    "artifactName": "${os}-${name}-${version}.${ext}",
+    "target": [
+      "nsis",
+      "portable"
+    ],
     "fileAssociations": [
       {
         "ext": "module",
@@ -45,8 +52,7 @@
         "description": "Chouten File"
       }
     ],
-    "icon": "icons/icon.ico",
-    "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
+    "icon": "icons/icon.ico"
   },
   "protocols": {
     "name": "chouten",

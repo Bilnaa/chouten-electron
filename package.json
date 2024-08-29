@@ -1,6 +1,6 @@
 {
   "name": "chouten",
-  "version": "0.1.8-alpha.0",
+  "version": "0.1.9-alpha",
   "main": "dist-electron/main/index.js",
   "description": "Really simple Electron + Vue + Vite boilerplate.",
   "author": "Nabil <Bilnaa@users.noreply.github.com>",
@@ -46,6 +46,8 @@
     "axios": "^1.7.2",
     "bufferutil": "^4.0.8",
     "discord-rpc": "^4.0.1",
+    "electron-log": "^5.1.7",
+    "electron-updater": "^6.2.1",
     "fastify": "^4.28.1",
     "glob": "^11.0.0",
     "hls.js": "^1.5.13",
