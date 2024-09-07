@@ -10,7 +10,7 @@
           <p class="secondary">{{ titles?.secondary }}</p>
       <div class="primary-row">
         <h2 class="primary">{{ titles?.primary }}</h2>
-        <div class="card-footer" v-if="indicator">
+        <div class="card-footer" v-if="indicator !== ''">
           <span>{{ indicator }}</span>
           <span class="heart">❤️</span>
         </div>

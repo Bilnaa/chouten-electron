@@ -10,7 +10,6 @@
         <p>If you are here you know what you need to do </p>
         <p>Do not close this window by any means because it will stop the scraping process and break the app</p>
     </div>
-  <webview src="about:blank" style="width:100%; height:100%;"></webview>
 </body>
 <style>
     body {
@@ -68,124 +67,12 @@ class Response {
     );
 };
 
-async function callWebview(url, method = 'GET', headers = {}, body = null) {
-    const webview = document.querySelector('webview');
 
-    try {
-        const loadResult = await new Promise((resolve, reject) => {
-            const loadTimeout = setTimeout(() => {
-                reject(new Error('Webview loading timed out'));
-            }, 30000); // 30 seconds timeout
-
-            webview.addEventListener('did-fail-load', (event) => {
-                clearTimeout(loadTimeout);
-                console.error('did-fail-load:', event);
-                resolve({
-                    success: false,
-                    errorCode: event.errorCode,
-                    errorDescription: event.errorDescription
-                });
-            }, { once: true });
-
-            webview.addEventListener('did-stop-loading', () => {
-                clearTimeout(loadTimeout);
-                console.log('did-stop-loading');
-                resolve({ success: true });
-            }, { once: true });
-
-            // Set the webview's src based on method and body
-            if (method === 'GET' || method === 'HEAD') {
-                webview.src = url;
-            } else {
-                webview.addEventListener('dom-ready', () => {
-                    // Inject a form and submit it for POST, PUT, DELETE, etc.
-                    webview.executeJavaScript(`
-                        const form = document.createElement('form');
-                        form.method = '${method}';
-                        form.action = '${url}';
-                        
-                        ${body ? `
-                        const formData = ${JSON.stringify(body)};
-                        for (const key in formData) {
-                            if (formData.hasOwnProperty(key)) {
-                                const input = document.createElement('input');
-                                input.type = 'hidden';
-                                input.name = key;
-                                input.value = formData[key];
-                                form.appendChild(input);
-                            }
-                        }
-                        ` : ''}
-                        
-                        form.submit();
-                    `);
-                });
-            }
-        });
-
-        if (!loadResult.success) {
-            return new Response(
-                mapErrorCodeToHttpStatus(loadResult.errorCode),
-                `Error: ${loadResult.errorDescription}`,
-                'text/plain',
-                {}
-            );
-        }
-
-        const content = await webview.executeJavaScript('document.documentElement.outerHTML');
-
-        console.log('Loaded Content:', content);
-
-        if (!content || content.trim() === '') {
-            console.warn('Content is empty or whitespace only.');
-            return new Response(
-                204, // No Content
-                '',
-                'text/plain',
-                {}
-            );
-        }
-
-        // Check for specific error patterns in the content
-        if (content.includes('<title>Error</title>')) {
-            console.error('Page loaded with error content');
-            return new Response(
-                500, // Internal Server Error
-                'Page loaded with error content',
-                'text/plain',
-                {}
-            );
-        }
-
-        return new Response(
-            200,
-            content,
-            'text/html',
-            {}
-        );
-    } catch (error) {
-        console.error('Error in callWebview:', error);
-        return new Response(
-            500,
-            `Error: ${error.message}`,
-            'text/plain',
-            {}
-        );
-    }
+</script>
+<script>
+    async function callWebView(url, method, headers, body) {
+    let response = await window.ipcRenderer.invoke('webview', { url, method, headers, body });
+    return response;
 }
-
-function mapErrorCodeToHttpStatus(errorCode) {
-    switch (errorCode) {
-        case -3: return 400; // ERR_ABORTED
-        case -6: return 404; // ERR_FILE_NOT_FOUND
-        case -7: return 403; // ERR_ACCESS_DENIED
-        case -20: return 408; // ERR_TIMED_OUT
-        case -21: return 500; // ERR_FAILED
-        case -106: return 404; // ERR_NAME_NOT_RESOLVED
-        case -324: return 503; // ERR_EMPTY_RESPONSE
-        default: return 500;
-    }
-}
-
 </script>
 </html>
