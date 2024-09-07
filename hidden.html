@@ -70,7 +70,7 @@ class Response {
 
 </script>
 <script>
-    async function callWebView(url, method, headers, body) {
+    async function callWebview(url, method, headers, body) {
     let response = await window.ipcRenderer.invoke('webview', { url, method, headers, body });
     return response;
 }
