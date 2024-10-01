@@ -48,7 +48,7 @@
     "discord-rpc": "^4.0.1",
     "electron-log": "^5.1.7",
     "electron-updater": "^6.2.1",
-    "fastify": "^4.28.1",
+    "fastify": "^5.0.0",
     "glob": "^11.0.0",
     "hls.js": "^1.5.13",
     "media-captions": "^1.0.3",
