@@ -51,39 +51,45 @@
           <div class="chevron-right">›</div>
         </div>
 
-        <div class="category-selector">
-          <button v-for="category in categories" :key="category.title" @click="selectCategory(category.title)"
-            :class="{ active: selectedCategory === category.title }">
-            {{ category.title }}
-          </button>
-        </div>
+        <div class="episodes-content">
+          <div class="category-selector">
+            <button v-for="category in categories" :key="category.title" @click="selectCategory(category.title)"
+              :class="{ active: selectedCategory === category.title }">
+              {{ category.title }}
+            </button>
+          </div>
 
-        <div class="pagination-controls">
-          <button @click="prevPage" :disabled="currentPage === 0">Previous</button>
-          <span>Page {{ currentPage + 1 }} of {{ totalPages }}</span>
-          <button @click="nextPage" :disabled="currentPage >= totalPages - 1">Next</button>
-        </div>
+          <div class="pagination-controls">
+            <button @click="prevPage" :disabled="currentPage === 0">Previous</button>
+            <span>Page {{ currentPage + 1 }} of {{ totalPages }}</span>
+            <button @click="nextPage" :disabled="currentPage >= totalPages - 1">Next</button>
+          </div>
 
-        <transition-group class="episodes-list" name="episode-fade" tag="div">
-          <router-link v-if="!isChaptersModule"
-            :to="'/streams?episodeId=' + episode.url + '&episodeTitle=' + `${episode.title == '' ? 'Episode ' + episode.number : episode.title}` + '&title=' + media.titles.primary + '&episodes=' + JSON.stringify(episodes)"
-            v-for="episode in paginatedEpisodes" :key="episode.number" class="episode">
-              <img class="thumbnail" v-if="episode.thumbnail" :src="episode.thumbnail" alt="Thumbnail" />
+          <transition-group class="episodes-list" name="episode-fade" tag="div">
+            <router-link v-if="!isChaptersModule"
+              :to="'/streams?episodeId=' + episode.url + '&episodeTitle=' + `${episode.title == '' ? 'Episode ' + episode.number : episode.title}` + '&title=' + media.titles.primary + '&episodes=' + JSON.stringify(episodes)"
+              v-for="episode in paginatedEpisodes" :key="episode.number" class="episode">
+              <div class="thumbnail-container">
+                <img v-if="episode.thumbnail" class="thumbnail" :src="episode.thumbnail" alt="Thumbnail" />
+              </div>
               <div class="episode-info">
                 <h3 class="episode-title">{{ episode.title || 'Episode ' + episode.number }}</h3>
                 <p class="episode-details">Episode {{ episode.number }}</p>
               </div>
-          </router-link>
-          <router-link v-if="isChaptersModule"
-            :to="'/reader?episodeId=' + episode.url + '&episodeTitle=' + `${episode.title == '' ? 'Episode ' + episode.number : episode.title}` + '&title=' + media.titles.primary + '&chapters=' + JSON.stringify(episodes)"
-            v-for="episode in paginatedEpisodes" :key="episode.number" class="episode">
-            <img class="thumbnail" v-if="episode.thumbnail" :src="episode.thumbnail" alt="Thumbnail" />
-            <div class="episode-info">
-              <h3 class="episode-title">{{ episode.title || 'Episode ' + episode.number }}</h3>
-              <p class="episode-details">Episode {{ episode.number }}</p>
-            </div>
-          </router-link>
-        </transition-group>
+            </router-link>
+            <router-link v-if="isChaptersModule"
+              :to="'/reader?episodeId=' + episode.url + '&episodeTitle=' + `${episode.title == '' ? 'Episode ' + episode.number : episode.title}` + '&title=' + media.titles.primary + '&chapters=' + JSON.stringify(episodes)"
+              v-for="episode in paginatedEpisodes" :key="episode.number" class="episode">
+              <div class="thumbnail-container">
+                <img v-if="episode.thumbnail" class="thumbnail" :src="episode.thumbnail" alt="Thumbnail" />
+              </div>
+              <div class="episode-info">
+                <h3 class="episode-title">{{ episode.title || 'Episode ' + episode.number }}</h3>
+                <p class="episode-details">Episode {{ episode.number }}</p>
+              </div>
+            </router-link>
+          </transition-group>
+        </div>
       </div>
       <div class="episodes-section" v-else>
         <div class="no-episodes-message">
@@ -382,19 +388,21 @@ export default {
 
 
 <style scoped>
-
 /* Media Details Container */
 .media-details {
-  padding: 20px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* Header Section */
 .header {
   position: relative;
-  height: 300px;
+  height: 40vh;
   overflow: hidden;
-  border-radius: 12px;
-  margin-bottom: 20px;
+  margin: 0;
+  border-radius: 0;
 }
 
 .background-image-container {
@@ -405,11 +413,25 @@ export default {
   height: 100%;
 }
 
+.background-image-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(20, 20, 20, 0.7) 0%,
+    rgba(20, 20, 20, 0.8) 50%,
+    rgba(20, 20, 20, 1) 100%
+  );
+}
+
 .background-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: brightness(40%) blur(2px);
 }
 
 .buttons {
@@ -417,121 +439,142 @@ export default {
   top: 20px;
   left: 20px;
   right: 20px;
+  z-index: 2;
   display: flex;
   justify-content: space-between;
-  z-index: 10;
 }
 
 .back button, .bookmark {
-  background-color: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.5);
   border: none;
-  color: #ffffff;
+  border-radius: 50%;
   width: 40px;
   height: 40px;
-  border-radius: 50%;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   cursor: pointer;
+  color: white;
+  transition: background-color 0.2s ease;
+}
+
+.back button:hover, .bookmark:hover {
+  background: rgba(0, 0, 0, 0.7);
 }
 
 .content {
   position: absolute;
-  bottom: 20px;
-  left: 20px;
-  right: 20px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
   display: flex;
   align-items: flex-end;
+  gap: 20px;
+  z-index: 1;
 }
 
 .cover-image {
-  width: 100px;
-  height: 150px;
+  width: 150px;
+  height: 225px;
   object-fit: cover;
   border-radius: 8px;
-  margin-right: 20px;
+  margin: 0;
 }
 
 .title-area {
-  flex-grow: 1;
+  flex: 1;
 }
 
 .secondary-title {
-  font-size: 14px;
-  margin-bottom: 5px;
-  color: #a0a0a0;
+  color: #aaa;
+  margin: 0;
+  font-size: 1em;
 }
 
 .primary-title {
-  font-size: 24px;
-  margin-bottom: 10px;
-  font-weight: bold;
+  margin: 8px 0;
+  font-size: 2em;
+  color: white;
 }
 
 .status {
   display: inline-block;
+  padding: 4px 12px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  font-size: 0.9em;
   color: var(--accent-color);
-  padding: 5px 10px;
-  background-color: #1E1E1E;
-  font-size: 14px;
-  opacity: 0.8;
-}
-
-.rating {
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-}
-
-.rating::after {
-  content: '❤️';
-  margin-left: 5px;
 }
 
 /* Main Content */
 .main-content {
-  display: flex;
-    flex-direction: row;
-    justify-content: center;
-    gap: 10px;
+  flex: 1;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+  padding: 20px;
+  height: calc(100vh - 40vh);
+  overflow: hidden;
 }
 
 .metadata {
-  margin-bottom: 20px;
-  width: 40vw;
+  background: #1a1a1a;
+  border-radius: 8px;
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 20px;
 }
 
 .tag {
-  background-color: #1E1E1E;
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 14px;
+  background: #2a2a2a;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: #ddd;
 }
 
 .synopsis {
-  font-size: 14px;
-  line-height: 1.5;
-  margin-bottom: 20px;
+  color: #ddd;
+  line-height: 1.6;
+}
+
+.synopsis h2 {
+  margin-bottom: 10px;
+  font-size: 1.2em;
+  color: white;
 }
 
 /* Episodes Section */
 .episodes-section {
+  background: #1a1a1a;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.episodes-content {
   flex: 1;
+  overflow-y: auto;
+  padding: 0 20px;
 }
 
 .season-selector {
-  background-color: #1E1E1E;
+  background: #2a2a2a;
   padding: 15px;
   border-radius: 8px;
   margin-bottom: 20px;
   cursor: pointer;
+  transition: background-color 0.2s ease;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -539,101 +582,390 @@ export default {
 
 .season-selector h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 1.1em;
 }
 
 .chevron-right {
-  font-size: 24px;
+  font-size: 1.5em;
+  opacity: 0.7;
+}
+
+.season-selector:hover {
+  background: #333;
 }
 
 .category-selector {
   display: flex;
-  margin-bottom: 20px;
-  overflow-x: auto;
   gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  background: #1a1a1a;
+  z-index: 10;
+  padding: 20px;
+  padding-bottom: 15px;
+  position: sticky;
+  top: 0;
+}
+
+/* Cacher la scrollbar sur Webkit */
+.category-selector::-webkit-scrollbar {
+  display: none;
 }
 
 .category-selector button {
-  background-color: #1E1E1E;
+  background: #2a2a2a;
   border: none;
-  color: #ffffff;
   padding: 8px 16px;
+  border-radius: 6px;
+  color: white;
   cursor: pointer;
-  font-size: 14px;
-  border-radius: 20px;
+  transition: all 0.2s ease;
   white-space: nowrap;
+  font-size: 0.9em;
+  min-width: fit-content;
+}
+
+.category-selector button:hover {
+  background: #333;
 }
 
 .category-selector button.active {
-  background-color: var(--accent-color);
+  background: var(--accent-color);
+  font-weight: 500;
 }
 
 .episodes-list {
-  display: flex;
-  flex-direction: column;
-  overflow: scroll;
-  gap: 10px;
-  height: 60vw;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 15px;
+  padding: 0 10px 20px 0;
+  width: 100%;
+  height: auto;
+  align-items: stretch;
 }
 
 .episode {
-  display: flex;
-  align-items: center;
-  background-color: #1E1E1E;
-  padding: 12px;
-  border-radius: 8px;
+  background: rgba(42, 42, 42, 0.5);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
   text-decoration: none;
   color: inherit;
+  display: flex;
+  flex-direction: row;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  height: 110px;
+  width: 100%;
+}
+
+.episode:hover {
+  transform: translateY(-2px);
+  background: rgba(52, 52, 52, 0.7);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Conteneur pour la thumbnail */
+.thumbnail-container {
+  width: 160px;
+  min-width: 160px;
+  position: relative;
+  height: 94px;
+  background: #2a2a2a;
+  margin: 8px;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .thumbnail {
-  width: 100px;
-  height: 56px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border-radius: 4px;
-  margin-right: 15px;
+}
+
+/* Style pour quand il n'y a pas de thumbnail */
+.thumbnail-container:empty::after {
+  content: 'No Preview';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #666;
+  font-size: 0.8em;
+}
+
+/* Ajuster pour mobile */
+@media (max-width: 768px) {
+  .thumbnail-container {
+    width: 120px;
+    min-width: 120px;
+  }
 }
 
 .episode-info {
-  flex-grow: 1;
+  padding: 12px;
+  flex: 1;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .episode-title {
-  font-size: 16px;
-  font-weight: bold;
   margin: 0;
-  color: #ffffff;
+  font-size: 1em;
+  color: white;
+  font-weight: 500;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.2;
+  align-self: start;
+  word-break: break-word;
 }
 
 .episode-details {
-  font-size: 14px;
-  color: #a0a0a0;
-  margin: 4px 0 0 0;
+  margin: 0;
+  color: #aaa;
+  font-size: 0.9em;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  width: fit-content;
+  align-self: end;
+  white-space: nowrap;
 }
 
 /* Pagination Controls */
 .pagination-controls {
+  padding: 15px 20px;
+  border-bottom: 1px solid #2a2a2a;
   display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-top: 20px;
+  justify-content: center;
+  gap: 15px;
+  background: #1a1a1a;
+  margin-bottom: 5px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .pagination-controls button {
-  background-color: transparent;
-  color: #ffffff;
+  background: #2a2a2a;
   border: none;
-  padding: 5px 10px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  color: white;
   cursor: pointer;
-  font-size: 14px;
+  transition: background-color 0.2s ease;
 }
 
-.pagination-controls span {
-  margin: 0 10px;
-  font-size: 14px;
+.pagination-controls button:hover:not(:disabled) {
+  background: #333;
 }
 
-/* Modal Styles */
+.pagination-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Garder les styles existants pour les modals et les transitions */
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .main-content {
+    grid-template-columns: 300px 1fr;
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .episodes-list {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .main-content {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 20px;
+    height: calc(100vh - 350px);
+    overflow-y: hidden;
+  }
+
+  .metadata {
+    height: 300px;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+
+  .episodes-section {
+    height: calc(100vh - 700px);
+    min-height: 300px;
+    overflow: hidden;
+  }
+
+  .episodes-content {
+    overflow-y: auto;
+  }
+
+  .synopsis {
+    overflow-y: visible;
+  }
+
+  .header {
+    height: auto;
+    min-height: 350px;
+  }
+
+  .content {
+    padding: 20px;
+    gap: 20px;
+  }
+
+  .cover-image {
+    width: 130px;
+    height: 195px;
+  }
+}
+
+@media (max-width: 600px) {
+  .main-content {
+    padding: 15px;
+    gap: 15px;
+    height: calc(100vh - 300px);
+  }
+
+  .metadata {
+    height: 250px;
+    min-height: 250px;
+    padding: 15px;
+  }
+
+  .episodes-section {
+    height: calc(100vh - 600px);
+    min-height: 250px;
+  }
+
+  .episodes-content {
+    padding: 0 15px;
+  }
+
+  .cover-image {
+    width: 120px;
+    height: 180px;
+  }
+
+  .primary-title {
+    font-size: 1.4em;
+  }
+
+  .episodes-list {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .episode {
+    height: 100px;
+  }
+
+  .thumbnail-container {
+    width: 130px;
+    min-width: 130px;
+    height: 84px;
+  }
+
+  .episode-info {
+    padding: 10px;
+  }
+
+  .category-selector {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .category-selector button {
+    padding: 8px 12px;
+    font-size: 0.9em;
+    white-space: nowrap;
+  }
+
+  .pagination-controls {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .pagination-controls button {
+    padding: 6px 12px;
+    font-size: 0.9em;
+  }
+}
+
+@media (max-width: 400px) {
+  .header {
+    min-height: 280px;
+  }
+
+  .content {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .cover-image {
+    width: 100px;
+    height: 150px;
+  }
+
+  .primary-title {
+    font-size: 1.2em;
+  }
+
+  .episode {
+    height: 90px;
+  }
+
+  .thumbnail-container {
+    width: 110px;
+    min-width: 110px;
+    height: 74px;
+  }
+
+  .episode-title {
+    font-size: 0.9em;
+  }
+
+  .episode-details {
+    font-size: 0.8em;
+  }
+}
+
+/* Mode paysage sur mobile */
+@media (max-height: 500px) {
+  .main-content {
+    height: calc(100vh - 250px);
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+  }
+
+  .metadata {
+    width: 300px;
+    height: 100%;
+  }
+
+  .episodes-section {
+    flex: 1;
+    height: 100%;
+  }
+}
+
+/* Corrections des styles */
+
+/* Ajout des styles manquants pour le modal */
 .season-modal {
   position: fixed;
   top: 0;
@@ -650,15 +982,21 @@ export default {
 .season-modal-content {
   background-color: #1E1E1E;
   padding: 20px;
-  border-radius: 8px;
+  border-radius: 12px;
   width: 300px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
 }
 
 .season-modal-content h2 {
   color: #ffffff;
-  padding: 10px 0;
+  padding: 12px 15px;
+  margin: 5px 0;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  font-size: 1em;
 }
 
 .season-modal-content h2:hover {
@@ -666,35 +1004,39 @@ export default {
 }
 
 .season-modal-content h2.selected {
-  color: var(--accent-color);
+  background-color: var(--accent-color);
+  color: white;
 }
 
 .close-button {
-  background-color: #2a2a2a;
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.5);
   color: #ffffff;
   border: none;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  font-size: 24px;
+  width: 30px;
+  height: 30px;
+  font-size: 20px;
   cursor: pointer;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 20px;
 }
 
-/* Loading Spinner */
+/* Ajout des styles pour le loading */
 .loading {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
+  background-color: #141414;
 }
 
 .spinner {
   border: 4px solid #333;
-  border-top: 4px solid #fff;
+  border-top: 4px solid var(--accent-color);
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -706,58 +1048,95 @@ export default {
   100% { transform: rotate(360deg); }
 }
 
-/* Transitions */
+/* Ajout des transitions manquantes */
 .modal-fade-enter-active,
-.modal-fade-leave-active,
-.modal-scale-enter-active,
-.modal-scale-leave-active,
-.list-complete-item,
-.episode-fade-enter-active,
-.episode-fade-leave-active {
-  transition: all 0.3s ease;
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease;
 }
 
 .modal-fade-enter-from,
-.modal-fade-leave-to,
-.modal-scale-enter-from,
-.modal-scale-leave-to,
-.list-complete-enter-from,
-.list-complete-leave-to,
-.episode-fade-enter-from,
-.episode-fade-leave-to {
+.modal-fade-leave-to {
   opacity: 0;
+}
+
+.modal-scale-enter-active,
+.modal-scale-leave-active {
+  transition: transform 0.3s ease;
+}
+
+.modal-scale-enter-from,
+.modal-scale-leave-to {
   transform: scale(0.9);
 }
 
-/* Responsive Design */
+.list-complete-enter-active,
+.list-complete-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.list-complete-enter-from,
+.list-complete-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.episode-fade-enter-active,
+.episode-fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.episode-fade-enter-from,
+.episode-fade-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* Ajouter des styles pour les barres de défilement personnalisées */
+.metadata::-webkit-scrollbar,
+.episodes-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.metadata::-webkit-scrollbar-track,
+.episodes-list::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.metadata::-webkit-scrollbar-thumb,
+.episodes-list::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+
+.metadata::-webkit-scrollbar-thumb:hover,
+.episodes-list::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}
+
+/* Ajuster pour les cas avec peu d'épisodes */
+@media (min-width: 769px) {
+  .episodes-list:only-child {
+    grid-template-columns: minmax(300px, 600px);
+    justify-content: center;
+  }
+}
+
 @media (max-width: 768px) {
-  .header {
-    height: 250px;
-  }
-
-  .cover-image {
-    width: 80px;
-    height: 120px;
-  }
-
-  .primary-title {
-    font-size: 20px;
-  }
-
-  .secondary-title {
-    font-size: 12px;
-  }
-
   .episode {
-    flex-direction: column;
-    align-items: flex-start;
+    margin: 0;
+    max-width: 100%;
+  }
+}
+
+/* Ajuster pour mobile */
+@media (max-width: 768px) {
+  .category-selector {
+    margin: -15px -15px 15px -15px;
+    padding: 12px;
   }
 
-  .thumbnail {
-    width: 100%;
-    height: auto;
-    margin-right: 0;
-    margin-bottom: 10px;
+  .episodes-section {
+    padding: 15px;
   }
 }
 </style>
