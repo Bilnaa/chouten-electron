@@ -50,6 +50,7 @@ const router = createRouter({
       episodeId: route.query.episodeId,
       episodeTitle: route.query.episodeTitle,
       title: route.query.title,
+      chapters: route.query.chapters
     }),},
   ],
 });

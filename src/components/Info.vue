@@ -75,7 +75,7 @@
               </div>
           </router-link>
           <router-link v-if="isChaptersModule"
-            :to="'/reader?episodeId=' + episode.url + '&episodeTitle=' + `${episode.title == '' ? 'Episode ' + episode.number : episode.title}` + '&title=' + media.titles.primary"
+            :to="'/reader?episodeId=' + episode.url + '&episodeTitle=' + `${episode.title == '' ? 'Episode ' + episode.number : episode.title}` + '&title=' + media.titles.primary + '&chapters=' + JSON.stringify(episodes)"
             v-for="episode in paginatedEpisodes" :key="episode.number" class="episode">
             <img class="thumbnail" v-if="episode.thumbnail" :src="episode.thumbnail" alt="Thumbnail" />
             <div class="episode-info">
