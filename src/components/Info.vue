@@ -59,7 +59,7 @@
             </button>
           </div>
 
-          <div class="pagination-controls">
+          <div class="pagination-controls" v-if="totalPages > 1">
             <button @click="prevPage" :disabled="currentPage === 0">Previous</button>
             <span>Page {{ currentPage + 1 }} of {{ totalPages }}</span>
             <button @click="nextPage" :disabled="currentPage >= totalPages - 1">Next</button>
@@ -116,7 +116,43 @@
     </transition>
   </div>
   <div v-else class="loading">
-    <div class="spinner"></div>
+    <div class="skeleton-container">
+      <div class="skeleton-header">
+        <div class="skeleton-banner"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-poster"></div>
+          <div class="skeleton-title-area">
+            <div class="skeleton-text short"></div>
+            <div class="skeleton-text medium"></div>
+            <div class="skeleton-text short"></div>
+          </div>
+        </div>
+      </div>
+      <div class="skeleton-main">
+        <div class="skeleton-metadata">
+          <div class="skeleton-tags">
+            <div class="skeleton-tag"></div>
+            <div class="skeleton-tag"></div>
+            <div class="skeleton-tag"></div>
+          </div>
+          <div class="skeleton-synopsis">
+            <div class="skeleton-text medium"></div>
+            <div class="skeleton-text long"></div>
+            <div class="skeleton-text long"></div>
+            <div class="skeleton-text medium"></div>
+          </div>
+        </div>
+        <div class="skeleton-episodes">
+          <div class="skeleton-episode" v-for="n in 6" :key="n">
+            <div class="skeleton-thumbnail"></div>
+            <div class="skeleton-episode-info">
+              <div class="skeleton-text medium"></div>
+              <div class="skeleton-text short"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -1137,6 +1173,184 @@ export default {
 
   .episodes-section {
     padding: 15px;
+  }
+}
+
+/* Styles pour le skeleton loading */
+.skeleton-container {
+  width: 100%;
+  height: 100vh;
+  background: #141414;
+  overflow: hidden;
+}
+
+.skeleton-header {
+  height: 40vh;
+  position: relative;
+}
+
+.skeleton-banner {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(110deg, #1a1a1a 30%, #222 50%, #1a1a1a 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+.skeleton-content {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+}
+
+.skeleton-poster {
+  width: 150px;
+  height: 225px;
+  background: linear-gradient(110deg, #1a1a1a 30%, #222 50%, #1a1a1a 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 8px;
+}
+
+.skeleton-title-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-text {
+  height: 20px;
+  background: linear-gradient(110deg, #1a1a1a 30%, #222 50%, #1a1a1a 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 4px;
+}
+
+.skeleton-text.short {
+  width: 30%;
+}
+
+.skeleton-text.medium {
+  width: 60%;
+}
+
+.skeleton-text.long {
+  width: 90%;
+}
+
+.skeleton-main {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+  padding: 20px;
+  height: calc(60vh - 40px);
+}
+
+.skeleton-metadata {
+  background: #1a1a1a;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.skeleton-tags {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.skeleton-tag {
+  width: 80px;
+  height: 30px;
+  background: linear-gradient(110deg, #222 30%, #2a2a2a 50%, #222 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 4px;
+}
+
+.skeleton-synopsis {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-episodes {
+  background: #1a1a1a;
+  border-radius: 8px;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 15px;
+  overflow-y: auto;
+}
+
+.skeleton-episode {
+  background: #222;
+  border-radius: 12px;
+  height: 110px;
+  display: flex;
+  gap: 12px;
+  padding: 8px;
+}
+
+.skeleton-thumbnail {
+  width: 160px;
+  height: 94px;
+  background: linear-gradient(110deg, #1a1a1a 30%, #222 50%, #1a1a1a 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 8px;
+}
+
+.skeleton-episode-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .skeleton-main {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .skeleton-metadata {
+    height: 300px;
+  }
+
+  .skeleton-episodes {
+    height: calc(100vh - 700px);
+  }
+}
+
+@media (max-width: 600px) {
+  .skeleton-poster {
+    width: 120px;
+    height: 180px;
+  }
+
+  .skeleton-episodes {
+    grid-template-columns: 1fr;
+  }
+
+  .skeleton-thumbnail {
+    width: 130px;
+    height: 84px;
   }
 }
 </style>
