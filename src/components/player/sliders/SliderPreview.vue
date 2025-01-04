@@ -13,7 +13,7 @@ const { thumbnails, noClamp = false } = defineProps<{
   </media-slider-preview>
 </template>
 
-<style>
+<style scoped>
 .preview {
   display: flex;
   flex-direction: column;

@@ -24,6 +24,9 @@
           <p class="secondary-title">{{ media.titles.secondary }}</p>
           <h1 class="primary-title">{{ media.titles.primary }}</h1>
           <p class="status">{{ getStatus(media.status) }}</p>
+          <div class="synopsis">
+            <p>{{ media.description }}</p>
+          </div>
         </div>
         <div class="rating" v-if="media.rating !== null">{{ media.rating.toFixed(1) }}</div>
       </div>
@@ -36,10 +39,6 @@
           <span class="tag"> {{ currentEpisodes.length + ' ' + (media.mediaType === 0 ? 'Episodes' : 'Chapters')
             }}</span>
           <span class="tag">{{ media.yearReleased }}</span>
-        </div>
-        <div class="synopsis">
-          <h2>Synopsis</h2>
-          <p>{{ media.description }}</p>
         </div>
       </div>
 
@@ -77,9 +76,9 @@
                 <p class="episode-details">Episode {{ episode.number }}</p>
               </div>
             </router-link>
-            <router-link v-if="isChaptersModule"
+            <router-link v-else
               :to="'/reader?episodeId=' + episode.url + '&episodeTitle=' + `${episode.title == '' ? 'Episode ' + episode.number : episode.title}` + '&title=' + media.titles.primary + '&chapters=' + JSON.stringify(episodes)"
-              v-for="episode in paginatedEpisodes" :key="episode.number" class="episode">
+              v-for="episode in paginatedEpisodes" :key="'chapter-' + episode.number" class="episode">
               <div class="thumbnail-container">
                 <img v-if="episode.thumbnail" class="thumbnail" :src="episode.thumbnail" alt="Thumbnail" />
               </div>
@@ -118,17 +117,25 @@
   <div v-else class="loading">
     <div class="skeleton-container">
       <div class="skeleton-header">
-        <div class="skeleton-banner"></div>
-        <div class="skeleton-content">
+        <div class="buttons">
+          <div class="back skeleton-button"></div>
+          <div class="bookmark skeleton-button"></div>
+        </div>
+        <div class="background-image-container">
+          <div class="skeleton-banner"></div>
+        </div>
+        <div class="content">
           <div class="skeleton-poster"></div>
           <div class="skeleton-title-area">
             <div class="skeleton-text short"></div>
             <div class="skeleton-text medium"></div>
             <div class="skeleton-text short"></div>
           </div>
+          <div class="skeleton-rating"></div>
         </div>
       </div>
-      <div class="skeleton-main">
+
+      <div class="main-content">
         <div class="skeleton-metadata">
           <div class="skeleton-tags">
             <div class="skeleton-tag"></div>
@@ -142,12 +149,21 @@
             <div class="skeleton-text medium"></div>
           </div>
         </div>
-        <div class="skeleton-episodes">
-          <div class="skeleton-episode" v-for="n in 6" :key="n">
-            <div class="skeleton-thumbnail"></div>
-            <div class="skeleton-episode-info">
-              <div class="skeleton-text medium"></div>
-              <div class="skeleton-text short"></div>
+
+        <div class="skeleton-episodes-section">
+          <div class="skeleton-season-selector"></div>
+          <div class="skeleton-category-selector">
+            <div class="skeleton-category"></div>
+            <div class="skeleton-category"></div>
+            <div class="skeleton-category"></div>
+          </div>
+          <div class="skeleton-episodes-grid">
+            <div class="skeleton-episode" v-for="n in 6" :key="n">
+              <div class="skeleton-thumbnail"></div>
+              <div class="skeleton-episode-info">
+                <div class="skeleton-text medium"></div>
+                <div class="skeleton-text short"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -429,13 +445,33 @@ export default {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
+  position: relative;
+}
+
+.media-details::-webkit-scrollbar {
+  width: 8px;
+}
+
+.media-details::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.media-details::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.media-details::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* Header Section */
 .header {
   position: relative;
-  height: 40vh;
+  height: 55vh;
+  min-height: 55vh;
   overflow: hidden;
   margin: 0;
   border-radius: 0;
@@ -475,13 +511,13 @@ export default {
   top: 20px;
   left: 20px;
   right: 20px;
-  z-index: 2;
+  z-index: 100;
   display: flex;
   justify-content: space-between;
 }
 
 .back button, .bookmark {
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.7);
   border: none;
   border-radius: 50%;
   width: 40px;
@@ -491,11 +527,14 @@ export default {
   justify-content: center;
   cursor: pointer;
   color: white;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .back button:hover, .bookmark:hover {
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.9);
+  transform: scale(1.05);
 }
 
 .content {
@@ -503,44 +542,84 @@ export default {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 20px;
+  padding: 40px;
   display: flex;
   align-items: flex-end;
-  gap: 20px;
+  gap: 40px;
   z-index: 1;
 }
 
 .cover-image {
-  width: 150px;
-  height: 225px;
+  width: 220px;
+  height: 330px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 12px;
   margin: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 .title-area {
   flex: 1;
+  max-width: 1200px;
 }
 
 .secondary-title {
   color: #aaa;
   margin: 0;
-  font-size: 1em;
+  font-size: 1.1em;
 }
 
 .primary-title {
   margin: 8px 0;
-  font-size: 2em;
+  font-size: 2.5em;
   color: white;
 }
 
 .status {
   display: inline-block;
-  padding: 4px 12px;
+  padding: 6px 16px;
   background: rgba(0, 0, 0, 0.5);
   border-radius: 4px;
-  font-size: 0.9em;
+  font-size: 0.95em;
   color: var(--accent-color);
+  margin-bottom: 20px;
+}
+
+.synopsis {
+  color: #ddd;
+  line-height: 1.7;
+  max-width: 1200px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 20px 25px;
+  border-radius: 12px;
+  max-height: 150px;
+  overflow-y: auto;
+  margin-top: 5px;
+}
+
+.synopsis p {
+  margin: 0;
+  font-size: 1.05em;
+  opacity: 0.95;
+  padding-right: 10px;
+}
+
+.synopsis::-webkit-scrollbar {
+  width: 8px;
+}
+
+.synopsis::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.synopsis::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.synopsis::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* Main Content */
@@ -550,16 +629,38 @@ export default {
   grid-template-columns: 300px 1fr;
   gap: 20px;
   padding: 20px;
-  height: calc(100vh - 40vh);
-  overflow: hidden;
+  max-width: 91vw;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
+.main-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.main-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Section métadonnées */
 .metadata {
   background: #1a1a1a;
   border-radius: 8px;
   padding: 20px;
-  height: 100%;
-  overflow-y: auto;
+  height: fit-content;
+  min-width: 0;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .tags {
@@ -588,129 +689,61 @@ export default {
   color: white;
 }
 
-/* Episodes Section */
+/* Section épisodes */
 .episodes-section {
   background: #1a1a1a;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  overflow: hidden;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .episodes-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 20px;
-}
-
-.season-selector {
-  background: #2a2a2a;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+  width: 100%;
+  position: relative;
+  box-sizing: border-box;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
 }
 
-.season-selector h2 {
-  margin: 0;
-  font-size: 1.1em;
-}
-
-.chevron-right {
-  font-size: 1.5em;
-  opacity: 0.7;
-}
-
-.season-selector:hover {
-  background: #333;
-}
-
-.category-selector {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  background: #1a1a1a;
-  z-index: 10;
-  padding: 20px;
-  padding-bottom: 15px;
-  position: sticky;
-  top: 0;
-}
-
-/* Cacher la scrollbar sur Webkit */
-.category-selector::-webkit-scrollbar {
-  display: none;
-}
-
-.category-selector button {
-  background: #2a2a2a;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  font-size: 0.9em;
-  min-width: fit-content;
-}
-
-.category-selector button:hover {
-  background: #333;
-}
-
-.category-selector button.active {
-  background: var(--accent-color);
-  font-weight: 500;
-}
-
+/* Style pour la liste d'épisodes */
 .episodes-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 15px;
-  padding: 0 10px 20px 0;
   width: 100%;
-  height: auto;
-  align-items: stretch;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
+/* Style pour un épisode */
 .episode {
-  background: rgba(42, 42, 42, 0.5);
+  background: #222;
   border-radius: 12px;
   overflow: hidden;
   transition: all 0.3s ease;
   text-decoration: none;
   color: inherit;
   display: flex;
-  flex-direction: row;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  gap: 12px;
+  padding: 8px;
   height: 110px;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .episode:hover {
   transform: translateY(-2px);
-  background: rgba(52, 52, 52, 0.7);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: #2a2a2a;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-/* Conteneur pour la thumbnail */
 .thumbnail-container {
   width: 160px;
-  min-width: 160px;
-  position: relative;
   height: 94px;
-  background: #2a2a2a;
-  margin: 8px;
+  background: #1a1a1a;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -718,90 +751,116 @@ export default {
 .thumbnail {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-}
-
-/* Style pour quand il n'y a pas de thumbnail */
-.thumbnail-container:empty::after {
-  content: 'No Preview';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: #666;
-  font-size: 0.8em;
-}
-
-/* Ajuster pour mobile */
-@media (max-width: 768px) {
-  .thumbnail-container {
-    width: 120px;
-    min-width: 120px;
-  }
+  object-fit: contain;
+  background: #1a1a1a;
 }
 
 .episode-info {
-  padding: 12px;
   flex: 1;
-  display: grid;
-  grid-template-rows: 1fr auto;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 8px 0;
   min-width: 0;
   overflow: hidden;
 }
 
 .episode-title {
   margin: 0;
-  font-size: 1em;
+  font-size: 1.1em;
   color: white;
   font-weight: 500;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  line-height: 1.2;
-  align-self: start;
-  word-break: break-word;
+  line-height: 1.3;
 }
 
 .episode-details {
   margin: 0;
   color: #aaa;
   font-size: 0.9em;
-  padding: 4px 8px;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
   width: fit-content;
-  align-self: end;
   white-space: nowrap;
+  margin-top: auto;
+}
+
+/* Sélecteur de catégories */
+.category-selector {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  background: #1a1a1a;
+  z-index: 10;
+  padding: 20px;
+  position: sticky;
+  top: 0;
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.category-selector button {
+  background: #2a2a2a;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  font-size: 0.95em;
+  min-width: fit-content;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.category-selector button:hover {
+  background: #333;
+  transform: translateY(-1px);
+}
+
+.category-selector button.active {
+  background: var(--accent-color);
+  font-weight: 500;
 }
 
 /* Pagination Controls */
 .pagination-controls {
   padding: 15px 20px;
-  border-bottom: 1px solid #2a2a2a;
   display: flex;
   justify-content: center;
-  gap: 15px;
+  gap: 20px;
   background: #1a1a1a;
-  margin-bottom: 5px;
   position: sticky;
-  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   z-index: 10;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .pagination-controls button {
   background: #2a2a2a;
   border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
+  padding: 10px 20px;
+  border-radius: 8px;
   color: white;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
+  font-size: 0.95em;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .pagination-controls button:hover:not(:disabled) {
   background: #333;
+  transform: translateY(-1px);
 }
 
 .pagination-controls button:disabled {
@@ -809,199 +868,253 @@ export default {
   cursor: not-allowed;
 }
 
-/* Garder les styles existants pour les modals et les transitions */
-
 /* Responsive Design */
-@media (max-width: 1200px) {
-  .main-content {
-    grid-template-columns: 300px 1fr;
-    gap: 20px;
-    padding: 20px;
-  }
-
+@media (max-width: 1599px) {
   .episodes-list {
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   }
 }
 
 @media (max-width: 900px) {
   .main-content {
     grid-template-columns: 1fr;
-    gap: 20px;
-    padding: 20px;
-    height: calc(100vh - 350px);
-    overflow-y: hidden;
-  }
-
-  .metadata {
-    height: 300px;
-    min-height: 300px;
-    overflow-y: auto;
-  }
-
-  .episodes-section {
-    height: calc(100vh - 700px);
-    min-height: 300px;
-    overflow: hidden;
-  }
-
-  .episodes-content {
-    overflow-y: auto;
-  }
-
-  .synopsis {
-    overflow-y: visible;
-  }
-
-  .header {
     height: auto;
-    min-height: 350px;
-  }
-
-  .content {
-    padding: 20px;
-    gap: 20px;
-  }
-
-  .cover-image {
-    width: 130px;
-    height: 195px;
-  }
-}
-
-@media (max-width: 600px) {
-  .main-content {
-    padding: 15px;
-    gap: 15px;
-    height: calc(100vh - 300px);
+    overflow-y: auto;
+    max-height: calc(100vh - 40vh);
   }
 
   .metadata {
-    height: 250px;
-    min-height: 250px;
-    padding: 15px;
+    height: fit-content;
   }
 
   .episodes-section {
-    height: calc(100vh - 600px);
-    min-height: 250px;
+    height: fit-content;
+    min-height: 500px;
   }
 
   .episodes-content {
-    padding: 0 15px;
-  }
-
-  .cover-image {
-    width: 120px;
-    height: 180px;
-  }
-
-  .primary-title {
-    font-size: 1.4em;
+    height: 100%;
   }
 
   .episodes-list {
     grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .episode {
-    height: 100px;
-  }
-
-  .thumbnail-container {
-    width: 130px;
-    min-width: 130px;
-    height: 84px;
-  }
-
-  .episode-info {
-    padding: 10px;
-  }
-
-  .category-selector {
-    padding: 12px;
-    gap: 8px;
-  }
-
-  .category-selector button {
-    padding: 8px 12px;
-    font-size: 0.9em;
-    white-space: nowrap;
-  }
-
-  .pagination-controls {
-    padding: 12px;
-    gap: 10px;
-  }
-
-  .pagination-controls button {
-    padding: 6px 12px;
-    font-size: 0.9em;
   }
 }
 
-@media (max-width: 400px) {
-  .header {
-    min-height: 280px;
-  }
+/* Scrollbar Styles */
+.episodes-list::-webkit-scrollbar {
+  width: 8px;
+}
 
-  .content {
-    padding: 12px;
-    gap: 12px;
-  }
+.episodes-list::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 4px;
+}
 
-  .cover-image {
-    width: 100px;
-    height: 150px;
-  }
+.episodes-list::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
 
-  .primary-title {
-    font-size: 1.2em;
-  }
+.episodes-list::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}
 
-  .episode {
-    height: 90px;
-  }
+/* Styles pour le skeleton loading */
+.skeleton-container {
+  width: 100%;
+  height: 100vh;
+  background: #141414;
+  overflow: hidden;
+}
 
-  .thumbnail-container {
-    width: 110px;
-    min-width: 110px;
-    height: 74px;
-  }
+.skeleton-header {
+  height: 40vh;
+  position: relative;
+  overflow: hidden;
+}
 
-  .episode-title {
-    font-size: 0.9em;
-  }
+.skeleton-button {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(110deg, #1a1a1a 30%, #222 50%, #1a1a1a 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 50%;
+}
 
-  .episode-details {
-    font-size: 0.8em;
+.skeleton-banner {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(110deg, #1a1a1a 30%, #222 50%, #1a1a1a 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+.skeleton-poster {
+  width: 150px;
+  height: 225px;
+  background: linear-gradient(110deg, #1a1a1a 30%, #222 50%, #1a1a1a 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 8px;
+}
+
+.skeleton-rating {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(110deg, #1a1a1a 30%, #222 50%, #1a1a1a 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 50%;
+}
+
+.skeleton-title-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 20px;
+}
+
+.skeleton-text {
+  height: 20px;
+  background: linear-gradient(110deg, #1a1a1a 30%, #222 50%, #1a1a1a 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 4px;
+}
+
+.skeleton-text.short {
+  width: 30%;
+}
+
+.skeleton-text.medium {
+  width: 60%;
+}
+
+.skeleton-text.long {
+  width: 90%;
+}
+
+.skeleton-metadata {
+  background: #1a1a1a;
+  border-radius: 8px;
+  padding: 20px;
+  height: fit-content;
+}
+
+.skeleton-tags {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.skeleton-tag {
+  width: 80px;
+  height: 30px;
+  background: linear-gradient(110deg, #222 30%, #2a2a2a 50%, #222 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 4px;
+}
+
+.skeleton-synopsis {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-episodes-section {
+  background: #1a1a1a;
+  border-radius: 8px;
+  padding: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.skeleton-season-selector {
+  height: 50px;
+  background: linear-gradient(110deg, #222 30%, #2a2a2a 50%, #222 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 8px;
+}
+
+.skeleton-category-selector {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+.skeleton-category {
+  width: 100px;
+  height: 35px;
+  flex-shrink: 0;
+  background: linear-gradient(110deg, #222 30%, #2a2a2a 50%, #222 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 6px;
+}
+
+.skeleton-episodes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 15px;
+  overflow-y: auto;
+}
+
+.skeleton-episode {
+  background: #222;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  gap: 12px;
+  padding: 8px;
+  height: 110px;
+}
+
+.skeleton-thumbnail {
+  width: 160px;
+  height: 94px;
+  background: linear-gradient(110deg, #1a1a1a 30%, #222 50%, #1a1a1a 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 8px;
+}
+
+.skeleton-episode-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
   }
 }
 
-/* Mode paysage sur mobile */
-@media (max-height: 500px) {
-  .main-content {
-    height: calc(100vh - 250px);
-    display: flex;
-    flex-direction: row;
-    overflow: hidden;
+@media (max-width: 900px) {
+  .skeleton-episodes-grid {
+    grid-template-columns: 1fr;
   }
-
-  .metadata {
-    width: 300px;
-    height: 100%;
-  }
-
-  .episodes-section {
-    flex: 1;
-    height: 100%;
+  
+  .skeleton-poster {
+    width: 120px;
+    height: 180px;
   }
 }
 
-/* Corrections des styles */
-
-/* Ajout des styles manquants pour le modal */
+/* Styles pour le modal des saisons */
 .season-modal {
   position: fixed;
   top: 0;
@@ -1061,30 +1174,7 @@ export default {
   align-items: center;
 }
 
-/* Ajout des styles pour le loading */
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background-color: #141414;
-}
-
-.spinner {
-  border: 4px solid #333;
-  border-top: 4px solid var(--accent-color);
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Ajout des transitions manquantes */
+/* Transitions pour le modal */
 .modal-fade-enter-active,
 .modal-fade-leave-active {
   transition: opacity 0.3s ease;
@@ -1116,241 +1206,241 @@ export default {
   transform: translateY(-10px);
 }
 
-.episode-fade-enter-active,
-.episode-fade-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.episode-fade-enter-from,
-.episode-fade-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
-}
-
-/* Ajouter des styles pour les barres de défilement personnalisées */
-.metadata::-webkit-scrollbar,
-.episodes-list::-webkit-scrollbar {
+/* Styles pour la scrollbar du modal */
+.season-modal-content::-webkit-scrollbar {
   width: 8px;
 }
 
-.metadata::-webkit-scrollbar-track,
-.episodes-list::-webkit-scrollbar-track {
+.season-modal-content::-webkit-scrollbar-track {
   background: #1a1a1a;
+  border-radius: 4px;
 }
 
-.metadata::-webkit-scrollbar-thumb,
-.episodes-list::-webkit-scrollbar-thumb {
+.season-modal-content::-webkit-scrollbar-thumb {
   background: #333;
   border-radius: 4px;
 }
 
-.metadata::-webkit-scrollbar-thumb:hover,
-.episodes-list::-webkit-scrollbar-thumb:hover {
+.season-modal-content::-webkit-scrollbar-thumb:hover {
   background: #444;
 }
 
-/* Ajuster pour les cas avec peu d'épisodes */
-@media (min-width: 769px) {
-  .episodes-list:only-child {
-    grid-template-columns: minmax(300px, 600px);
-    justify-content: center;
-  }
+/* Styles des boutons de catégorie */
+.category-selector::-webkit-scrollbar {
+  display: none;
+}
+
+.category-selector button {
+  background: #2a2a2a;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  font-size: 0.9em;
+  min-width: fit-content;
+}
+
+.category-selector button:hover {
+  background: #333;
+}
+
+.category-selector button.active {
+  background: var(--accent-color);
+  font-weight: 500;
+}
+
+/* Styles des boutons de pagination */
+.pagination-controls button {
+  background: #2a2a2a;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+  background: #333;
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.season-selector {
+  background: #2a2a2a;
+  padding: 20px;
+  border-radius: 12px;
+  margin: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.season-selector:hover {
+  background: #333;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+  border-color: var(--accent-color);
+}
+
+.season-selector h2 {
+  margin: 0;
+  font-size: 1.2em;
+  font-weight: 500;
+  color: white;
+}
+
+.season-selector p {
+  margin: 5px 0 0 0;
+  font-size: 0.9em;
+  color: #aaa;
+}
+
+.chevron-right {
+  font-size: 1.8em;
+  color: rgba(255, 255, 255, 0.7);
+  transition: all 0.3s ease;
+}
+
+.season-selector:hover .chevron-right {
+  transform: translateX(4px);
+  color: #ffffff;
+}
+
+/* Nouveau style simple pour un seul épisode */
+.single-episode-container {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.single-episode-simple {
+  background: var(--accent-color);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  text-decoration: none;
+  color: white;
+  width: 100%;
+  max-width: 400px;
+  transition: all 0.2s ease;
+}
+
+.single-episode-simple:hover {
+  transform: scale(1.02);
+  filter: brightness(1.1);
+}
+
+.play-button {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.episode-info-simple {
+  flex: 1;
+}
+
+.episode-info-simple h3 {
+  margin: 0;
+  font-size: 1.2em;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.episode-info-simple p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 0.9em;
 }
 
 @media (max-width: 768px) {
-  .episode {
-    margin: 0;
+  .single-episode-simple {
     max-width: 100%;
   }
 }
 
-/* Ajuster pour mobile */
-@media (max-width: 768px) {
-  .category-selector {
-    margin: -15px -15px 15px -15px;
-    padding: 12px;
-  }
-
-  .episodes-section {
-    padding: 15px;
-  }
+/* Ajout du style pour un seul épisode */
+.episodes-list.single {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
 }
 
-/* Styles pour le skeleton loading */
-.skeleton-container {
+.episodes-list.single .episode {
   width: 100%;
-  height: 100vh;
-  background: #141414;
-  overflow: hidden;
+  max-width: 600px;
 }
 
-.skeleton-header {
-  height: 40vh;
-  position: relative;
-}
-
-.skeleton-banner {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(110deg, #1a1a1a 30%, #222 50%, #1a1a1a 70%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite linear;
-}
-
-.skeleton-content {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  right: 20px;
-  display: flex;
-  gap: 20px;
-  align-items: flex-end;
-}
-
-.skeleton-poster {
-  width: 150px;
-  height: 225px;
-  background: linear-gradient(110deg, #1a1a1a 30%, #222 50%, #1a1a1a 70%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite linear;
-  border-radius: 8px;
-}
-
-.skeleton-title-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.skeleton-text {
-  height: 20px;
-  background: linear-gradient(110deg, #1a1a1a 30%, #222 50%, #1a1a1a 70%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite linear;
-  border-radius: 4px;
-}
-
-.skeleton-text.short {
-  width: 30%;
-}
-
-.skeleton-text.medium {
-  width: 60%;
-}
-
-.skeleton-text.long {
-  width: 90%;
-}
-
-.skeleton-main {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 20px;
-  padding: 20px;
-  height: calc(60vh - 40px);
-}
-
-.skeleton-metadata {
-  background: #1a1a1a;
-  border-radius: 8px;
-  padding: 20px;
-}
-
-.skeleton-tags {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.skeleton-tag {
-  width: 80px;
-  height: 30px;
-  background: linear-gradient(110deg, #222 30%, #2a2a2a 50%, #222 70%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite linear;
-  border-radius: 4px;
-}
-
-.skeleton-synopsis {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.skeleton-episodes {
-  background: #1a1a1a;
-  border-radius: 8px;
-  padding: 20px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 15px;
-  overflow-y: auto;
-}
-
-.skeleton-episode {
-  background: #222;
-  border-radius: 12px;
-  height: 110px;
-  display: flex;
-  gap: 12px;
-  padding: 8px;
-}
-
-.skeleton-thumbnail {
-  width: 160px;
-  height: 94px;
-  background: linear-gradient(110deg, #1a1a1a 30%, #222 50%, #1a1a1a 70%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite linear;
-  border-radius: 8px;
-}
-
-.skeleton-episode-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 8px 0;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
+/* Media Queries */
+@media (min-width: 1600px) {
+  .header {
+    height: 65vh;
+    min-height: 65vh;
   }
-  100% {
-    background-position: 200% 0;
+
+  .main-content {
+    padding: 30px;
+    gap: 30px;
+  }
+
+  .cover-image {
+    width: 280px;
+    height: 420px;
+  }
+
+  .synopsis {
+    max-height: 200px;
+    font-size: 1.1em;
+    line-height: 1.8;
+  }
+
+  .primary-title {
+    font-size: 3em;
+  }
+
+  .secondary-title {
+    font-size: 1.2em;
   }
 }
 
 @media (max-width: 900px) {
-  .skeleton-main {
+  .header {
+    height: 45vh;
+    min-height: 45vh;
+  }
+
+  .main-content {
     grid-template-columns: 1fr;
-    height: auto;
+    padding: 15px;
+    gap: 15px;
   }
 
-  .skeleton-metadata {
-    height: 300px;
+  .cover-image {
+    width: 160px;
+    height: 240px;
   }
 
-  .skeleton-episodes {
-    height: calc(100vh - 700px);
-  }
-}
-
-@media (max-width: 600px) {
-  .skeleton-poster {
-    width: 120px;
-    height: 180px;
-  }
-
-  .skeleton-episodes {
-    grid-template-columns: 1fr;
-  }
-
-  .skeleton-thumbnail {
-    width: 130px;
-    height: 84px;
+  .primary-title {
+    font-size: 2em;
   }
 }
 </style>
