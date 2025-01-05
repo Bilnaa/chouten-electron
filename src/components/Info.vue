@@ -710,6 +710,7 @@ export default {
   width: 100%;
   position: relative;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 .episodes-content {
@@ -811,8 +812,6 @@ export default {
   background: #1a1a1a;
   z-index: 10;
   padding: 20px;
-  position: sticky;
-  top: 0;
   width: 100%;
   box-sizing: border-box;
   flex-shrink: 0;
