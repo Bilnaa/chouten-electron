@@ -561,18 +561,29 @@ export default {
 .title-area {
   flex: 1;
   max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .secondary-title {
   color: #aaa;
   margin: 0;
   font-size: 1.1em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .primary-title {
   margin: 8px 0;
   font-size: 2.5em;
   color: white;
+  line-height: 1.2;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
 }
 
 .status {
@@ -583,6 +594,7 @@ export default {
   font-size: 0.95em;
   color: var(--accent-color);
   margin-bottom: 20px;
+  width: fit-content;
 }
 
 .synopsis {
@@ -899,6 +911,14 @@ export default {
   .episodes-list {
     grid-template-columns: 1fr;
   }
+
+  .primary-title {
+    font-size: 1.8em;
+  }
+
+  .secondary-title {
+    font-size: 1em;
+  }
 }
 
 /* Scrollbar Styles */
@@ -929,18 +949,9 @@ export default {
 }
 
 .skeleton-header {
-  height: 40vh;
+  height: 55vh;
   position: relative;
   overflow: hidden;
-}
-
-.skeleton-button {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(110deg, #1a1a1a 30%, #222 50%, #1a1a1a 70%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite linear;
-  border-radius: 50%;
 }
 
 .skeleton-banner {
@@ -951,30 +962,33 @@ export default {
   animation: shimmer 1.5s infinite linear;
 }
 
-.skeleton-poster {
-  width: 150px;
-  height: 225px;
-  background: linear-gradient(110deg, #1a1a1a 30%, #222 50%, #1a1a1a 70%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite linear;
-  border-radius: 8px;
+.skeleton-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 40px;
+  display: flex;
+  align-items: flex-end;
+  gap: 40px;
+  z-index: 1;
 }
 
-.skeleton-rating {
-  width: 50px;
-  height: 50px;
+.skeleton-poster {
+  width: 220px;
+  height: 330px;
   background: linear-gradient(110deg, #1a1a1a 30%, #222 50%, #1a1a1a 70%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite linear;
-  border-radius: 50%;
+  border-radius: 12px;
 }
 
 .skeleton-title-area {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin: 0 20px;
+  gap: 15px;
+  max-width: 1200px;
 }
 
 .skeleton-text {
@@ -991,10 +1005,23 @@ export default {
 
 .skeleton-text.medium {
   width: 60%;
+  height: 40px;
 }
 
-.skeleton-text.long {
-  width: 90%;
+.skeleton-text.status {
+  width: 100px;
+  height: 30px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.skeleton-synopsis {
+  height: 150px;
+  background: linear-gradient(110deg, rgba(26, 26, 26, 0.4) 30%, rgba(34, 34, 34, 0.4) 50%, rgba(26, 26, 26, 0.4) 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 12px;
+  margin-top: 20px;
 }
 
 .skeleton-metadata {
@@ -1017,12 +1044,6 @@ export default {
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite linear;
   border-radius: 4px;
-}
-
-.skeleton-synopsis {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
 }
 
 .skeleton-episodes-section {
@@ -1064,7 +1085,6 @@ export default {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 15px;
-  overflow-y: auto;
 }
 
 .skeleton-episode {
@@ -1103,14 +1123,37 @@ export default {
   }
 }
 
+@media (min-width: 1600px) {
+  .skeleton-header {
+    height: 65vh;
+  }
+
+  .skeleton-poster {
+    width: 280px;
+    height: 420px;
+  }
+
+  .skeleton-synopsis {
+    height: 200px;
+  }
+}
+
 @media (max-width: 900px) {
+  .skeleton-header {
+    height: 45vh;
+  }
+
+  .skeleton-poster {
+    width: 160px;
+    height: 240px;
+  }
+
+  .skeleton-synopsis {
+    height: 120px;
+  }
+
   .skeleton-episodes-grid {
     grid-template-columns: 1fr;
-  }
-  
-  .skeleton-poster {
-    width: 120px;
-    height: 180px;
   }
 }
 
@@ -1440,7 +1483,11 @@ export default {
   }
 
   .primary-title {
-    font-size: 2em;
+    font-size: 1.8em;
+  }
+
+  .secondary-title {
+    font-size: 1em;
   }
 }
 </style>
