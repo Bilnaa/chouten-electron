@@ -33,7 +33,7 @@
         </media-provider>
 
         <div class="vds-buffering-indicator">
-          <media-spinner class="vds-buffering-spinner"></media-spinner>
+          <media-spinner class="vds-buffering-spinner" />
         </div>
         <SkipButton
               v-for="(skip, index) in skips"

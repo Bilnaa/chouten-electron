@@ -84,6 +84,13 @@ import FullscreenIcon from 'vue-material-design-icons/Fullscreen.vue';
 import ArrowLeftIcon from 'vue-material-design-icons/ArrowLeft.vue';
 import ArrowRightIcon from 'vue-material-design-icons/ArrowRight.vue';
 import { Presence } from 'discord-rpc';
+import { useRouter } from 'vue-router';
+
+type Chapter = {
+    title: string;
+    number: number;
+    url: string;
+};
 
 export default {
     components: {
@@ -92,8 +99,10 @@ export default {
         ArrowLeftIcon,
         ArrowRightIcon,
     },
-    props: ["episodeId", "episodeTitle", "title"],
+    props: ["episodeId", "episodeTitle", "title", "chapters"],
     setup(props) {
+        console.log(props.chapters);
+        const router = useRouter();
         const episodeId = props.episodeId;
         const selectedStyle = ref('single');
         const readingDirection = ref('ltr');
@@ -117,6 +126,22 @@ export default {
         const progress = computed(() => {
             return ((currentPage.value + 1) / totalPages.value) * 100;
         });
+
+        function goToNextChapter() {
+            const currentChapterIndex = props.chapters.findIndex((chapter: Chapter) => chapter.title === props.episodeTitle);
+            if (currentChapterIndex < props.chapters.length - 1) {
+            const nextChapter = props.chapters[currentChapterIndex + 1];
+            router.push({
+            path: '/reader',
+            query: {
+                episodeId: nextChapter.id,
+                episodeTitle: nextChapter.title,
+                title: props.title,
+                chapters: JSON.stringify(props.chapters)
+            }
+            });
+        }
+        }
 
         const currentStyle = computed(() => {
             return availableStyles.find(style => style.value === selectedStyle.value);
@@ -150,6 +175,8 @@ export default {
         function nextPage() {
             if (currentPage.value < totalPages.value - 1) {
                 currentPage.value++;
+            } else {
+                goToNextChapter();
             }
         }
 

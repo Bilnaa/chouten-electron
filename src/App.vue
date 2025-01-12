@@ -267,9 +267,8 @@ body {
 
 .container {
   margin-left: 120px;
-  padding: 20px;
   overflow-y: auto;
-  height: calc(100vh - 32px); /* Adjust height to account for title bar */
+  /* height: calc(100vh - 32px);  Adjust height to account for title bar */
   background-color: #0C0C0C;
 }
 

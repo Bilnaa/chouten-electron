@@ -7,7 +7,7 @@
       <div class="spotlight-modal" @click.stop>
         <div class="search-input-wrapper">
           <MagnifyIcon :size="24" />
-          <input v-model="searchQuery" @keyup.enter="onSearch" @keypress="results = {}" class="search-input"
+          <input v-model="searchQuery" @keyup.enter="onSearch" @keypress="results = []" class="search-input"
             placeholder="Press Enter to search" ref="searchInput" />
         </div>
         <div v-if="recentSearches.length > 0 && !searchQuery" class="recent-searches">
@@ -18,10 +18,23 @@
             </li>
           </ul>
         </div>
-        <div v-else class="search-results">
-          <router-link v-for="result in results" :key="result.url" :to="'/infos?url=' + result.url">
-            {{ result.titles.primary }}
-          </router-link>
+        <div v-else class="search-results" ref="searchResults" @scroll="handleScroll">
+          <div v-for="result in results" :key="result.url" class="search-result-item">
+            <router-link :to="'/infos?url=' + result.url" class="result-link">
+              <img :src="result.poster" :alt="result.titles.primary" class="result-poster">
+              <div class="result-info">
+                <h3 class="result-title">{{ result.titles.primary }}</h3>
+                <p v-if="result.titles.secondary" class="result-subtitle">{{ result.titles.secondary }}</p>
+                <div class="result-details">
+                  <span class="result-indicator">{{ result.indicator }}</span>
+                  <span v-if="result.current && result.total" class="result-progress">
+                    {{ result.current }} / {{ result.total }}
+                    
+                  </span>
+                </div>
+              </div>
+            </router-link>
+          </div>
         </div>
       </div>
     </div>
@@ -29,16 +42,24 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
+import { defineComponent, ref, onMounted, computed } from 'vue';
 import MagnifyIcon from 'vue-material-design-icons/Magnify.vue';
 import TextItem from './TextItem.vue';
 
+type Titles = {
+  primary: string;
+  secondary?: string;
+};
+
 interface SearchResult {
   url: string;
-  titles: {
-    primary: string;
-  };
+  titles: Titles;
+  poster: string;
+  indicator: string;
+  current?: number;
+  total?: number;
 }
+
 
 export default defineComponent({
   name: 'SearchButton',
@@ -49,10 +70,14 @@ export default defineComponent({
   setup() {
     const isSearchOpen = ref(false);
     const searchQuery = ref('');
-    const results = ref<Record<string, SearchResult>>({});
+    const results = ref<SearchResult[]>([]);
     const recentSearches = ref<string[]>([]);
     const searchInput = ref<HTMLInputElement | null>(null);
-
+    const searchResults = ref<HTMLDivElement | null>(null);
+    const currentPage = ref<number>(1);
+    const totalPages = ref<number>(1);
+    const isLoading = ref<boolean>(false);
+    const hasMorePages = computed(() => currentPage.value < totalPages.value);
     const openSearch = () => {
       isSearchOpen.value = true;
       setTimeout(() => searchInput.value?.focus(), 0);
@@ -66,13 +91,39 @@ export default defineComponent({
 
     const onSearch = async () => {
       console.log('Searching for:', searchQuery.value);
-      results.value = {};
-      const search = await window.ipcRenderer.invoke('execute-script', `const instance = new source.default(); return instance.search("${searchQuery.value}")`);
+      results.value = [];
+      currentPage.value = 1;
+      const search = await window.ipcRenderer.invoke('execute-script', `const instance = new source.default(); return instance.search("${searchQuery.value}",1)`);
       if (search.success) {
+        totalPages.value = search.result.info.pages;
         results.value = search.result.results;
         addToRecentSearches(searchQuery.value);
       }
       console.log('Results:', results.value);
+    };
+
+    const loadMoreResults = async () => {
+      if (isLoading.value || currentPage.value >= totalPages.value) return;
+
+      isLoading.value = true;
+      currentPage.value++;
+
+      const search = await window.ipcRenderer.invoke('execute-script', `const instance = new source.default(); return instance.search("${searchQuery.value}",${currentPage.value})`);
+      if (search.success) {
+        results.value  = [...results.value, ...search.result.results];
+      }
+
+      isLoading.value = false;
+    };
+
+    const handleScroll = () => {
+      const element = searchResults.value;
+      if (element) {
+        const { scrollTop, scrollHeight, clientHeight } = element;
+        if (scrollTop + clientHeight >= scrollHeight - 50 && !isLoading.value && hasMorePages.value) {
+          loadMoreResults();
+        }
+      }
     };
 
     const setSearchQuery = (query: string) => {
@@ -117,13 +168,18 @@ export default defineComponent({
       results,
       recentSearches,
       searchInput,
+      searchResults,
       openSearch,
       closeSearch,
       onSearch,
       setSearchQuery,
       addToRecentSearches,
       loadRecentSearches,
-      saveRecentSearches
+      saveRecentSearches,
+      loadMoreResults,
+      hasMorePages,
+      isLoading,
+      handleScroll
     };
   }
 });
@@ -161,7 +217,10 @@ export default defineComponent({
   top: 35%;
   width: 600px;
   max-width: 90%;
+  max-height: 80vh;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
 }
 
 .search-input-wrapper {
@@ -186,15 +245,15 @@ export default defineComponent({
 }
 
 .search-results {
-  max-height: 400px;
+  flex-grow: 1;
   overflow-y: auto;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
+  padding: 1rem;
+  max-height: 480px;
 }
 
 .recent-searches {
   padding: 10px;
+  overflow-y: auto;
 }
 
 .recent-searches h3 {
@@ -217,5 +276,69 @@ export default defineComponent({
 
 .recent-searches li:hover {
   background-color: #3d3d3d;
+}
+
+.search-result-item {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #444444;
+  padding-bottom: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.search-result-item:hover {
+  background-color: #3d3d3d;
+}
+
+.result-link {
+  display: flex;
+  text-decoration: none;
+  color: inherit;
+}
+
+.result-poster {
+  width: 80px;
+  height: 120px;
+  object-fit: cover;
+  margin-right: 1rem;
+  border-radius: 4px;
+}
+
+.result-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.result-title {
+  font-size: 1.1rem;
+  margin: 0 0 0.3rem 0;
+  color: #ffffff;
+}
+
+.result-subtitle {
+  font-size: 0.9rem;
+  color: #bbbbbb;
+  margin: 0 0 0.3rem 0;
+}
+
+.result-details {
+  display: flex;
+  align-items: center;
+  margin-top: auto;
+}
+
+.result-indicator {
+  display: inline-block;
+  background-color: #007bff;
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.8rem;
+  margin-right: 0.5rem;
+}
+
+.result-progress {
+  font-size: 0.8rem;
+  color: #bbbbbb;
 }
 </style>

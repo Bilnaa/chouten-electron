@@ -1,5 +1,10 @@
 import { ipcRenderer, contextBridge } from 'electron'
 
+
+contextBridge.exposeInMainWorld('electronAPI', {
+  doneClicked: () => ipcRenderer.send('done-clicked')
+});
+
 const safeDOM = {
   append(parent: HTMLElement, child: HTMLElement) {
     if (!Array.from(parent.children).find(e => e === child)) {

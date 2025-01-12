@@ -2,7 +2,8 @@
   <router-link class="text-item" :to="'/infos?url='+url">
     <div class="image-container">
       <img :src="poster" :alt="titles.primary" class="cover">
-      <span class="text-label">{{ indicator }}</span>
+      <span class="text-label"  v-if="indicator !== ''"
+      >{{ indicator }}</span>
     </div>
     <div class="text-content">
       <h3 class="title">{{ titles.primary }}</h3>
