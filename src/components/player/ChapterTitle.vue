@@ -1,5 +1,7 @@
 <template>
-  <media-chapter-title class="title" />
+  <div class="title">
+    <media-chapter-title/>
+  </div>
 </template>
 
 <style scoped>
