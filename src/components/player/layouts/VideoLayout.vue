@@ -14,11 +14,16 @@ import Gestures from '../Gestures.vue';
 import Seek10Button from '../buttons/Seek10Button.vue';
 import SeekMinus10Button from '../buttons/Seek-10Button.vue';
 import NextEpisodeButton from '../buttons/NextEpisodeButton.vue';
-
-const { thumbnails, episodes } = defineProps<{
+import DownloadButton from '../buttons/DownloadButton.vue';
+const { thumbnails, episodes, player } = defineProps<{
   thumbnails?: string;
   episodes: string;
+  player : HTMLVideoElement;
 }>();
+
+function containsChapter(player : HTMLVideoElement) {
+  return Array.from(player?.textTracks || []).some(track => track.kind === 'chapters');
+}
 </script>
 
 <template>
@@ -36,11 +41,12 @@ const { thumbnails, episodes } = defineProps<{
       <MuteButton tooltip-placement="top" />
       <VolumeSlider />
       <TimeGroup />
-      <ChapterTitle />
+      <ChapterTitle v-if="containsChapter(player)" />
       <div class="vds-controls-spacer" />
       <NextEpisodeButton :episodes="episodes" tooltip-placement="top" />
       <CaptionButton tooltip-placement="top" />
       <SettingsMenu placement="top end" tooltip-placement="top" />
+      <!-- <DownloadButton placement="top end" tooltip-placement="top"/> -->
       <PIPButton tooltip-placement="top" />
       <FullscreenButton tooltip-placement="top end" />
     </media-controls-group>

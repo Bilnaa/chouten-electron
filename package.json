@@ -55,7 +55,7 @@
     "media-icons": "^1.1.5",
     "mime-types": "^2.1.35",
     "video.js": "^8.16.1",
-    "vidstack": "^1.11.29",
+    "vidstack": "^1.12.12",
     "vue-material-design-icons": "^5.3.0",
     "vue-observe-visibility": "^1.0.0",
     "vue-router": "^4.4.0",

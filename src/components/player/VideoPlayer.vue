@@ -33,7 +33,9 @@
         </media-provider>
 
         <div class="vds-buffering-indicator">
-          <media-spinner class="vds-buffering-spinner" />
+          <div class="vds-buffering-spinner">
+            <media-spinner />
+          </div>
         </div>
         <SkipButton
               v-for="(skip, index) in skips"
@@ -42,7 +44,7 @@
               :currentTime="currentTime"
               @skip="skipTo"
           />
-        <VideoLayout :thumbnails="thumbnails" :episodes="episodes" />
+        <VideoLayout :thumbnails="thumbnails" :episodes="episodes" :player="$refs.mediaPlayer" />
       </media-player>
     </div>
   </div>
