@@ -1,6 +1,6 @@
 {
   "name": "chouten",
-  "version": "0.1.9-alpha.0",
+  "version": "0.2.0-alpha",
   "main": "dist-electron/main/index.js",
   "description": "Really simple Electron + Vue + Vite boilerplate.",
   "author": "Nabil <Bilnaa@users.noreply.github.com>",

@@ -436,6 +436,8 @@ export default defineComponent({
 .repos-container {
   padding: 20px;
   color: white;
+  height: 100vh;
+  width: 88vw;
 }
 
 .repos-container span.material-design-icon > .material-design-icon__svg {
