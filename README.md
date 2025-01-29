@@ -1,79 +1,67 @@
-# electron-vite-vue
+# Chouten
 
-🥳 Really simple `Electron` + `Vue` + `Vite` boilerplate.
+🎬 A modern Electron + Vue + Vite based media application.
 
-<!-- [![awesome-vite](https://awesome.re/mentioned-badge.svg)](https://github.com/vitejs/awesome-vite) -->
-<!-- [![Netlify Status](https://api.netlify.com/api/v1/badges/ae3863e3-1aec-4eb1-8f9f-1890af56929d/deploy-status)](https://app.netlify.com/sites/electron-vite/deploys) -->
-<!-- [![GitHub license](https://img.shields.io/github/license/caoxiemeihao/electron-vite-vue)](https://github.com/electron-vite/electron-vite-vue/blob/main/LICENSE) -->
-<!-- [![GitHub stars](https://img.shields.io/github/stars/caoxiemeihao/electron-vite-vue?color=fa6470)](https://github.com/electron-vite/electron-vite-vue) -->
-<!-- [![GitHub forks](https://img.shields.io/github/forks/caoxiemeihao/electron-vite-vue)](https://github.com/electron-vite/electron-vite-vue) -->
 [![GitHub Build](https://github.com/electron-vite/electron-vite-vue/actions/workflows/build.yml/badge.svg)](https://github.com/electron-vite/electron-vite-vue/actions/workflows/build.yml)
-[![GitHub Discord](https://img.shields.io/badge/chat-discord-blue?logo=discord)](https://discord.gg/sRqjYpEAUK)
+[![GitHub Discord](https://img.shields.io/badge/chat-discord-blue?logo=discord)](https://discord.gg/j5ETh7uSy6)
+
+## Overview
+
+Chouten is a powerful media application built with modern web technologies. It combines the robustness of Electron with the reactivity of Vue 3 and the speed of Vite to deliver a seamless desktop experience.
 
 ## Features
 
-📦 Out of the box  
-🎯 Based on the official [template-vue-ts](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-vue-ts), less invasive  
-🌱 Extensible, really simple directory structure  
-💪 Support using Node.js API in Electron-Renderer  
-🔩 Support C/C++ native addons  
-🖥 It's easy to implement multiple windows  
+🎯 **Modern Tech Stack**
+- Built with Electron, Vue 3, and Vite
+- TypeScript support out of the box
+- Fast development and build times
 
-## Quick Setup
+🛠 **Core Capabilities**
+- Media playback with HLS support
+- Discord Rich Presence integration
+- Automatic updates via electron-updater
+- Built-in API server using Fastify
 
-```sh
-# clone the project
-git clone https://github.com/electron-vite/electron-vite-vue.git
+💪 **Developer Features**
+- Full Node.js API support in Electron-Renderer
+- C/C++ native addons compatibility
+- Multiple window support
+- Comprehensive TypeScript definitions
 
-# enter the project directory
-cd electron-vite-vue
+## Quick Start
 
-# install dependency
+```bash
+# Clone the repository
+git clone https://github.com/Bilnaa/chouten-electron.git
+
+# Navigate to project directory
+cd chouten-electron
+
+# Install dependencies
 npm install
 
-# develop
+# Start development server
 npm run dev
 ```
 
-## Debug
+## Development
 
-![electron-vite-react-debug.gif](https://github.com/electron-vite/electron-vite-react/blob/main/electron-vite-react-debug.gif?raw=true)
+- `npm run dev` - Start the development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run publish` - Build and publish new version
 
-## Directory
+## Technologies
 
-```diff
-+ ├─┬ electron
-+ │ ├─┬ main
-+ │ │ └── index.ts    entry of Electron-Main
-+ │ └─┬ preload
-+ │   └── index.ts    entry of Preload-Scripts
-  ├─┬ src
-  │ └── main.ts       entry of Electron-Renderer
-  ├── index.html
-  ├── package.json
-  └── vite.config.ts
-```
+- **Frontend**: Vue 3, TypeScript
+- **Backend**: Electron, Node.js, Fastify
+- **Build Tools**: Vite, Electron Builder
+- **Media**: HLS.js, Media Captions
 
-<!--
-## Be aware
+## Contributing
 
-🚨 By default, this template integrates Node.js in the Renderer process. If you don't need it, you just remove the option below. [Because it will modify the default config of Vite](https://github.com/electron-vite/vite-plugin-electron-renderer#config-presets-opinionated).
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-```diff
-# vite.config.ts
+## License
 
-export default {
-  plugins: [
--   // Use Node.js API in the Renderer-process
--   renderer({
--     nodeIntegration: true,
--   }),
-  ],
-}
-```
--->
-
-## FAQ
-
-- [C/C++ addons, Node.js modules - Pre-Bundling](https://github.com/electron-vite/vite-plugin-electron-renderer#dependency-pre-bundling)
-- [dependencies vs devDependencies](https://github.com/electron-vite/vite-plugin-electron-renderer#dependencies-vs-devdependencies)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
