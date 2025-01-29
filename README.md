@@ -2,7 +2,7 @@
 
 🎬 A modern Electron + Vue + Vite based media application.
 
-[![GitHub Build](https://github.com/electron-vite/electron-vite-vue/actions/workflows/build.yml/badge.svg)](https://github.com/electron-vite/electron-vite-vue/actions/workflows/build.yml)
+[![GitHub Build](https://github.com/Bilnaa/chouten-electron/actions/workflows/build.yml/badge.svg)](https://github.com/Bilnaa/chouten-electron/actions/workflows/build.yml)
 [![GitHub Discord](https://img.shields.io/badge/chat-discord-blue?logo=discord)](https://discord.gg/j5ETh7uSy6)
 
 ## Overview
@@ -43,6 +43,16 @@ npm install
 # Start development server
 npm run dev
 ```
+
+### macOS Users
+
+Since the application is not signed with an Apple Developer Certificate, macOS users need to run the following command after installation to bypass Gatekeeper restrictions:
+
+```bash
+xattr -c /path-to-chouten/chouten.app
+```
+
+Replace `/path-to-chouten/` with the actual path where the application is installed.
 
 ## Development
 
