@@ -31,6 +31,8 @@
     height: 70%;
     background-color: #2a2a2a;
     animation: pulse 1.5s infinite;
+    will-change: opacity;
+    transform: translateZ(0);
   }
   
   .skeleton-content {
@@ -44,6 +46,8 @@
     margin-bottom: 15px;
     animation: pulse 1.5s infinite;
     border-radius: 12px;
+    will-change: opacity;
+    transform: translateZ(0);
   }
   
   .skeleton-description {
@@ -53,6 +57,8 @@
     margin-bottom: 10px;
     animation: pulse 1.5s infinite;
     border-radius: 6px;
+    will-change: opacity;
+    transform: translateZ(0);
   }
   
   @keyframes pulse {

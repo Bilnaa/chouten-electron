@@ -959,18 +959,8 @@ export default {
   background: linear-gradient(110deg, #1a1a1a 30%, #222 50%, #1a1a1a 70%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite linear;
-}
-
-.skeleton-content {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 40px;
-  display: flex;
-  align-items: flex-end;
-  gap: 40px;
-  z-index: 1;
+  will-change: background-position;
+  transform: translateZ(0);
 }
 
 .skeleton-poster {
@@ -980,14 +970,8 @@ export default {
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite linear;
   border-radius: 12px;
-}
-
-.skeleton-title-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  max-width: 1200px;
+  will-change: background-position;
+  transform: translateZ(0);
 }
 
 .skeleton-text {
@@ -996,6 +980,8 @@ export default {
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite linear;
   border-radius: 4px;
+  will-change: background-position;
+  transform: translateZ(0);
 }
 
 .skeleton-text.short {
