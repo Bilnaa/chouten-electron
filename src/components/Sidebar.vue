@@ -1,13 +1,13 @@
 <template>
   <div class="sidebar" :style="{ backgroundColor: isLinux ? '#171717' : '' }">
-    <div class="logo-container" @click="isOpened = !isOpened">
+    <!-- <div class="logo-container" @click="isOpened = !isOpened">
       <div class="logo-placeholder" v-if="!isLogged">
         <span>LOGO</span>
       </div>
       <div class="logo-placeholder" v-else>
         <img :src="discordAvatar" alt="avatar" width="40" height="40" />
       </div>
-    </div>
+    </div> -->
 
     <Modal v-if="isOpened" :show="showModal" @close="closeModal">
       <div v-if="!isLogged">

@@ -40,6 +40,8 @@
     background-color: #2a2a2a;
     border-radius: 12px;
     animation: pulse 1.5s infinite;
+    will-change: opacity;
+    transform: translateZ(0);
   }
   
   .skeleton-label {
@@ -51,14 +53,8 @@
     background-color: #333;
     border-radius: 12px;
     animation: pulse 1.5s infinite;
-  }
-  
-  .text-content {
-    padding: 10px;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    will-change: opacity;
+    transform: translateZ(0);
   }
   
   .skeleton-title {
@@ -68,6 +64,8 @@
     margin-bottom: 4px;
     border-radius: 8px;
     animation: pulse 1.5s infinite;
+    will-change: opacity;
+    transform: translateZ(0);
   }
   
   .skeleton-index {
@@ -76,6 +74,8 @@
     background-color: #2a2a2a;
     border-radius: 6px;
     animation: pulse 1.5s infinite;
+    will-change: opacity;
+    transform: translateZ(0);
   }
   
   @keyframes pulse {
